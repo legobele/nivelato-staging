@@ -1,31 +1,44 @@
 # Nivelato — Todo List
 
 ## App Logic
-- [ ] Add validation: `lado_A - desnivel_A = lado_B - desnivel_B` — flag if measurements don't add up
-- [ ] Add techo desnivel missing warning (mom noted "faltaron desniveles de techo" on real order)
+- [x] Validation logic (PAREDES NO CUADRAN, TECHO/PISO NO CUADRAN, FALTAN NIVELES DE TECHO, FALTA MEDIDA DEL HUECO)
+- [x] LCD flicker on all inputs globally
 - [ ] Spite project: RAADS-R in Microsoft Excel (to counter mom's Copilot Excel arc)
 
-## Auth & Accounts
-- [ ] Auth flow: /accounts/login + /accounts/signup
+## Firebase & Auth
 - [ ] Firebase setup (auth + db)
+- [ ] Organization / user division (shop = org, employees = users)
+- [ ] Auth flow: /accounts/login + /accounts/signup
 - [ ] Protect app behind login
+- [ ] Employee positions & permissions per org
+- [ ] Audit log of all actions (who measured what, when)
+- [ ] Ability to send measurements straight to the shop's setup (some kind of dashboard)
+- [ ] Account configurations & access control
+- [ ] Device-specific access (e.g. only company tablet allowed, not personal phones)
 
-## SaaS / Business
-- [ ] Pricing model (current thinking):
-    - $100 initial setup (firebase, deploy, config)
-    - $50/mo/user — glass shop = 1 employee + uncle = $100/mo baseline
-    - Breakdown: $50 covers Base44 plan, $50 is pure Benj money for shitposting & freedom
-- [ ] Landing page
-- [ ] Eventually: per-use pricing tier for bigger clients
-- [ ] Figure out if Benj gets paid before or after deployment lol
+## Marketing
+- [ ] Landing page — professional and futuristic as FUCK
+      (hosting screenshots on GitHub: put them in /docs/screenshots/ or /assets/ and link raw.githubusercontent.com URLs)
+- [ ] Photography — workers measuring glass (Benj does mobile photography, needs editing similar to Apple Photos)
+- [ ] Link everything up (landing page → app → contact)
+- [ ] Pitch to other glass shops across PR (note: social communication deficits per DSM-5. plan accordingly 😭)
+- [ ] Convince uncle re: exclusivity — he won't find another tool if we pitch to other shops first
+- [ ] Copyright & trademark — formally register Nivelato™ as a trademark
+
+## SaaS / Pricing (confirmed after tomorrow's test)
+- [ ] $100 initial setup — 1 month trial, up to 5 users
+- [ ] $50/mo/user after trial
+- [ ] On-call bugfix fee — $20? (feeling off about this one, revisit)
+- [ ] Pitch to uncle after successful hardware test tomorrow
 
 ## Deployment
-- [ ] Currently on GitHub Pages (legobele/nivelato)
-- [ ] Eventually migrate off static hosting when auth is added
+- [x] GitHub Pages (legobele/nivelato)
+- [ ] Eventually migrate to proper hosting when auth is added (Firebase Hosting maybe?)
 
 ## Notes
 - Mom's product spec: "el técnico no tenga que pensar — la app hace las operaciones y le indica si algo está mal"
-- Mom also confirmed: levels needed on all 4 sides (top, bottom, left, right) — NOT the middle (glass has no barriguitas)
-- Glass cut size varies per frame SYSTEM, not a universal formula — app just captures hueco + desniveles
-- Real test case: Derrick Champion order (espejo color bronce, 114 1/16" × ~47", walls off by 1/8" each side, techo sube 1/4" a la izquierda)
+- Mom confirmed: levels needed on all 4 sides — NOT the middle (glass has no barriguitas)
+- Glass cut varies per frame system — app just captures hueco + desniveles, no auto-cut calc
+- Real test case: Derrick Champion order (espejo color bronce, 114 1/16" × ~47", techo sube 1/4" izq)
+- Hardware: Bosch GLM 20 (distance) at home, Hilti PMC 30 (laser level) at shop
 - Mom is on a Copilot/Excel arc. Nivelato is the answer. Stay the course.
