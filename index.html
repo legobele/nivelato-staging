@@ -3,233 +3,366 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Descuadre</title>
+  <title>Nivelato</title>
   <link rel="stylesheet" href="autism.css" />
 </head>
 <body>
 
   <!-- TABS -->
   <nav id="tabs">
-    <button class="tab active" data-tab="paredes">Paredes</button>
+    <button class="tab active" data-tab="pared-izq">P.Izq</button>
+    <button class="tab" data-tab="pared-der">P.Der</button>
     <button class="tab" data-tab="techo">Techo</button>
     <button class="tab" data-tab="piso">Piso</button>
     <button class="tab" data-tab="medidas">Medidas</button>
   </nav>
 
-  <!-- PAREDES -->
-  <section id="tab-paredes" class="tab-content active">
-    <div class="screen-label">// PAREDES</div>
+  <!-- ══ PARED IZQUIERDA ══ -->
+  <section id="tab-pared-izq" class="tab-content active">
+    <div class="screen-label">// PARED IZQUIERDA</div>
+    <p class="instruction">Pon el láser en la pared izquierda.</p>
 
-    <div class="wall-group">
-      <div class="group-title">PARED IZQUIERDA</div>
-      <div class="input-row">
-        <label>A — Abajo</label>
-        <div class="fraction-input">
+    <div class="wall-diagram izq">
+      <div class="diagram-point top">B</div>
+      <div class="diagram-body"></div>
+      <div class="diagram-point bot">A</div>
+    </div>
+
+    <div class="input-group">
+      <div class="input-block">
+        <div class="input-label">A — Piso (abajo)</div>
+        <div class="fraction-row">
           <input type="number" id="pI-a-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="pI-a-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="pI-a-den" placeholder="8" min="1" step="1" value="8" />
+          <select id="pI-a-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
           <span class="unit">"</span>
         </div>
       </div>
-      <div class="input-row">
-        <label>B — Arriba</label>
-        <div class="fraction-input">
+
+      <div class="input-block">
+        <div class="input-label">B — Techo (arriba)</div>
+        <div class="fraction-row">
           <input type="number" id="pI-b-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="pI-b-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="pI-b-den" placeholder="8" min="1" step="1" value="8" />
+          <select id="pI-b-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
           <span class="unit">"</span>
         </div>
+      </div>
+
+      <div class="desnivel-display" id="desn-pared-izq">
+        DESNIVEL: —
       </div>
     </div>
 
-    <div class="wall-group">
-      <div class="group-title">PARED DERECHA</div>
-      <div class="input-row">
-        <label>C — Abajo</label>
-        <div class="fraction-input">
-          <input type="number" id="pD-c-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="pD-c-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="pD-c-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
-      </div>
-      <div class="input-row">
-        <label>D — Arriba</label>
-        <div class="fraction-input">
-          <input type="number" id="pD-d-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="pD-d-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="pD-d-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="wall-group">
-      <div class="group-title">DIMENSIONES DEL ÁREA</div>
-      <div class="input-row">
-        <label>Ancho (X)</label>
-        <div class="fraction-input">
-          <input type="number" id="area-x-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="area-x-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="area-x-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
-      </div>
-      <div class="input-row">
-        <label>Alto (Y)</label>
-        <div class="fraction-input">
-          <input type="number" id="area-y-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="area-y-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="area-y-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
-      </div>
-    </div>
-
-    <button class="next-btn" onclick="goTab('techo')">SIGUIENTE →</button>
+    <button class="next-btn" onclick="goTab('pared-der')">PRÓXIMO PASO →</button>
   </section>
 
-  <!-- TECHO -->
+  <!-- ══ PARED DERECHA ══ -->
+  <section id="tab-pared-der" class="tab-content">
+    <div class="screen-label">// PARED DERECHA</div>
+    <p class="instruction">Pon el láser en la pared derecha.</p>
+
+    <div class="wall-diagram der">
+      <div class="diagram-point top">B</div>
+      <div class="diagram-body"></div>
+      <div class="diagram-point bot">A</div>
+    </div>
+
+    <div class="input-group">
+      <div class="input-block">
+        <div class="input-label">A — Piso (abajo)</div>
+        <div class="fraction-row">
+          <input type="number" id="pD-a-whole" placeholder="0" min="0" step="1" />
+          <select id="pD-a-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+
+      <div class="input-block">
+        <div class="input-label">B — Techo (arriba)</div>
+        <div class="fraction-row">
+          <input type="number" id="pD-b-whole" placeholder="0" min="0" step="1" />
+          <select id="pD-b-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+
+      <div class="desnivel-display" id="desn-pared-der">
+        DESNIVEL: —
+      </div>
+    </div>
+
+    <button class="nav-row-btn" onclick="goTab('pared-izq')">← ATRÁS</button>
+    <button class="next-btn" onclick="goTab('techo')">PRÓXIMO PASO →</button>
+  </section>
+
+  <!-- ══ TECHO ══ -->
   <section id="tab-techo" class="tab-content">
     <div class="screen-label">// TECHO</div>
+    <p class="instruction">Pon el láser en la pared derecha. Luego mide: del láser al techo.</p>
 
-    <div class="wall-group">
-      <div class="group-title">MEDICIÓN LÁSER — TECHO</div>
-      <p class="hint">Láser en una esquina. Mide la brecha en cada extremo.</p>
-      <div class="input-row">
-        <label>a — Izquierda</label>
-        <div class="fraction-input">
-          <input type="number" id="t-a-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="t-a-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="t-a-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
-      </div>
-      <div class="input-row">
-        <label>b — Derecha</label>
-        <div class="fraction-input">
-          <input type="number" id="t-b-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="t-b-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="t-b-den" placeholder="8" min="1" step="1" value="8" />
-          <span class="unit">"</span>
-        </div>
+    <div class="ceiling-diagram">
+      <div class="ceil-bar"></div>
+      <div class="ceil-points">
+        <span>A<br/><small>izq</small></span>
+        <span>B<br/><small>der</small></span>
       </div>
     </div>
 
-    <button class="next-btn" onclick="goTab('piso')">SIGUIENTE →</button>
+    <div class="input-group">
+      <div class="input-block">
+        <div class="input-label">A — Izquierda</div>
+        <div class="fraction-row">
+          <input type="number" id="t-a-whole" placeholder="0" min="0" step="1" />
+          <select id="t-a-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+
+      <div class="input-block">
+        <div class="input-label">B — Derecha</div>
+        <div class="fraction-row">
+          <input type="number" id="t-b-whole" placeholder="0" min="0" step="1" />
+          <select id="t-b-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+
+      <div class="desnivel-display" id="desn-techo">
+        DESNIVEL: —
+      </div>
+    </div>
+
+    <button class="nav-row-btn" onclick="goTab('pared-der')">← ATRÁS</button>
+    <button class="next-btn" onclick="goTab('piso')">PRÓXIMO PASO →</button>
   </section>
 
-  <!-- PISO -->
+  <!-- ══ PISO ══ -->
   <section id="tab-piso" class="tab-content">
     <div class="screen-label">// PISO</div>
+    <p class="instruction">Pon el láser en la pared derecha. Luego mide: del láser al piso.</p>
 
-    <div class="wall-group">
-      <div class="group-title">MEDICIÓN LÁSER — PISO</div>
-      <p class="hint">Láser en una esquina. Mide la brecha en cada extremo.</p>
-      <div class="input-row">
-        <label>e — Izquierda</label>
-        <div class="fraction-input">
-          <input type="number" id="p-e-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="p-e-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="p-e-den" placeholder="8" min="1" step="1" value="8" />
+    <div class="floor-diagram">
+      <div class="floor-points">
+        <span>A<br/><small>izq</small></span>
+        <span>B<br/><small>der</small></span>
+      </div>
+      <div class="floor-bar"></div>
+    </div>
+
+    <div class="input-group">
+      <div class="input-block">
+        <div class="input-label">A — Izquierda</div>
+        <div class="fraction-row">
+          <input type="number" id="p-a-whole" placeholder="0" min="0" step="1" />
+          <select id="p-a-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
           <span class="unit">"</span>
         </div>
       </div>
-      <div class="input-row">
-        <label>f — Derecha</label>
-        <div class="fraction-input">
-          <input type="number" id="p-f-whole" placeholder="0" min="0" step="1" />
-          <span class="frac-sep">&nbsp;</span>
-          <input type="number" id="p-f-num" placeholder="0" min="0" step="1" />
-          <span class="frac-bar">/</span>
-          <input type="number" id="p-f-den" placeholder="8" min="1" step="1" value="8" />
+
+      <div class="input-block">
+        <div class="input-label">B — Derecha</div>
+        <div class="fraction-row">
+          <input type="number" id="p-b-whole" placeholder="0" min="0" step="1" />
+          <select id="p-b-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
           <span class="unit">"</span>
         </div>
+      </div>
+
+      <div class="desnivel-display" id="desn-piso">
+        DESNIVEL: —
       </div>
     </div>
 
-    <button class="next-btn" onclick="goTab('medidas')">CALCULAR →</button>
+    <button class="nav-row-btn" onclick="goTab('techo')">← ATRÁS</button>
+    <button class="next-btn" onclick="goTab('medidas')">VER MEDIDAS →</button>
   </section>
 
-  <!-- MEDIDAS -->
+  <!-- ══ MEDIDAS ══ -->
   <section id="tab-medidas" class="tab-content">
     <div class="screen-label">// MEDIDAS</div>
 
-    <div id="medidas-display">
-      <div class="frame-diagram">
+    <div class="frame-diagram">
 
-        <!-- Top — tap → techo -->
-        <div class="frame-top tappable" onclick="goTab('techo')" title="Editar techo">
-          <span class="frame-label-top">C — TECHO ✎</span>
-          <span id="res-techo" class="frame-value">—</span>
-        </div>
-
-        <!-- Middle row: left | area | right -->
-        <div class="frame-middle">
-
-          <!-- Left wall — tap → paredes -->
-          <div class="frame-side left tappable" onclick="goTab('paredes')" title="Editar pared izquierda">
-            <span class="frame-label-side">D ✎</span>
-            <span class="frame-label-side">PARED IZQ</span>
-            <span id="res-pared-izq" class="frame-value side-val">—</span>
-          </div>
-
-          <!-- Area — tap → paredes (dimensions) -->
-          <div class="frame-area tappable" onclick="goTab('paredes')" title="Editar dimensiones">
-            <div class="area-dims" id="res-area">— × —</div>
-            <div class="area-sub">ÁREA ✎</div>
-          </div>
-
-          <!-- Right wall — tap → paredes -->
-          <div class="frame-side right tappable" onclick="goTab('paredes')" title="Editar pared derecha">
-            <span class="frame-label-side">B ✎</span>
-            <span class="frame-label-side">PARED DER</span>
-            <span id="res-pared-der" class="frame-value side-val">—</span>
-          </div>
-
-        </div>
-
-        <!-- Bottom — tap → piso -->
-        <div class="frame-bottom tappable" onclick="goTab('piso')" title="Editar piso">
-          <span class="frame-label-bot">A — PISO ✎</span>
-          <span id="res-piso" class="frame-value">—</span>
-        </div>
-
+      <!-- Techo -->
+      <div class="frame-top tappable" onclick="goTab('techo')">
+        <span class="frame-zone-label">C — TECHO ✎</span>
+        <span id="res-techo" class="frame-value">—</span>
       </div>
 
-      <div class="notas-block">
-        <div class="notas-label">NOTAS</div>
-        <textarea id="notas-field" placeholder="Puedes cambiar los detalles acá..."></textarea>
+      <!-- Middle -->
+      <div class="frame-middle">
+        <div class="frame-side left tappable" onclick="goTab('pared-izq')">
+          <span class="frame-zone-label">D ✎</span>
+          <span class="frame-zone-label">P.IZQ</span>
+          <span id="res-pared-izq" class="frame-value side-val">—</span>
+        </div>
+
+        <div class="frame-area">
+          <div class="area-label">ÁREA</div>
+          <div class="area-dims" id="res-area">— × —</div>
+          <div class="area-note">* fórmula pendiente</div>
+        </div>
+
+        <div class="frame-side right tappable" onclick="goTab('pared-der')">
+          <span class="frame-zone-label">B ✎</span>
+          <span class="frame-zone-label">P.DER</span>
+          <span id="res-pared-der" class="frame-value side-val">—</span>
+        </div>
       </div>
 
-      <button class="next-btn" id="btn-continuar" onclick="showShare()">CONTINUAR →</button>
-
-      <div id="share-block" class="share-block hidden">
-        <button class="share-btn" id="btn-sms" onclick="shareViaSMS()">
-          ENVIAR IMAGEN VIA SMS &nbsp;→
-        </button>
-        <button class="share-btn" id="btn-whatsapp" onclick="shareViaWhatsApp()">
-          ENVIAR IMAGEN VIA WHATSAPP &nbsp;→
-        </button>
+      <!-- Piso -->
+      <div class="frame-bottom tappable" onclick="goTab('piso')">
+        <span class="frame-zone-label">A — PISO ✎</span>
+        <span id="res-piso" class="frame-value">—</span>
       </div>
+
+    </div>
+
+    <div class="notas-block">
+      <div class="notas-label">NOTAS — Puedes cambiar los detalles acá</div>
+      <textarea id="notas-field" placeholder="..."></textarea>
+    </div>
+
+    <button class="next-btn" onclick="showShare()">CONTINUAR →</button>
+
+    <div id="share-block" class="share-block hidden">
+      <button class="share-btn" onclick="shareViaSMS()">ENVIAR IMAGEN VIA SMS →</button>
+      <button class="share-btn" onclick="shareViaWhatsApp()">ENVIAR IMAGEN VIA WHATSAPP →</button>
     </div>
   </section>
 
