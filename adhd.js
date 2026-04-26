@@ -9,7 +9,7 @@ document.querySelectorAll('input[type="number"]').forEach(input => {
     setTimeout(() => {
       input.style.opacity = orig || '1';
       recalcAll();
-    }, 120);
+    }, 300);
   });
 });
 
@@ -136,7 +136,7 @@ function renderMedidas() {
     setTimeout(() => {
       el.textContent = text;
       el.style.opacity = '1';
-    }, 140);
+    }, 300);
   };
 
   setLCD('res-techo',     fmt(results.techo));
@@ -152,7 +152,7 @@ function renderMedidas() {
       const y = results.area.y > 0 ? toFractionStr(results.area.y) : '—';
       areaEl.textContent = `${x} × ${y}`;
       areaEl.style.opacity = '1';
-    }, 160);
+    }, 300);
   }
 
   // mark tabs done
