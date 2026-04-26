@@ -17,7 +17,6 @@ function toFracStr(decimal) {
   if (sixteenths === 0) return `${sign}${whole}"`;
   if (sixteenths === 16) return `${sign}${whole + 1}"`;
 
-  // simplify
   const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
   const g = gcd(sixteenths, 16);
   const n = sixteenths / g;
@@ -47,7 +46,7 @@ document.querySelectorAll('.tab').forEach(btn => {
   btn.addEventListener('click', () => goTab(btn.dataset.tab));
 });
 
-// ─── LCD FLICKER ON INPUT ──────────────────────────────────────────────────
+// ─── LCD FLICKER ───────────────────────────────────────────────────────────
 function lcdFlicker(el, newText) {
   if (!el) return;
   el.style.opacity = '0.15';
@@ -60,16 +59,30 @@ function lcdFlicker(el, newText) {
 // ─── CALCULATIONS ──────────────────────────────────────────────────────────
 let results = {};
 
-function calcDesnivel(a, b) {
-  // A (piso/izq) is priority — diff = A - B
+// walls: A (piso) is priority reference. diff = A - B.
+// if A > B → wall leans AFUERA (toward outside) at top
+// if A < B → wall leans ADENTRO (toward inside) at top
+function calcDesnivel_wall(a, b) {
   const diff = a - b;
-  return { val: Math.abs(diff), dir: diff > 0 ? 'IZQ' : diff < 0 ? 'DER' : 'NIVEL' };
+  if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'NIVEL' };
+  const val = Math.abs(diff);
+  // A is the piso (bottom) reading — larger A means wall is farther at bottom
+  // → top is closer → leans ADENTRO at top / AFUERA at bottom
+  const dir   = diff > 0 ? 'ADENTRO' : 'AFUERA';
+  const label = diff > 0 ? `${toFracStr(val)} ADENTRO` : `${toFracStr(val)} AFUERA`;
+  return { val, dir, label };
 }
 
+// ceiling/floor: A (izquierda) is priority reference. diff = A - B.
+// if A > B → right side is lower → slopes DOWN toward right
+// if A < B → right side is higher → slopes UP toward right
 function calcDesnivel_horiz(a, b) {
-  // A (izquierda) priority — diff = A - B
   const diff = a - b;
-  return { val: Math.abs(diff), dir: diff > 0 ? '↘ BAJA DER' : diff < 0 ? '↗ SUBE DER' : 'NIVEL' };
+  if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'NIVEL' };
+  const val   = Math.abs(diff);
+  const dir   = diff > 0 ? 'BAJA DER' : 'SUBE DER';
+  const label = diff > 0 ? `${toFracStr(val)} BAJA DER` : `${toFracStr(val)} SUBE DER`;
+  return { val, dir, label };
 }
 
 function recalcAll() {
@@ -82,28 +95,21 @@ function recalcAll() {
   const p_A  = readVal('p-a-whole',  'p-a-frac');
   const p_B  = readVal('p-b-whole',  'p-b-frac');
 
-  results.paredIzq = calcDesnivel(pI_A, pI_B);
-  results.paredDer = calcDesnivel(pD_A, pD_B);
+  results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
+  results.paredDer = calcDesnivel_wall(pD_A, pD_B);
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   results.piso     = calcDesnivel_horiz(p_A, p_B);
 
-  // live desnivel per-tab
   updateLiveDesnivel('desn-pared-izq', results.paredIzq);
   updateLiveDesnivel('desn-pared-der', results.paredDer);
   updateLiveDesnivel('desn-techo',     results.techo);
   updateLiveDesnivel('desn-piso',      results.piso);
 }
 
-function fmtDesnivel(r) {
-  if (!r) return '—';
-  if (r.val === 0) return 'NIVEL';
-  return `${toFracStr(r.val)} ${r.dir}`;
-}
-
 function updateLiveDesnivel(elId, r) {
   const el = document.getElementById(elId);
   if (!el) return;
-  const text = r ? `DESNIVEL: ${fmtDesnivel(r)}` : 'DESNIVEL: —';
+  const text = r ? `DESNIVEL: ${r.label}` : 'DESNIVEL: —';
   el.style.opacity = '0.2';
   setTimeout(() => {
     el.textContent = text;
@@ -121,25 +127,45 @@ function wireInputs() {
 
 // ─── RENDER MEDIDAS ────────────────────────────────────────────────────────
 function renderMedidas() {
-  lcdFlicker(document.getElementById('res-techo'),     fmtDesnivel(results.techo));
-  lcdFlicker(document.getElementById('res-pared-izq'), fmtDesnivel(results.paredIzq));
-  lcdFlicker(document.getElementById('res-pared-der'), fmtDesnivel(results.paredDer));
-  lcdFlicker(document.getElementById('res-piso'),      fmtDesnivel(results.piso));
+  // techo
+  const techoEl = document.getElementById('res-techo');
+  lcdFlicker(techoEl, results.techo?.label || '—');
 
-  // area: placeholder until formula confirmed with mom
-  const areaEl = document.getElementById('res-area');
-  if (areaEl) {
-    areaEl.style.opacity = '0.2';
-    setTimeout(() => {
-      areaEl.textContent = '— × —';
-      areaEl.style.opacity = '1';
-    }, 300);
-  }
+  // piso
+  const pisoEl = document.getElementById('res-piso');
+  lcdFlicker(pisoEl, results.piso?.label || '—');
+
+  // pared izq — show both A and B readings + desnivel
+  const pIEl = document.getElementById('res-pared-izq');
+  lcdFlicker(pIEl, results.paredIzq?.label || '—');
+
+  // pared der
+  const pDEl = document.getElementById('res-pared-der');
+  lcdFlicker(pDEl, results.paredDer?.label || '—');
+
+  // hueco display — raw opening from priority A points
+  renderHueco();
 
   // mark tabs done
   ['pared-izq','pared-der','techo','piso'].forEach(t => {
     document.querySelector(`.tab[data-tab="${t}"]`)?.classList.add('done');
   });
+}
+
+// ─── HUECO (raw opening) ───────────────────────────────────────────────────
+// Ancho and alto are entered manually by the user on the Medidas screen
+function renderHueco() {
+  const ancho = readVal('hueco-ancho-whole', 'hueco-ancho-frac');
+  const alto  = readVal('hueco-alto-whole',  'hueco-alto-frac');
+  const areaEl = document.getElementById('res-area');
+  if (!areaEl) return;
+  const anchoStr = ancho > 0 ? toFracStr(ancho) : '—';
+  const altoStr  = alto  > 0 ? toFracStr(alto)  : '—';
+  areaEl.style.opacity = '0.2';
+  setTimeout(() => {
+    areaEl.textContent = `${anchoStr} × ${altoStr}`;
+    areaEl.style.opacity = '1';
+  }, 300);
 }
 
 // ─── SHARE ─────────────────────────────────────────────────────────────────
@@ -148,13 +174,17 @@ function showShare() {
 }
 
 function buildShareText() {
-  const notas = document.getElementById('notas-field')?.value?.trim();
-  const lines = [
-    'NIVELATO — DESCUADRE',
-    `TECHO:     ${fmtDesnivel(results.techo)}`,
-    `PISO:      ${fmtDesnivel(results.piso)}`,
-    `PARED IZQ: ${fmtDesnivel(results.paredIzq)}`,
-    `PARED DER: ${fmtDesnivel(results.paredDer)}`,
+  const notas  = document.getElementById('notas-field')?.value?.trim();
+  const ancho  = readVal('hueco-ancho-whole', 'hueco-ancho-frac');
+  const alto   = readVal('hueco-alto-whole',  'hueco-alto-frac');
+  const lines  = [
+    'NIVELATO — MEDIDAS',
+    `HUECO:     ${ancho > 0 ? toFracStr(ancho) : '—'} × ${alto > 0 ? toFracStr(alto) : '—'}`,
+    '─────────────────',
+    `TECHO:     ${results.techo?.label    || '—'}`,
+    `PISO:      ${results.piso?.label     || '—'}`,
+    `PARED IZQ: ${results.paredIzq?.label || '—'}`,
+    `PARED DER: ${results.paredDer?.label || '—'}`,
   ];
   if (notas) lines.push(`NOTAS: ${notas}`);
   return lines.join('\n');
@@ -171,3 +201,11 @@ function shareViaWhatsApp() {
 // ─── INIT ──────────────────────────────────────────────────────────────────
 wireInputs();
 recalcAll();
+
+// wire hueco inputs separately (they're in the medidas tab)
+document.addEventListener('input', (e) => {
+  if (e.target.id?.startsWith('hueco-')) renderHueco();
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id?.startsWith('hueco-')) renderHueco();
+});

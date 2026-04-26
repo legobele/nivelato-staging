@@ -312,57 +312,111 @@
     <button class="next-btn" onclick="goTab('medidas')">VER MEDIDAS →</button>
   </section>
 
+
   <!-- ══ MEDIDAS ══ -->
   <section id="tab-medidas" class="tab-content">
     <div class="screen-label">// MEDIDAS</div>
 
+    <!-- HUECO input -->
+    <div class="input-group" style="margin-bottom:10px;">
+      <div class="input-label" style="margin-bottom:8px;">HUECO (medida del espacio)</div>
+      <div class="input-block">
+        <div class="input-label">ANCHO</div>
+        <div class="fraction-row">
+          <input type="number" id="hueco-ancho-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-ancho-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+      <div class="input-block">
+        <div class="input-label">ALTO</div>
+        <div class="fraction-row">
+          <input type="number" id="hueco-alto-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-alto-frac" class="frac-select">
+            <option value="0">0</option>
+            <option value="0.0625">1/16</option>
+            <option value="0.125">1/8</option>
+            <option value="0.1875">3/16</option>
+            <option value="0.25">1/4</option>
+            <option value="0.3125">5/16</option>
+            <option value="0.375">3/8</option>
+            <option value="0.4375">7/16</option>
+            <option value="0.5">1/2</option>
+            <option value="0.5625">9/16</option>
+            <option value="0.625">5/8</option>
+            <option value="0.6875">11/16</option>
+            <option value="0.75">3/4</option>
+            <option value="0.8125">13/16</option>
+            <option value="0.875">7/8</option>
+            <option value="0.9375">15/16</option>
+          </select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- frame diagram with desniveles -->
     <div class="frame-diagram">
 
       <!-- Techo -->
       <div class="frame-top tappable" onclick="goTab('techo')">
-        <span class="frame-zone-label">C — TECHO ✎</span>
+        <span class="frame-zone-label">TECHO ✎</span>
         <span id="res-techo" class="frame-value">—</span>
       </div>
 
       <!-- Middle -->
       <div class="frame-middle">
         <div class="frame-side left tappable" onclick="goTab('pared-izq')">
-          <span class="frame-zone-label">D ✎</span>
-          <span class="frame-zone-label">P.IZQ</span>
+          <span class="frame-zone-label">P.IZQ ✎</span>
           <span id="res-pared-izq" class="frame-value side-val">—</span>
         </div>
 
         <div class="frame-area">
-          <div class="area-label">ÁREA</div>
+          <div class="area-label">HUECO</div>
           <div class="area-dims" id="res-area">— × —</div>
-          <div class="area-note">* fórmula pendiente</div>
         </div>
 
         <div class="frame-side right tappable" onclick="goTab('pared-der')">
-          <span class="frame-zone-label">B ✎</span>
-          <span class="frame-zone-label">P.DER</span>
+          <span class="frame-zone-label">P.DER ✎</span>
           <span id="res-pared-der" class="frame-value side-val">—</span>
         </div>
       </div>
 
       <!-- Piso -->
       <div class="frame-bottom tappable" onclick="goTab('piso')">
-        <span class="frame-zone-label">A — PISO ✎</span>
+        <span class="frame-zone-label">PISO ✎</span>
         <span id="res-piso" class="frame-value">—</span>
       </div>
 
     </div>
 
     <div class="notas-block">
-      <div class="notas-label">NOTAS — Puedes cambiar los detalles acá</div>
+      <div class="notas-label">NOTAS</div>
       <textarea id="notas-field" placeholder="..."></textarea>
     </div>
 
     <button class="next-btn" onclick="showShare()">CONTINUAR →</button>
 
     <div id="share-block" class="share-block hidden">
-      <button class="share-btn" onclick="shareViaSMS()">ENVIAR IMAGEN VIA SMS →</button>
-      <button class="share-btn" onclick="shareViaWhatsApp()">ENVIAR IMAGEN VIA WHATSAPP →</button>
+      <button class="share-btn" onclick="shareViaSMS()">ENVIAR VIA SMS →</button>
+      <button class="share-btn" onclick="shareViaWhatsApp()">ENVIAR VIA WHATSAPP →</button>
     </div>
   </section>
 
