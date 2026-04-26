@@ -10,8 +10,8 @@
   --dim: #555;
   --accent: #e0e0e0;
   --bright: #ffffff;
-  --danger: #888;
   --input-bg: #0d0d0d;
+  --tap-flash: #1a1a1a;
 }
 
 * {
@@ -222,6 +222,18 @@ html, body {
   padding: 0;
 }
 
+/* TAPPABLE zones */
+.tappable {
+  cursor: pointer;
+  transition: background 0.08s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tappable:active {
+  background: var(--tap-flash) !important;
+}
+
 .frame-top, .frame-bottom {
   display: flex;
   justify-content: space-between;
@@ -247,6 +259,7 @@ html, body {
   color: var(--bright);
   font-size: 13px;
   letter-spacing: 0.05em;
+  transition: opacity 0.12s;
 }
 
 .frame-middle {
@@ -285,6 +298,7 @@ html, body {
   font-size: 12px !important;
   text-align: center;
   margin-top: 4px;
+  transition: opacity 0.12s;
 }
 
 .frame-area {
@@ -302,6 +316,7 @@ html, body {
   color: var(--bright);
   letter-spacing: 0.05em;
   text-align: center;
+  transition: opacity 0.12s;
 }
 
 .area-sub {
@@ -370,9 +385,4 @@ html, body {
 .share-btn:active {
   border-color: var(--accent);
   color: var(--accent);
-}
-
-/* Screenshot target */
-#screenshot-target {
-  display: none;
 }

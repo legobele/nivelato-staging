@@ -175,33 +175,44 @@
 
     <div id="medidas-display">
       <div class="frame-diagram">
-        <!-- Top -->
-        <div class="frame-top">
-          <span class="frame-label-top">C — TECHO</span>
+
+        <!-- Top — tap → techo -->
+        <div class="frame-top tappable" onclick="goTab('techo')" title="Editar techo">
+          <span class="frame-label-top">C — TECHO ✎</span>
           <span id="res-techo" class="frame-value">—</span>
         </div>
+
         <!-- Middle row: left | area | right -->
         <div class="frame-middle">
-          <div class="frame-side left">
-            <span class="frame-label-side">D</span>
+
+          <!-- Left wall — tap → paredes -->
+          <div class="frame-side left tappable" onclick="goTab('paredes')" title="Editar pared izquierda">
+            <span class="frame-label-side">D ✎</span>
             <span class="frame-label-side">PARED IZQ</span>
             <span id="res-pared-izq" class="frame-value side-val">—</span>
           </div>
-          <div class="frame-area">
+
+          <!-- Area — tap → paredes (dimensions) -->
+          <div class="frame-area tappable" onclick="goTab('paredes')" title="Editar dimensiones">
             <div class="area-dims" id="res-area">— × —</div>
-            <div class="area-sub">ÁREA</div>
+            <div class="area-sub">ÁREA ✎</div>
           </div>
-          <div class="frame-side right">
-            <span class="frame-label-side">B</span>
+
+          <!-- Right wall — tap → paredes -->
+          <div class="frame-side right tappable" onclick="goTab('paredes')" title="Editar pared derecha">
+            <span class="frame-label-side">B ✎</span>
             <span class="frame-label-side">PARED DER</span>
             <span id="res-pared-der" class="frame-value side-val">—</span>
           </div>
+
         </div>
-        <!-- Bottom -->
-        <div class="frame-bottom">
-          <span class="frame-label-bot">A — PISO</span>
+
+        <!-- Bottom — tap → piso -->
+        <div class="frame-bottom tappable" onclick="goTab('piso')" title="Editar piso">
+          <span class="frame-label-bot">A — PISO ✎</span>
           <span id="res-piso" class="frame-value">—</span>
         </div>
+
       </div>
 
       <div class="notas-block">
