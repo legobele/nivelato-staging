@@ -138,7 +138,29 @@ function recalcAll() {
   updatePill('desn-techo',     results.techo);
   updatePill('desn-piso',      results.piso);
 
+  // derived: if pared izq has both points but pared der is missing, show expected
+  showDerivedNote('derived-pared-der-note', results.paredIzq, results.paredDer,
+    'pD-a-whole', 'pD-b-whole');
+  // derived: if techo has both points but piso is missing, show expected
+  showDerivedNote('derived-piso-note', results.techo, results.piso,
+    'p-a-whole', 'p-b-whole');
+
   drawCanvas();
+}
+
+function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
+  const el = document.getElementById(noteId);
+  if (!el) return;
+  const aVal = readVal(aId, aId.replace('whole','frac'));
+  const bVal = readVal(bId, bId.replace('whole','frac'));
+  const hasBoth = aVal > 0 && bVal > 0;
+  // only show when reference has data but this side is empty or has only one point
+  if (referenceResult && referenceResult.val > 0 && !hasBoth) {
+    el.style.display = 'block';
+    el.innerHTML = \`⟳ Esperado (igual a opuesto): <strong>\${referenceResult.label}</strong> — confirmar con láser\`;
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 function updatePill(id, result) {
@@ -724,6 +746,49 @@ document.addEventListener('mouseout', e => {
 });
 
 window.addEventListener('resize', resizeCanvas);
+
+// ─── DRAG TO PAN ──────────────────────────────────────────────────────────
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+let vpAtDrag  = { x: 0, y: 0 };
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  isDragging = true;
+  dragStart = { x: e.clientX, y: e.clientY };
+  vpAtDrag  = { x: vp.x, y: vp.y };
+  canvas.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  const dx = e.clientX - dragStart.x;
+  const dy = e.clientY - dragStart.y;
+  vp.x = vpAtDrag.x + dx; vp.y = vpAtDrag.y + dy;
+  vpTarget.x = vp.x; vpTarget.y = vp.y;
+  userZoomed = true;
+  drawCanvas();
+});
+window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
+canvas.style.cursor = 'grab';
+
+// touch drag (single finger)
+let touchDragStart = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    touchDragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, vpx: vp.x, vpy: vp.y };
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && touchDragStart) {
+    const dx = e.touches[0].clientX - touchDragStart.x;
+    const dy = e.touches[0].clientY - touchDragStart.y;
+    vp.x = touchDragStart.vpx + dx; vp.y = touchDragStart.vpy + dy;
+    vpTarget.x = vp.x; vpTarget.y = vp.y;
+    userZoomed = true;
+    drawCanvas();
+  }
+}, { passive: true });
+canvas.addEventListener('touchend', e => { if (e.touches.length === 0) touchDragStart = null; });
 
 // ─── MANUAL ZOOM (pinch + wheel) ──────────────────────────────────────────
 let userZoomed = false; // set true when user manually zooms — suppresses auto-animate
