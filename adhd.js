@@ -267,57 +267,101 @@ function smoothAnimate() {
 
 function drawCanvas() {
   const dpr = window.devicePixelRatio;
-  const CW  = canvas.width;
-  const CH  = canvas.height;
-  const W   = CW / dpr;
-  const H   = CH / dpr;
+  const W   = canvas.width  / dpr;
+  const H   = canvas.height / dpr;
 
   ctx.save();
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
-
-  // background
   ctx.fillStyle = '#f8f9fa';
   ctx.fillRect(0, 0, W, H);
 
-  // apply viewport transform
   ctx.save();
   ctx.translate(vp.x, vp.y);
   ctx.scale(vp.scale, vp.scale);
 
-  const gr = getGlassRect();
+  const gr  = getGlassRect();
+  const sc  = vp.scale;
 
-  // ── glass rectangle ──
-  ctx.fillStyle = '#e7f5ff';
-  ctx.strokeStyle = '#1971c2';
-  ctx.lineWidth = 2;
+  // ── read raw values ──
+  const ancho  = readVal('hueco-ancho-whole','hueco-ancho-frac') || 0;
+  const alto   = readVal('hueco-alto-whole', 'hueco-alto-frac')  || 0;
+  const pI_A   = readVal('pI-a-whole','pI-a-frac'); // left wall, bottom measurement
+  const pI_B   = readVal('pI-b-whole','pI-b-frac'); // left wall, top measurement
+  const pD_A   = readVal('pD-a-whole','pD-a-frac'); // right wall, bottom
+  const pD_B   = readVal('pD-b-whole','pD-b-frac'); // right wall, top
+  const t_A    = readVal('t-a-whole', 't-a-frac');  // ceiling, left
+  const t_B    = readVal('t-b-whole', 't-b-frac');  // ceiling, right
+  const p_A    = readVal('p-a-whole', 'p-a-frac');  // floor, left
+  const p_B    = readVal('p-b-whole', 'p-b-frac');  // floor, right
+
+  // ── compute pixel offset for each corner based on desnivelation ──
+  // For walls: ADENTRO = wall leans in = top corner shifts inward
+  //   pI (left wall): diff = pI_A - pI_B. positive = bottom further = top shifts right (inward)
+  //   We exaggerate visually by a fixed scale factor
+  const EXAG = gr.w * 0.18; // max visual exaggeration = 18% of glass width
+  const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+
+  // normalize desnivel relative to overall dimension (or use raw inch ratio)
+  // walls: pI_A vs pI_B — difference in inches
+  const pIMax = Math.max(pI_A, pI_B, 1);
+  const pDMax = Math.max(pD_A, pD_B, 1);
+  const tMax  = Math.max(t_A,  t_B,  1);
+  const pMax  = Math.max(p_A,  p_B,  1);
+
+  // pixel shifts — positive = outward from glass center
+  // left wall: if pI_A > pI_B → bottom is further out → top corner shifts inward (right)
+  const pI_shift_top    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
+  const pI_shift_bottom = 0; // anchor bottom
+
+  // right wall: if pD_A > pD_B → same logic, top shifts inward (left)
+  const pD_shift_top    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
+  const pD_shift_bottom = 0;
+
+  // ceiling: if t_A > t_B → left side lower → left corner shifts down
+  const t_shift_left  = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
+  const t_shift_right = 0;
+
+  // floor: if p_A > p_B → left side lower → left corner shifts up
+  const p_shift_left  = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const p_shift_right = 0;
+
+  // ── compute the 4 corners of the deformed glass ──
+  // corners: TL, TR, BR, BL
+  // Left wall controls TL/BL x offset, right wall controls TR/BR x offset
+  // Ceiling controls TL/TR y offset, floor controls BL/BR y offset
+  const TL = { x: gr.x + pI_shift_top,    y: gr.y + t_shift_left  };
+  const TR = { x: gr.x + gr.w + pD_shift_top,    y: gr.y + t_shift_right };
+  const BR = { x: gr.x + gr.w + pD_shift_bottom, y: gr.y + gr.h + p_shift_right };
+  const BL = { x: gr.x + pI_shift_bottom, y: gr.y + gr.h + p_shift_left };
+
+  // ── draw deformed glass shape ──
+  ctx.save();
   ctx.beginPath();
-  ctx.rect(gr.x, gr.y, gr.w, gr.h);
+  ctx.moveTo(TL.x, TL.y);
+  ctx.lineTo(TR.x, TR.y);
+  ctx.lineTo(BR.x, BR.y);
+  ctx.lineTo(BL.x, BL.y);
+  ctx.closePath();
+  ctx.fillStyle = '#e7f5ff';
   ctx.fill();
+  ctx.strokeStyle = '#1971c2';
+  ctx.lineWidth = 0.8 / sc;
   ctx.stroke();
+  ctx.restore();
 
-  // ── dimension labels (hueco) ──
-  const ancho = readVal('hueco-ancho-whole','hueco-ancho-frac');
-  const alto  = readVal('hueco-alto-whole', 'hueco-alto-frac');
+  // ── draw desnivel arrows on each edge ──
+  drawDeformArrow(ctx, BL, TL, pI_shift_top,    'left',   results.paredIzq, sc);
+  drawDeformArrow(ctx, TR, BR, pD_shift_top,    'right',  results.paredDer, sc);
+  drawDeformArrow(ctx, TL, TR, t_shift_left,    'top',    results.techo,    sc);
+  drawDeformArrow(ctx, BL, BR, p_shift_left,    'bottom', results.piso,     sc);
 
-  ctx.fillStyle = '#495057';
-  ctx.font = `${13 / vp.scale}px Inter, system-ui, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  if (ancho > 0) {
-    drawDimLine(ctx, gr.x, gr.y - 22, gr.x + gr.w, gr.y - 22, toFracStr(ancho), vp.scale);
-  }
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  if (alto > 0) {
-    drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto), vp.scale, true);
-  }
+  // ── step highlight (glow on active edge) ──
+  drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
 
-  // ── desnivel markers ──
-  drawDesnivelMarkers(ctx, gr, vp.scale);
-
-  // ── step highlight ──
-  drawStepHighlight(ctx, gr, currentStep, vp.scale);
+  // ── dimension labels ──
+  if (ancho > 0) drawDimLine(ctx, gr.x, gr.y - 22, gr.x + gr.w, gr.y - 22, toFracStr(ancho), sc);
+  if (alto  > 0) drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto),  sc, true);
 
   ctx.restore();
   ctx.restore();
@@ -356,82 +400,99 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
   ctx.restore();
 }
 
-function drawDesnivelMarkers(ctx, gr, scale) {
-  const COLORS = { ok: '#2f9e44', warn: '#e67700' };
-  const fs = 11 / scale;
+// drawDeformArrow: draws a perpendicular arrow at the shifted corner showing the desnivel amount
+// p1 = anchor corner (no shift), p2 = shifted corner
+function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
+  if (!result || result.val === 0) return;
+  const COLOR = '#e67700';
+  const ARROW_HEAD = 5 / scale;
+  const fs = 10 / scale;
 
-  // Pared Izquierda — left edge
-  if (results.paredIzq && results.paredIzq.val > 0) {
-    drawEdgeMarker(ctx, gr.x, gr.y, gr.x, gr.y + gr.h,
-      results.paredIzq.label, 'left', scale, COLORS.ok);
-  }
-  // Pared Derecha — right edge
-  if (results.paredDer && results.paredDer.val > 0) {
-    drawEdgeMarker(ctx, gr.x + gr.w, gr.y, gr.x + gr.w, gr.y + gr.h,
-      results.paredDer.label, 'right', scale, COLORS.ok);
-  }
-  // Techo — top edge
-  if (results.techo && results.techo.val > 0) {
-    drawEdgeMarker(ctx, gr.x, gr.y, gr.x + gr.w, gr.y,
-      results.techo.label, 'top', scale, COLORS.ok);
-  }
-  // Piso — bottom edge
-  if (results.piso && results.piso.val > 0) {
-    drawEdgeMarker(ctx, gr.x, gr.y + gr.h, gr.x + gr.w, gr.y + gr.h,
-      results.piso.label, 'bottom', scale, COLORS.ok);
-  }
-}
-
-function drawEdgeMarker(ctx, x1, y1, x2, y2, label, side, scale, color) {
-  const offset = 18 / scale;
-  const fs     = 10 / scale;
   ctx.save();
-  ctx.fillStyle = color;
-  ctx.font = `600 ${fs}px Inter, system-ui, sans-serif`;
+  ctx.strokeStyle = COLOR;
+  ctx.fillStyle   = COLOR;
+  ctx.lineWidth   = 1.2 / scale;
 
-  let tx, ty;
-  if (side === 'left')   { tx = x1 - offset; ty = (y1 + y2) / 2; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; }
-  if (side === 'right')  { tx = x1 + offset; ty = (y1 + y2) / 2; ctx.textAlign = 'left';  ctx.textBaseline = 'middle'; }
-  if (side === 'top')    { tx = (x1 + x2) / 2; ty = y1 - offset; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; }
-  if (side === 'bottom') { tx = (x1 + x2) / 2; ty = y1 + offset; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; }
+  // draw a small perpendicular double-headed arrow at the shifted corner
+  // showing the displacement from where the corner would be (straight) to where it is (shifted)
+  let ax1, ay1, ax2, ay2; // arrow from "ideal" to "actual" position
 
-  // arrow indicator
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5 / scale;
+  if (side === 'left' || side === 'right') {
+    // shift is horizontal — arrow runs horizontally at top of the edge
+    const y = pShifted.y;
+    const xIdeal = (side === 'left') ? pAnchor.x : pAnchor.x;
+    ax1 = xIdeal; ay1 = y;
+    ax2 = xIdeal + shiftPx; ay2 = y;
+  } else {
+    // shift is vertical — arrow runs vertically at left of the edge
+    const x = pShifted.x;
+    const yIdeal = pAnchor.y;
+    ax1 = x; ay1 = yIdeal;
+    ax2 = x; ay2 = yIdeal + shiftPx;
+  }
+
+  // dashed reference line from anchor corner along the ideal straight edge
+  ctx.save();
+  ctx.setLineDash([3/scale, 3/scale]);
+  ctx.strokeStyle = '#adb5bd';
+  ctx.lineWidth = 0.8 / scale;
   ctx.beginPath();
-  if (side === 'left')   { ctx.moveTo(x1, (y1+y2)/2); ctx.lineTo(tx + 4/scale, ty); }
-  if (side === 'right')  { ctx.moveTo(x1, (y1+y2)/2); ctx.lineTo(tx - 4/scale, ty); }
-  if (side === 'top')    { ctx.moveTo((x1+x2)/2, y1); ctx.lineTo(tx, ty + 4/scale); }
-  if (side === 'bottom') { ctx.moveTo((x1+x2)/2, y1); ctx.lineTo(tx, ty - 4/scale); }
+  if (side === 'left' || side === 'right') {
+    ctx.moveTo(ax1, pAnchor.y); ctx.lineTo(ax1, pShifted.y);
+  } else {
+    ctx.moveTo(pAnchor.x, ay1); ctx.lineTo(pShifted.x, ay1);
+  }
   ctx.stroke();
+  ctx.restore();
 
-  ctx.fillText(label, tx, ty);
+  // solid arrow from ideal to shifted
+  if (Math.abs(shiftPx) > 2 / scale) {
+    ctx.beginPath();
+    ctx.moveTo(ax1, ay1);
+    ctx.lineTo(ax2, ay2);
+    ctx.strokeStyle = COLOR;
+    ctx.lineWidth = 1.5 / scale;
+    ctx.stroke();
+
+    // arrowhead at shifted end
+    const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
+    ctx.beginPath();
+    ctx.moveTo(ax2, ay2);
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.4), ay2 - ARROW_HEAD * Math.sin(angle - 0.4));
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.4), ay2 - ARROW_HEAD * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle = COLOR;
+    ctx.fill();
+  }
+
+  // label
+  ctx.font = `bold ${fs}px Inter, system-ui, sans-serif`;
+  ctx.fillStyle = COLOR;
+  const midX = (ax1 + ax2) / 2;
+  const midY = (ay1 + ay2) / 2;
+  const labelOff = 10 / scale;
+  if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX - labelOff, midY); }
+  if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
+  if (side === 'top')    { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
+  if (side === 'bottom') { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
+
   ctx.restore();
 }
 
-function drawStepHighlight(ctx, gr, step, scale) {
+function drawStepHighlight(ctx, TL, TR, BL, BR, step, scale) {
   if (step === 0 || step === 5) return;
   ctx.save();
   ctx.strokeStyle = '#1971c2';
-  ctx.lineWidth = 3 / scale;
-  ctx.shadowColor = 'rgba(25, 113, 194, 0.35)';
-  ctx.shadowBlur  = 8 / scale;
-  const pad = 4 / scale;
+  ctx.lineWidth = 2 / scale;
+  ctx.shadowColor = 'rgba(25, 113, 194, 0.4)';
+  ctx.shadowBlur  = 6 / scale;
+  ctx.lineCap = 'round';
 
   ctx.beginPath();
-  if (step === 1) { // pared izq — left edge
-    ctx.moveTo(gr.x - pad, gr.y - pad);
-    ctx.lineTo(gr.x - pad, gr.y + gr.h + pad);
-  } else if (step === 2) { // pared der — right edge
-    ctx.moveTo(gr.x + gr.w + pad, gr.y - pad);
-    ctx.lineTo(gr.x + gr.w + pad, gr.y + gr.h + pad);
-  } else if (step === 3) { // techo — top edge
-    ctx.moveTo(gr.x - pad, gr.y - pad);
-    ctx.lineTo(gr.x + gr.w + pad, gr.y - pad);
-  } else if (step === 4) { // piso — bottom edge
-    ctx.moveTo(gr.x - pad, gr.y + gr.h + pad);
-    ctx.lineTo(gr.x + gr.w + pad, gr.y + gr.h + pad);
-  }
+  if (step === 1) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(TL.x, TL.y); } // left edge
+  if (step === 2) { ctx.moveTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); } // right edge
+  if (step === 3) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); } // top edge
+  if (step === 4) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(BR.x, BR.y); } // bottom edge
   ctx.stroke();
   ctx.restore();
 }
