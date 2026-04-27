@@ -93,7 +93,10 @@ html, body {
   animation: fadeUp 0.25s ease;
 }
 
-.step-panel.active { display: block; }
+.step-panel.active {
+  display: flex;
+  flex-direction: column;
+}
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
@@ -219,7 +222,13 @@ html, body {
 .btn-row {
   display: flex;
   gap: 10px;
-  margin-top: 32px;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background: var(--white);
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--grey-200);
+  z-index: 10;
 }
 
 .btn-primary {
