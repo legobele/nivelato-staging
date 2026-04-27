@@ -219,7 +219,7 @@ html, body {
 .btn-row {
   display: flex;
   gap: 10px;
-  margin-top: 4px;
+  margin-top: 32px;
 }
 
 .btn-primary {
