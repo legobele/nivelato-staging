@@ -180,8 +180,11 @@ function runValidation() {
   const pD_A = readVal('pD-a-whole','pD-a-frac'), pD_B = readVal('pD-b-whole','pD-b-frac');
   const t_A  = readVal('t-a-whole', 't-a-frac'),  t_B  = readVal('t-b-whole', 't-b-frac');
   const p_A  = readVal('p-a-whole', 'p-a-frac'),  p_B  = readVal('p-b-whole', 'p-b-frac');
-  const ancho = readVal('hueco-ancho-whole','hueco-ancho-frac');
-  const alto  = readVal('hueco-alto-whole', 'hueco-alto-frac');
+  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
+  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const ancho = anchoTop; const alto = altoIzq; // legacy compat
   const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
   if (!anyEntered) return [];
 
@@ -202,8 +205,8 @@ function runValidation() {
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('Faltan niveles de techo');
-  if (anyEntered && (ancho === 0 || alto === 0))
-    warnings.push('Falta medida del hueco');
+  if (anyEntered && (anchoTop === 0 || anchoBot === 0 || altoIzq === 0 || altoDer === 0))
+    warnings.push('Falta medida del hueco (las 4 medidas son requeridas)');
   return warnings;
 }
 
@@ -222,8 +225,11 @@ function renderValidation() {
 
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
 function renderSummary() {
-  const ancho = readVal('hueco-ancho-whole','hueco-ancho-frac');
-  const alto  = readVal('hueco-alto-whole', 'hueco-alto-frac');
+  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
+  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const ancho = anchoTop; const alto = altoIzq; // legacy compat
   const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   set('res-area',      `${ancho > 0 ? toFracStr(ancho) : '—'} × ${alto > 0 ? toFracStr(alto) : '—'}`);
   set('res-pared-izq', results.paredIzq?.label || '—');
@@ -249,11 +255,14 @@ function showShare() {
 
 function _saveCurrentJob(warnings) {
   if (typeof window.saveJobToFirestore !== 'function') return;
-  const ancho = readVal('hueco-ancho-whole','hueco-ancho-frac');
-  const alto  = readVal('hueco-alto-whole', 'hueco-alto-frac');
+  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
+  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const ancho = anchoTop; const alto = altoIzq; // legacy compat
   const notas = document.getElementById('notas-field')?.value || '';
   const jobData = {
-    hueco: { ancho, alto },
+    hueco: { anchoTop, anchoBot, altoIzq, altoDer, ancho: anchoTop, alto: altoIzq },
     desniveles: {
       paredIzq: results.paredIzq?.label || null,
       paredDer: results.paredDer?.label || null,
@@ -434,8 +443,11 @@ function drawCanvas() {
   const sc  = vp.scale;
 
   // ── read raw values ──
-  const ancho  = readVal('hueco-ancho-whole','hueco-ancho-frac') || 0;
-  const alto   = readVal('hueco-alto-whole', 'hueco-alto-frac')  || 0;
+  const anchoTop_c = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac') || 0;
+  const anchoBot_c = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
+  const altoIzq_c  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
+  const altoDer_c  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac')  || 0;
+  const ancho = anchoTop_c; const alto = altoIzq_c;
   const pI_A   = readVal('pI-a-whole','pI-a-frac'); // left wall, bottom measurement
   const pI_B   = readVal('pI-b-whole','pI-b-frac'); // left wall, top measurement
   const pD_A   = readVal('pD-a-whole','pD-a-frac'); // right wall, bottom
@@ -685,10 +697,14 @@ const FIELD_VIEWS = {
   'p-b-whole': { focusX: 1.0, focusY: 1.0, zoom: 4.8 }, // bottom-right
   'p-b-frac':  { focusX: 1.0, focusY: 1.0, zoom: 4.8 },
   // step 0 — hueco (center, full view)
-  'hueco-ancho-whole': { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
-  'hueco-ancho-frac':  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
-  'hueco-alto-whole':  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
-  'hueco-alto-frac':   { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+  'hueco-ancho-top-whole': { focusX: 0.5, focusY: 0.1, zoom: 0.85 },
+  'hueco-ancho-top-frac':  { focusX: 0.5, focusY: 0.1, zoom: 0.85 },
+  'hueco-ancho-bot-whole': { focusX: 0.5, focusY: 0.9, zoom: 0.85 },
+  'hueco-ancho-bot-frac':  { focusX: 0.5, focusY: 0.9, zoom: 0.85 },
+  'hueco-alto-izq-whole':  { focusX: 0.1, focusY: 0.5, zoom: 0.85 },
+  'hueco-alto-izq-frac':   { focusX: 0.1, focusY: 0.5, zoom: 0.85 },
+  'hueco-alto-der-whole':  { focusX: 0.9, focusY: 0.5, zoom: 0.85 },
+  'hueco-alto-der-frac':   { focusX: 0.9, focusY: 0.5, zoom: 0.85 },
 };
 
 // highlighted field id — used to draw a dot on the canvas
