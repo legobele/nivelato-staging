@@ -215,7 +215,9 @@ function showShare() {
     const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n¿Continuar de todas formas?');
     if (!ok) return;
   }
-  document.getElementById('share-block')?.classList.remove('hidden');
+  const block = document.getElementById('share-block');
+  block?.classList.remove('hidden');
+  setTimeout(() => block?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
 }
 
 function buildShareText() {
