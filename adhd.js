@@ -157,7 +157,7 @@ function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
   // only show when reference has data but this side is empty or has only one point
   if (referenceResult && referenceResult.val > 0 && !hasBoth) {
     el.style.display = 'block';
-    el.innerHTML = \`⟳ Esperado (igual a opuesto): <strong>\${referenceResult.label}</strong> — confirmar con láser\`;
+    el.innerHTML = '⟳ Esperado (igual a opuesto): <strong>' + referenceResult.label + '</strong> — confirmar con láser';
   } else {
     el.style.display = 'none';
   }
