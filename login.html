@@ -114,7 +114,7 @@
       text-align: center;
       line-height: 1.5;
     }
-    #owner-fields { display: none; } /* initial hide, JS overrides */
+
   </style>
 </head>
 <body>
@@ -165,14 +165,14 @@
       </select>
     </div>
     <!-- Owner-only: org name + join code -->
-    <div id="owner-fields" style="display:none">
+    <div id="owner-fields" style="display:block">
       <div class="field">
         <label>Nombre del taller</label>
         <input type="text" id="signup-orgname" placeholder="Vidrios Lebron" />
       </div>
     </div>
     <!-- Non-owner: join code -->
-    <div id="user-fields" style="display:block">
+    <div id="user-fields" style="display:none">
       <div class="field">
         <label>Código del taller <span style="color:#868e96;font-weight:400">(te lo da el dueño)</span></label>
         <input type="text" id="signup-orgcode" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase" />
