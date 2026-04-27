@@ -26,7 +26,43 @@ function toFracStr(decimal) {
 let currentStep = 0;
 const TOTAL_STEPS = 5;
 
+function getLingerView(leavingStep) {
+  // Returns a { focusX, focusY, zoom } to hang on after leaving a step,
+  // based on which field actually had data entered. Returns null = zoom out normally.
+  if (leavingStep === 1) {
+    // pared izq: check A (piso = bottom-left) and B (techo = top-left)
+    const hasA = readVal('pI-a-whole','pI-a-frac') > 0;
+    const hasB = readVal('pI-b-whole','pI-b-frac') > 0;
+    if (hasA && hasB) return { focusX: 0.0, focusY: 0.5, zoom: 2.2 }; // full left edge
+    if (hasA)         return { focusX: 0.0, focusY: 1.0, zoom: 3.0 }; // bottom-left
+    if (hasB)         return { focusX: 0.0, focusY: 0.0, zoom: 3.0 }; // top-left
+  }
+  if (leavingStep === 2) {
+    const hasA = readVal('pD-a-whole','pD-a-frac') > 0;
+    const hasB = readVal('pD-b-whole','pD-b-frac') > 0;
+    if (hasA && hasB) return { focusX: 1.0, focusY: 0.5, zoom: 2.2 };
+    if (hasA)         return { focusX: 1.0, focusY: 1.0, zoom: 3.0 };
+    if (hasB)         return { focusX: 1.0, focusY: 0.0, zoom: 3.0 };
+  }
+  if (leavingStep === 3) {
+    const hasA = readVal('t-a-whole','t-a-frac') > 0;
+    const hasB = readVal('t-b-whole','t-b-frac') > 0;
+    if (hasA && hasB) return { focusX: 0.5, focusY: 0.0, zoom: 2.2 };
+    if (hasA)         return { focusX: 0.0, focusY: 0.0, zoom: 3.0 };
+    if (hasB)         return { focusX: 1.0, focusY: 0.0, zoom: 3.0 };
+  }
+  if (leavingStep === 4) {
+    const hasA = readVal('p-a-whole','p-a-frac') > 0;
+    const hasB = readVal('p-b-whole','p-b-frac') > 0;
+    if (hasA && hasB) return { focusX: 0.5, focusY: 1.0, zoom: 2.2 };
+    if (hasA)         return { focusX: 0.0, focusY: 1.0, zoom: 3.0 };
+    if (hasB)         return { focusX: 1.0, focusY: 1.0, zoom: 3.0 };
+  }
+  return null;
+}
+
 function goStep(n) {
+  const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.getElementById(`step-${n}`)?.classList.add('active');
   currentStep = n;
@@ -35,7 +71,28 @@ function goStep(n) {
   document.getElementById('progress-bar').style.width = pct + '%';
   recalcAll();
   if (n === TOTAL_STEPS) renderSummary();
-  animateCanvas(n);
+
+  // if leaving a measurement step that had data, linger on that area briefly
+  // then after a delay, animate to the new step's default view
+  const linger = getLingerView(leavingStep);
+  if (linger && n !== TOTAL_STEPS) {
+    // snap to linger view first
+    const W  = canvas.width  / window.devicePixelRatio;
+    const H  = canvas.height / window.devicePixelRatio;
+    const gr = getGlassRect();
+    const wx = gr.x + linger.focusX * gr.w;
+    const wy = gr.y + linger.focusY * gr.h;
+    vpTarget.scale = linger.zoom;
+    vpTarget.x = W / 2 - wx * linger.zoom;
+    vpTarget.y = H / 2 - wy * linger.zoom;
+    if (animFrame) cancelAnimationFrame(animFrame);
+    smoothAnimate();
+    // then after 800ms, transition to the new step's view
+    setTimeout(() => animateCanvas(n), 800);
+  } else {
+    animateCanvas(n);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
