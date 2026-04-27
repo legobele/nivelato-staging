@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nivelato — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f0f2f5; min-height: 100dvh; }
+
+    /* HEADER */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e9ecef;
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .header-logo { font-size: 20px; font-weight: 700; color: #1971c2; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .org-badge { font-size: 12px; background: #e7f5ff; color: #1971c2; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .btn-logout { font-size: 13px; color: #868e96; background: none; border: none; cursor: pointer; font-family: inherit; }
+    .btn-logout:hover { color: #c92a2a; }
+
+    /* MAIN */
+    main { padding: 24px 20px; max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 700; color: #212529; margin-bottom: 4px; }
+    .subtitle { font-size: 14px; color: #868e96; margin-bottom: 24px; }
+
+    /* STATS ROW */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-num { font-size: 28px; font-weight: 700; color: #1971c2; }
+    .stat-label { font-size: 12px; color: #868e96; margin-top: 2px; }
+
+    /* FILTERS */
+    .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-row input, .filter-row select {
+      padding: 8px 12px;
+      border: 1.5px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      background: #fff;
+    }
+    .filter-row input:focus, .filter-row select:focus { border-color: #1971c2; }
+    .filter-row input[type="date"] { flex: 1; min-width: 130px; }
+
+    /* JOB LIST */
+    .job-list { display: flex; flex-direction: column; gap: 10px; }
+    .job-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+    }
+    .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .job-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .job-title { font-size: 15px; font-weight: 600; color: #212529; }
+    .job-date { font-size: 12px; color: #868e96; }
+    .job-meta { font-size: 13px; color: #495057; }
+    .job-meta span { margin-right: 12px; }
+    .job-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: 6px; }
+    .tag-ok { background: #ebfbee; color: #2f9e44; }
+    .tag-warn { background: #fff3bf; color: #e67700; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      z-index: 100;
+      display: none;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%; max-width: 420px;
+      max-height: 85dvh;
+      overflow-y: auto;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #212529; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #868e96; }
+    .detail-val { font-weight: 600; color: #212529; }
+    .modal-notes { background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 13px; color: #495057; margin-top: 12px; }
+    .btn-close { width: 100%; padding: 12px; margin-top: 16px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
+    .empty-state { text-align: center; padding: 48px 20px; color: #868e96; font-size: 14px; }
+
+    .loading { text-align: center; padding: 40px; color: #868e96; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-logo">Nivelato</div>
+  <div class="header-right">
+    <div class="org-badge" id="org-name-badge">…</div>
+    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+</header>
+
+<main>
+  <h1>Historial de medidas</h1>
+  <div class="subtitle" id="dash-subtitle">Cargando…</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Medidas totales</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-today">—</div><div class="stat-label">Hoy</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-warn">—</div><div class="stat-label">Con advertencias</div></div>
+  </div>
+
+  <div class="filter-row">
+    <input type="date" id="filter-date" onchange="applyFilters()" />
+    <select id="filter-installer" onchange="applyFilters()">
+      <option value="">Todos los técnicos</option>
+    </select>
+  </div>
+
+  <div class="job-list" id="job-list">
+    <div class="loading">Cargando medidas…</div>
+  </div>
+</main>
+
+<!-- JOB DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-title" id="modal-title">Detalle</div>
+    <div id="modal-body"></div>
+    <button class="btn-close" onclick="closeModal()">Cerrar</button>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+  import { doc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+  let allJobs = [];
+  let currentUser = null;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.data();
+    if (!userData || (userData.role !== 'owner' && userData.role !== 'cotizador')) {
+      window.location.href = 'index.html'; return;
+    }
+    const orgId = userData.orgId;
+    // load org name
+    const orgDoc = await getDoc(doc(db, 'orgs', orgId));
+    const orgName = orgDoc.data()?.name || orgId;
+    document.getElementById('org-name-badge').textContent = orgName;
+    document.getElementById('dash-subtitle').textContent = `${orgName} · ${userData.role === 'owner' ? 'Administrador' : 'Cotizaciones'}`;
+
+    // load jobs
+    const jobsRef = collection(db, 'orgs', orgId, 'jobs');
+    const q = query(jobsRef, orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // populate installer filter
+    const installers = [...new Set(allJobs.map(j => j.installerName).filter(Boolean))];
+    const sel = document.getElementById('filter-installer');
+    installers.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+
+    renderJobs(allJobs);
+  });
+
+  window.applyFilters = () => {
+    const date = document.getElementById('filter-date').value;
+    const installer = document.getElementById('filter-installer').value;
+    let filtered = allJobs;
+    if (date) {
+      filtered = filtered.filter(j => {
+        if (!j.createdAt) return false;
+        const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
+        return d.toISOString().slice(0,10) === date;
+      });
+    }
+    if (installer) filtered = filtered.filter(j => j.installerName === installer);
+    renderJobs(filtered);
+  };
+
+  function renderJobs(jobs) {
+    const list = document.getElementById('job-list');
+    // stats
+    const today = new Date().toISOString().slice(0,10);
+    const todayCount = allJobs.filter(j => {
+      if (!j.createdAt) return false;
+      const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
+      return d.toISOString().slice(0,10) === today;
+    }).length;
+    const warnCount = allJobs.filter(j => j.warnings && j.warnings.length > 0).length;
+    document.getElementById('stat-total').textContent = allJobs.length;
+    document.getElementById('stat-today').textContent = todayCount;
+    document.getElementById('stat-warn').textContent  = warnCount;
+
+    if (jobs.length === 0) {
+      list.innerHTML = '<div class="empty-state">No hay medidas registradas aún.</div>';
+      return;
+    }
+    list.innerHTML = jobs.map((job, i) => {
+      const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+      const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const hasWarn = job.warnings && job.warnings.length > 0;
+      const tag = hasWarn
+        ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
+        : `<span class="job-tag tag-ok">✓ OK</span>`;
+      const hueco = job.hueco ? `${job.hueco.ancho}" × ${job.hueco.alto}"` : '—';
+      return `
+        <div class="job-card" onclick="openJob(${i})">
+          <div class="job-card-top">
+            <div class="job-title">${job.installerName || 'Técnico'} ${tag}</div>
+            <div class="job-date">${dateStr}</div>
+          </div>
+          <div class="job-meta">
+            <span>📐 ${hueco}</span>
+            <span>👤 ${job.installerName || '—'}</span>
+            ${job.notas ? `<span>📝 ${job.notas.slice(0,30)}${job.notas.length>30?'…':''}</span>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+    window._jobs = jobs;
+  }
+
+  window.openJob = (i) => {
+    const job = window._jobs[i];
+    const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+    const dateStr = date.toLocaleDateString('es-PR', { dateStyle:'full', timeStyle:'short' });
+    document.getElementById('modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
+    const rows = [
+      ['Técnico',     job.installerName || '—'],
+      ['Fecha',       dateStr],
+      ['Hueco',       job.hueco ? `${job.hueco.ancho}" × ${job.hueco.alto}"` : '—'],
+      ['Pared Izq.',  job.desniveles?.paredIzq || '—'],
+      ['Pared Der.',  job.desniveles?.paredDer || '—'],
+      ['Techo',       job.desniveles?.techo    || '—'],
+      ['Piso',        job.desniveles?.piso     || '—'],
+    ];
+    let html = rows.map(([l,v]) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`).join('');
+    if (job.warnings && job.warnings.length > 0) {
+      html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${w}`).join('<br>')}</div>`;
+    }
+    if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('modal-overlay').classList.add('open');
+  };
+
+  window.closeModal = (e) => {
+    if (!e || e.target === document.getElementById('modal-overlay')) {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+  };
+
+  window.doLogout = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+</script>
+</body>
+</html>
