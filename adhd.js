@@ -75,7 +75,7 @@ function goStep(n) {
   // if leaving a measurement step that had data, linger on that area briefly
   // then after a delay, animate to the new step's default view
   const linger = getLingerView(leavingStep);
-  if (linger && n !== TOTAL_STEPS) {
+  if (linger && n !== TOTAL_STEPS && !userZoomed) {
     // snap to linger view first
     const W  = canvas.width  / window.devicePixelRatio;
     const H  = canvas.height / window.devicePixelRatio;
@@ -90,7 +90,7 @@ function goStep(n) {
     // then after 800ms, transition to the new step's view
     setTimeout(() => animateCanvas(n), 800);
   } else {
-    animateCanvas(n);
+    if (!userZoomed) animateCanvas(n);
   }
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -533,13 +533,14 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
 function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   if (!result || result.val === 0) return;
   const COLOR = '#e67700';
-  const ARROW_HEAD = 5 / scale;
-  const fs = 10 / scale;
+  const ARROW_HEAD = 14 / scale;
+  const ARROW_WIDTH = 4 / scale;
+  const fs = 14 / scale;
 
   ctx.save();
   ctx.strokeStyle = COLOR;
   ctx.fillStyle   = COLOR;
-  ctx.lineWidth   = 1.2 / scale;
+  ctx.lineWidth   = 3 / scale;
 
   // draw a small perpendicular double-headed arrow at the shifted corner
   // showing the displacement from where the corner would be (straight) to where it is (shifted)
@@ -591,13 +592,16 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ctx.lineWidth = 1.5 / scale;
     ctx.stroke();
 
-    // arrowhead at shifted end
+    // arrowhead at shifted end — big with black border
     const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
     ctx.beginPath();
     ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.4), ay2 - ARROW_HEAD * Math.sin(angle - 0.4));
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.4), ay2 - ARROW_HEAD * Math.sin(angle + 0.4));
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.45), ay2 - ARROW_HEAD * Math.sin(angle - 0.45));
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.45), ay2 - ARROW_HEAD * Math.sin(angle + 0.45));
     ctx.closePath();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2.5 / scale;
+    ctx.stroke();
     ctx.fillStyle = COLOR;
     ctx.fill();
   }
@@ -607,8 +611,8 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   ctx.fillStyle = COLOR;
   const midX = (ax1 + ax2) / 2;
   const midY = (ay1 + ay2) / 2;
-  const labelOff = 10 / scale;
-  const labelPad = 18 / scale;
+  const labelOff = 14 / scale;
+  const labelPad = 26 / scale;
   if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.min(ax1, ax2) - labelPad, midY); }
   if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.max(ax1, ax2) + labelPad, midY); }
   if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(result.label, midX, Math.min(ay1, ay2) - labelPad); }
@@ -720,6 +724,57 @@ document.addEventListener('mouseout', e => {
 });
 
 window.addEventListener('resize', resizeCanvas);
+
+// ─── MANUAL ZOOM (pinch + wheel) ──────────────────────────────────────────
+let userZoomed = false; // set true when user manually zooms — suppresses auto-animate
+
+function applyZoom(cx, cy, factor) {
+  userZoomed = true;
+  const newScale = Math.max(0.3, Math.min(10, vp.scale * factor));
+  const sf = newScale / vp.scale;
+  vp.x = cx - sf * (cx - vp.x);
+  vp.y = cy - sf * (cy - vp.y);
+  vp.scale = newScale;
+  vpTarget.x = vp.x; vpTarget.y = vp.y; vpTarget.scale = vp.scale;
+  drawCanvas();
+}
+
+// mouse wheel zoom
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left);
+  const cy = (e.clientY - rect.top);
+  const factor = e.deltaY < 0 ? 1.12 : 0.88;
+  applyZoom(cx, cy, factor);
+}, { passive: false });
+
+// pinch-to-zoom
+let lastPinchDist = null;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    lastPinchDist = Math.sqrt(dx*dx + dy*dy);
+  }
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && lastPinchDist !== null) {
+    e.preventDefault();
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const rect = canvas.getBoundingClientRect();
+    const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+    const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+    applyZoom(cx, cy, dist / lastPinchDist);
+    lastPinchDist = dist;
+  }
+}, { passive: false });
+canvas.addEventListener('touchend', e => { if (e.touches.length < 2) lastPinchDist = null; });
+
+// reset zoom button
+window.resetZoom = () => { userZoomed = false; animateCanvas(currentStep); };
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 resizeCanvas();
