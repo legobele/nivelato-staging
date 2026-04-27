@@ -204,12 +204,12 @@ function resizeCanvas() {
 // Per-step viewport targets: { focusX, focusY, zoom }
 // focusX/Y = 0..1 relative to the glass rect (0,0 = top-left, 1,1 = bottom-right)
 const STEP_VIEWS = [
-  { focusX: 0.5, focusY: 0.5, zoom: 0.75 }, // step 0 — hueco, full view slightly smaller
-  { focusX: 0.0, focusY: 0.5, zoom: 1.3  }, // step 1 — pared izq, zoom left
-  { focusX: 1.0, focusY: 0.5, zoom: 1.3  }, // step 2 — pared der, zoom right
-  { focusX: 0.5, focusY: 0.0, zoom: 1.3  }, // step 3 — techo, zoom top
-  { focusX: 0.5, focusY: 1.0, zoom: 1.3  }, // step 4 — piso, zoom bottom
-  { focusX: 0.5, focusY: 0.5, zoom: 0.82 }, // step 5 — summary, full view
+  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 0 — hueco, full glass visible
+  { focusX: 0.0, focusY: 0.5, zoom: 3.2  }, // step 1 — pared izq, slam into left edge
+  { focusX: 1.0, focusY: 0.5, zoom: 3.2  }, // step 2 — pared der, slam into right edge
+  { focusX: 0.5, focusY: 0.0, zoom: 3.2  }, // step 3 — techo, slam into top edge
+  { focusX: 0.5, focusY: 1.0, zoom: 3.2  }, // step 4 — piso, slam into bottom edge
+  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 5 — summary, full glass again
 ];
 
 function getGlassRect() {
