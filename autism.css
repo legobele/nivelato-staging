@@ -146,16 +146,18 @@ html, body {
 }
 
 .fraction-row input[type="number"] {
-  width: 52px;
-  padding: 6px 8px;
+  width: 72px;
+  padding: 10px 8px;
   border: 1px solid var(--grey-300);
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 1.6rem;
+  font-weight: 700;
   font-family: inherit;
   color: var(--grey-900);
   background: var(--grey-50);
   -moz-appearance: textfield;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .fraction-row input[type="number"]:focus {
@@ -169,14 +171,15 @@ html, body {
 .fraction-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 .frac-select {
-  flex: 1;
-  padding: 6px 4px;
+  width: 70px;
+  flex: 0 0 70px;
+  padding: 4px 2px;
   border: 1px solid var(--grey-300);
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-family: inherit;
   background: var(--grey-50);
-  color: var(--grey-900);
+  color: var(--grey-700);
   cursor: pointer;
 }
 
