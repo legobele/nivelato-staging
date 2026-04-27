@@ -3,6 +3,7 @@
 ## App Logic
 - [x] Validation logic (PAREDES NO CUADRAN, TECHO/PISO NO CUADRAN, FALTAN NIVELES DE TECHO, FALTA MEDIDA DEL HUECO)
 - [x] LCD flicker on all inputs globally
+- [ ] ⭐ MOM FEEDBACK: Hueco step needs 2 width points (arriba + abajo) AND 2 height points (izquierda + derecha) — opening itself can be out of square independently of wall lean
 - [ ] Spanish translation for all UI strings (full localization pass)
 - [ ] Spite project: RAADS-R in Microsoft Excel (to counter mom's Copilot Excel arc)
 
@@ -44,6 +45,7 @@
 - Mom's product spec: "el técnico no tenga que pensar — la app hace las operaciones y le indica si algo está mal"
 - Mom confirmed: levels needed on all 4 sides — NOT the middle (glass has no barriguitas)
 - Glass cut varies per frame system — app just captures hueco + desniveles, no auto-cut calc
+- MOM FEEDBACK (2026-04-27): hueco needs ancho arriba + ancho abajo, and alto izquierda + alto derecha — the opening itself can be trapezoidal
 - Real test case: Derrick Champion order (espejo color bronce, 114 1/16" × ~47", techo sube 1/4" izq)
 - Hardware: Bosch GLM 20 (distance) at home, Hilti PMC 30 (laser level) at shop
 - Mom is on a Copilot/Excel arc. Nivelato is the answer. Stay the course.
