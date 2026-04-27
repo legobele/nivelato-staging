@@ -1,4 +1,4 @@
-# descuadre
+# nivelato
 
 a glass shop measurement tool for calculating wall/roof/floor out-of-squareness (descuadre).
 
