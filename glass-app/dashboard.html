@@ -115,6 +115,12 @@
 <main>
   <h1>Historial de medidas</h1>
   <div class="subtitle" id="dash-subtitle">Cargando…</div>
+  <div id="join-code-section" style="display:none; background:#e8f0fe; border-radius:12px; padding:14px 20px; margin:16px 0 8px; align-items:center; gap:16px; flex-wrap:wrap;">
+    <span style="font-size:11px; font-weight:600; color:#888; letter-spacing:0.05em;">CÓDIGO DEL TALLER:</span>
+    <span id="join-code-display" style="font-size:24px; font-weight:700; color:#1a73e8; letter-spacing:0.15em; font-family:monospace; margin-left:8px;">——</span>
+    <button onclick="copyJoinCode()" id="copy-btn" style="margin-left:auto; background:#1a73e8; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:13px; font-weight:600; cursor:pointer;">📋 Copiar</button>
+    <span style="font-size:11px; color:#888; width:100%; margin-top:2px;">Dáselo a tus empleados para que se registren en Nivelato</span>
+  </div>
 
   <div class="stats-row">
     <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Medidas totales</div></div>
@@ -165,6 +171,12 @@
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
     document.getElementById('dash-subtitle').textContent = `${orgName} · ${userData.role === 'owner' ? 'Administrador' : 'Cotizaciones'}`;
+    // show join code for owners
+    if (userData.role === 'owner') {
+      const jcs = document.getElementById('join-code-section');
+      jcs.style.display = 'flex';
+      document.getElementById('join-code-display').textContent = orgId;
+    }
 
     // load jobs
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
@@ -268,6 +280,15 @@
     if (!e || e.target === document.getElementById('modal-overlay')) {
       document.getElementById('modal-overlay').classList.remove('open');
     }
+  };
+
+  window.copyJoinCode = () => {
+    const code = document.getElementById('join-code-display').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = '✓ Copiado';
+      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+    });
   };
 
   window.doLogout = async () => {
