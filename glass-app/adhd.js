@@ -293,13 +293,23 @@ function animateCanvas(step) {
   const H   = canvas.height / window.devicePixelRatio;
   const gr  = getGlassRect();
 
+  let zoom = sv.zoom;
+
+  // for summary step (5), fit the whole glass into the visible canvas with padding
+  if (step === TOTAL_STEPS) {
+    const padFit = 48;
+    const fitZoomX = (W - padFit * 2) / gr.w;
+    const fitZoomY = (H - padFit * 2) / gr.h;
+    zoom = Math.min(fitZoomX, fitZoomY, 1.0); // never zoom in past 1x for summary
+  }
+
   // world point to focus on
   const wx = gr.x + sv.focusX * gr.w;
   const wy = gr.y + sv.focusY * gr.h;
 
-  vpTarget.scale = sv.zoom;
-  vpTarget.x = W / 2 - wx * sv.zoom;
-  vpTarget.y = H / 2 - wy * sv.zoom;
+  vpTarget.scale = zoom;
+  vpTarget.x = W / 2 - wx * zoom;
+  vpTarget.y = H / 2 - wy * zoom;
 
   if (animFrame) cancelAnimationFrame(animFrame);
   smoothAnimate();
