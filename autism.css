@@ -34,6 +34,7 @@ html, body {
   font-size: 15px;
   line-height: 1.5;
   overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 /* ─── HEADER ─────────────────────────────────────────────────────────────── */
@@ -75,7 +76,8 @@ html, body {
 #canvas-wrap {
   background: var(--white);
   border-bottom: 1px solid var(--grey-200);
-  height: 220px;
+  flex: 1 1 0;
+  min-height: 0;
   overflow: hidden;
   position: relative;
 }
@@ -89,7 +91,7 @@ html, body {
 /* ─── STEP PANELS ────────────────────────────────────────────────────────── */
 .step-panel {
   display: none;
-  padding: 20px 20px 24px;
+  padding: 16px 20px 16px;
   animation: fadeUp 0.25s ease;
 }
 
@@ -222,13 +224,7 @@ html, body {
 .btn-row {
   display: flex;
   gap: 10px;
-  margin-top: auto;
-  position: sticky;
-  bottom: 0;
-  background: var(--white);
-  padding: 12px 0 4px;
-  border-top: 1px solid var(--grey-200);
-  z-index: 10;
+  margin-top: 16px;
 }
 
 .btn-primary {
@@ -387,3 +383,19 @@ html, body {
 .btn-share:active { opacity: 0.8; }
 .btn-share.whatsapp { background: #25d366; color: white; }
 .btn-share.sms      { background: var(--grey-700); color: white; }
+
+/* ─── APP SHELL ──────────────────────────────────────────────────────────── */
+#app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+#bottom-panel {
+  flex-shrink: 0;
+  background: var(--white);
+  border-top: 1px solid var(--grey-200);
+  overflow-y: auto;
+  max-height: 55vh;
+}
