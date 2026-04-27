@@ -475,29 +475,38 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   let ax1, ay1, ax2, ay2; // arrow from "ideal" to "actual" position
 
   if (side === 'left' || side === 'right') {
-    // shift is horizontal — arrow runs horizontally at top of the edge
-    const y = pShifted.y;
-    const xIdeal = (side === 'left') ? pAnchor.x : pAnchor.x;
-    ax1 = xIdeal; ay1 = y;
-    ax2 = xIdeal + shiftPx; ay2 = y;
+    // arrow always at the TOP of the wall edge (min y of the two corners)
+    const yTop    = Math.min(pAnchor.y, pShifted.y);
+    const xIdeal  = (side === 'left') ? Math.max(pAnchor.x, pShifted.x) - shiftPx
+                                      : Math.min(pAnchor.x, pShifted.x) - shiftPx;
+    // ideal x = where the top corner would be if perfectly straight (= anchor x)
+    const xIdeal2 = (side === 'left') ? pAnchor.x : pAnchor.x;
+    ax1 = xIdeal2;        ay1 = yTop;
+    ax2 = xIdeal2 + shiftPx; ay2 = yTop;
   } else {
-    // shift is vertical — arrow runs vertically at left of the edge
-    const x = pShifted.x;
-    const yIdeal = pAnchor.y;
-    ax1 = x; ay1 = yIdeal;
-    ax2 = x; ay2 = yIdeal + shiftPx;
+    // techo + piso: arrow at RIGHT edge (max x of the two corners)
+    const xRight  = Math.max(pAnchor.x, pShifted.x);
+    const yIdeal  = (side === 'top') ? Math.max(pAnchor.y, pShifted.y) - shiftPx
+                                     : Math.min(pAnchor.y, pShifted.y) - shiftPx;
+    const yIdeal2 = (side === 'top') ? pAnchor.y : pAnchor.y;
+    ax1 = xRight; ay1 = yIdeal2;
+    ax2 = xRight; ay2 = yIdeal2 + shiftPx;
   }
 
-  // dashed reference line from anchor corner along the ideal straight edge
+  // dashed reference line showing the ideal straight edge at that point
   ctx.save();
   ctx.setLineDash([3/scale, 3/scale]);
   ctx.strokeStyle = '#adb5bd';
   ctx.lineWidth = 0.8 / scale;
   ctx.beginPath();
   if (side === 'left' || side === 'right') {
-    ctx.moveTo(ax1, pAnchor.y); ctx.lineTo(ax1, pShifted.y);
+    // vertical dashed line from top anchor down to where bottom anchor is
+    ctx.moveTo(ax1, Math.min(pAnchor.y, pShifted.y));
+    ctx.lineTo(ax1, Math.max(pAnchor.y, pShifted.y));
   } else {
-    ctx.moveTo(pAnchor.x, ay1); ctx.lineTo(pShifted.x, ay1);
+    // horizontal dashed line from left anchor across to right anchor
+    ctx.moveTo(Math.min(pAnchor.x, pShifted.x), ay1);
+    ctx.lineTo(Math.max(pAnchor.x, pShifted.x), ay1);
   }
   ctx.stroke();
   ctx.restore();
