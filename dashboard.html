@@ -132,6 +132,7 @@
   <div class="header-logo">Nivelato</div>
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
+    <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
     <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
 </header>
@@ -189,17 +190,24 @@
     const { doc: _doc2, getDoc: _getDoc2 } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const userSnap = await _getDoc2(_doc2(db, 'users', user.uid));
     if (userSnap.exists() && userSnap.data().disabled === true) {
-      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="firebase.auth().signOut().then(()=>location.href='login.html')" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+      window._pendingSignOut = async () => { await signOut(auth); window.location.href = 'login.html'; };
+      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="window._pendingSignOut()" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
       return;
     }
     currentUser = user;
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userData = userDoc.data();
-    if (!userData || (userData.role !== 'owner' && userData.role !== 'cotizador')) {
+    const DASH_ROLES = ['owner', 'cotizador', 'supervisor'];
+    if (!userData || !DASH_ROLES.includes(userData.role)) {
       window.location.href = 'index.html'; return;
     }
+    // supervisor and measurer can also create new measurements
+    const canMeasure = ['owner', 'supervisor', 'measurer'].includes(userData.role);
+    window._canMeasure = canMeasure;
     const orgId = userData.orgId;
     // load org name
+    const btnNew = document.getElementById('btn-new-measure');
+    if (btnNew && window._canMeasure) btnNew.style.display = 'block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
