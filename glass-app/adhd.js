@@ -436,9 +436,90 @@ function drawStepHighlight(ctx, gr, step, scale) {
   ctx.restore();
 }
 
+// ─── PER-FIELD FOCUS VIEWS ───────────────────────────────────────────────
+// Each field ID maps to { focusX, focusY, zoom } on the glass rect
+const FIELD_VIEWS = {
+  // step 1 — pared izquierda
+  'pI-a-whole': { focusX: 0.0, focusY: 1.0, zoom: 4.8 }, // bottom-left corner (piso)
+  'pI-a-frac':  { focusX: 0.0, focusY: 1.0, zoom: 4.8 },
+  'pI-b-whole': { focusX: 0.0, focusY: 0.0, zoom: 4.8 }, // top-left corner (techo)
+  'pI-b-frac':  { focusX: 0.0, focusY: 0.0, zoom: 4.8 },
+  // step 2 — pared derecha
+  'pD-a-whole': { focusX: 1.0, focusY: 1.0, zoom: 4.8 }, // bottom-right corner (piso)
+  'pD-a-frac':  { focusX: 1.0, focusY: 1.0, zoom: 4.8 },
+  'pD-b-whole': { focusX: 1.0, focusY: 0.0, zoom: 4.8 }, // top-right corner (techo)
+  'pD-b-frac':  { focusX: 1.0, focusY: 0.0, zoom: 4.8 },
+  // step 3 — techo
+  't-a-whole': { focusX: 0.0, focusY: 0.0, zoom: 4.8 }, // top-left
+  't-a-frac':  { focusX: 0.0, focusY: 0.0, zoom: 4.8 },
+  't-b-whole': { focusX: 1.0, focusY: 0.0, zoom: 4.8 }, // top-right
+  't-b-frac':  { focusX: 1.0, focusY: 0.0, zoom: 4.8 },
+  // step 4 — piso
+  'p-a-whole': { focusX: 0.0, focusY: 1.0, zoom: 4.8 }, // bottom-left
+  'p-a-frac':  { focusX: 0.0, focusY: 1.0, zoom: 4.8 },
+  'p-b-whole': { focusX: 1.0, focusY: 1.0, zoom: 4.8 }, // bottom-right
+  'p-b-frac':  { focusX: 1.0, focusY: 1.0, zoom: 4.8 },
+  // step 0 — hueco (center, full view)
+  'hueco-ancho-whole': { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+  'hueco-ancho-frac':  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+  'hueco-alto-whole':  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+  'hueco-alto-frac':   { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+};
+
+// highlighted field id — used to draw a dot on the canvas
+let activeFieldId = null;
+
+function focusField(fieldId) {
+  const sv = FIELD_VIEWS[fieldId];
+  if (!sv) return;
+  activeFieldId = fieldId;
+  const W  = canvas.width  / window.devicePixelRatio;
+  const H  = canvas.height / window.devicePixelRatio;
+  const gr = getGlassRect();
+  const wx = gr.x + sv.focusX * gr.w;
+  const wy = gr.y + sv.focusY * gr.h;
+  vpTarget.scale = sv.zoom;
+  vpTarget.x = W / 2 - wx * sv.zoom;
+  vpTarget.y = H / 2 - wy * sv.zoom;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  smoothAnimate();
+}
+
+function blurField() {
+  activeFieldId = null;
+  animateCanvas(currentStep); // snap back to step-level view
+}
+
 // ─── WIRE UP INPUTS ────────────────────────────────────────────────────────
 document.addEventListener('input',  e => { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
 document.addEventListener('change', e => { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
+
+document.addEventListener('focusin', e => {
+  const id = e.target.id;
+  if (FIELD_VIEWS[id]) focusField(id);
+});
+
+document.addEventListener('focusout', e => {
+  const id = e.target.id;
+  if (FIELD_VIEWS[id]) blurField();
+});
+
+// mouseenter on input-col cards (hover over whole card = zoom to its region)
+document.addEventListener('mouseover', e => {
+  const col = e.target.closest('.input-col');
+  if (!col) return;
+  // find the number input inside to determine which field
+  const inp = col.querySelector('input[type="number"]');
+  if (inp && FIELD_VIEWS[inp.id]) focusField(inp.id);
+});
+
+document.addEventListener('mouseout', e => {
+  const col = e.target.closest('.input-col');
+  if (!col) return;
+  const related = e.relatedTarget;
+  if (!related || !col.contains(related)) blurField();
+});
+
 window.addEventListener('resize', resizeCanvas);
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
