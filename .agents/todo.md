@@ -15,11 +15,20 @@
 - [x] dashboard.html — owner/cotizador: stats, job history, filter by date/installer, tap to expand
 - [x] adhd.js — auto-saves job to Firestore on every "Compartir" tap
 - [x] firestore.rules — deployed (members create, owner deletes, all read within org)
+- [ ] 🔥 BLOCKER: Firestore signup write fails (permission-denied) — temp fix: set rules to `allow read, write: if request.auth != null` in Firebase Console
 - [ ] TEST: create owner account → get join code → create employee account → take measurement → verify dashboard shows it
+- [ ] Dashboard: show join code prominently + "Copiar código" button for owner
+- [ ] Dashboard: owner can add users directly (invite by email) without join code flow
 - [ ] Hardcoded billing constraint UI (enforce min 1 owner + 1 user on signup flow)
 - [ ] Employee positions & permissions per org (owner, quoting, measuring, supervisor) — roles exist, permissions TBD
 - [ ] Device-specific access (e.g. only company tablet allowed, not personal phones)
 - [ ] Migrate to Firebase Hosting (bye GitHub Pages, hello custom domain)
+
+## Next Month (credits reset)
+- [ ] Email confirmation on signup (no more test@email.com in prod)
+- [ ] Bannability: owner can disable employee accounts from dashboard
+- [ ] Abuse protections: rate limiting, suspicious activity flags
+- [ ] Org management: owner can remove users, change roles, view last active
 
 ## Marketing
 - [x] Pitch email v1 (Spanish) — sent to uncle
@@ -51,3 +60,5 @@
 - Mom is on a Copilot/Excel arc. Nivelato is the answer. Stay the course.
 - Firebase project: nivelato-app, Firestore region: nam5, auth: email+password only
 - Org join code = first 6 chars of owner UID (uppercase). Owner sees it on signup alert.
+- WHOLE OFFICE HAS SEEN IT. Expectations are high. No pressure lol.
+- Account disable = payment enforcement. "No measuring for you until you pay." — real sentence, 2026.
