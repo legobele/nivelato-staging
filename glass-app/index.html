@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="autism.css" />
 </head>
 <body>
+<div id="app-shell">
 
   <!-- HEADER -->
   <header id="app-header">
@@ -19,10 +20,13 @@
   <!-- PROGRESS BAR -->
   <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
 
-  <!-- CANVAS -->
+  <!-- CANVAS — grows to fill remaining space -->
   <div id="canvas-wrap">
     <canvas id="drawing-canvas"></canvas>
   </div>
+
+  <!-- BOTTOM PANEL — fixed height, all steps live here -->
+  <div id="bottom-panel">
 
   <!-- ══ STEP 0 — HUECO ══ -->
   <section class="step-panel active" id="step-0">
@@ -194,6 +198,9 @@
       <button class="btn-share sms" onclick="shareViaSMS()">SMS</button>
     </div>
   </section>
+
+  </div><!-- /bottom-panel -->
+</div><!-- /app-shell -->
 
   <script src="adhd.js"></script>
   <script>
