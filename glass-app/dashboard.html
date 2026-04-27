@@ -520,10 +520,11 @@
     const topMidX   = (TL.x + TR.x) / 2;
     const botMidX   = (BL.x + BR.x) / 2;
 
-    desPill(pI, Math.min(TL.x, BL.x) - 10,  leftMidY,  'right');
-    desPill(pD, Math.max(TR.x, BR.x) + 10,  rightMidY, 'left');
-    desPill(tc, topMidX, Math.min(TL.y, TR.y) - 24, 'center');
-    desPill(ps, botMidX, Math.max(BL.y, BR.y) + 24, 'center');
+    // Pills sit 40px outside the glass edge to clear dimension lines (OFF=14 + arrow + 15px gap)
+    desPill(pI, Math.min(TL.x, BL.x) - 42,  leftMidY,  'right');
+    desPill(pD, Math.max(TR.x, BR.x) + 42,  rightMidY, 'left');
+    desPill(tc, topMidX, Math.min(TL.y, TR.y) - 46, 'center');
+    desPill(ps, botMidX, Math.max(BL.y, BR.y) + 46, 'center');
 
     // dimension lines
     const anchoT = job.hueco?.anchoTop  || job.hueco?.ancho;

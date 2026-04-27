@@ -34,21 +34,39 @@
   <!-- ══ STEP 0 — HUECO ══ -->
   <section class="step-panel active" id="step-0">
     <div class="step-title">Medidas del hueco</div>
-    <p class="step-hint">Ingresa el ancho y alto de la apertura.</p>
+    <p class="step-hint">Ingresa las 4 medidas de la apertura.</p>
     <div class="input-row">
       <div class="input-col">
-        <label>Ancho</label>
+        <label>Ancho — Arriba</label>
         <div class="fraction-row">
-          <input type="number" id="hueco-ancho-whole" placeholder="0" min="0" step="1" />
-          <select id="hueco-ancho-frac" class="frac-select">FRAC_OPTIONS</select>
+          <input type="number" id="hueco-ancho-top-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-ancho-top-frac" class="frac-select">FRAC_OPTIONS</select>
           <span class="unit">"</span>
         </div>
       </div>
       <div class="input-col">
-        <label>Alto</label>
+        <label>Ancho — Abajo</label>
         <div class="fraction-row">
-          <input type="number" id="hueco-alto-whole" placeholder="0" min="0" step="1" />
-          <select id="hueco-alto-frac" class="frac-select">FRAC_OPTIONS</select>
+          <input type="number" id="hueco-ancho-bot-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-ancho-bot-frac" class="frac-select">FRAC_OPTIONS</select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+    </div>
+    <div class="input-row" style="margin-top:10px">
+      <div class="input-col">
+        <label>Alto — Izquierda</label>
+        <div class="fraction-row">
+          <input type="number" id="hueco-alto-izq-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-alto-izq-frac" class="frac-select">FRAC_OPTIONS</select>
+          <span class="unit">"</span>
+        </div>
+      </div>
+      <div class="input-col">
+        <label>Alto — Derecha</label>
+        <div class="fraction-row">
+          <input type="number" id="hueco-alto-der-whole" placeholder="0" min="0" step="1" />
+          <select id="hueco-alto-der-frac" class="frac-select">FRAC_OPTIONS</select>
           <span class="unit">"</span>
         </div>
       </div>
