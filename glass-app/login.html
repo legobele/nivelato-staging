@@ -258,19 +258,26 @@
         await updateProfile(cred.user, { displayName: name });
         // generate a short org code
         orgId = cred.user.uid.slice(0, 6).toUpperCase();
-        // create org doc
-        await setDoc(doc(db, 'orgs', orgId), {
-          name: orgName,
-          ownerId: cred.user.uid,
-          joinCode: orgId,
-          createdAt: serverTimestamp(),
-          userCount: 1
-        });
-        // create user doc
-        await setDoc(doc(db, 'users', cred.user.uid), {
-          name, email, role, orgId,
-          createdAt: serverTimestamp()
-        });
+        // create org + user docs — separate try so Firestore errors surface clearly
+        try {
+          await setDoc(doc(db, 'orgs', orgId), {
+            name: orgName,
+            ownerId: cred.user.uid,
+            joinCode: orgId,
+            createdAt: serverTimestamp(),
+            userCount: 1
+          });
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            name, email, role, orgId,
+            createdAt: serverTimestamp()
+          });
+        } catch(fsErr) {
+          console.error('Firestore write failed:', fsErr.code, fsErr.message);
+          // still show the code even if Firestore failed
+          alert(`¡Auth OK pero Firestore falló!\n\nError: ${fsErr.code}\n\nTu UID: ${cred.user.uid}\nTu código: ${orgId}\n\nRevisa las Rules en Firebase Console.`);
+          window.location.href = 'dashboard.html';
+          return;
+        }
         // show join code before redirect
         alert(`¡Cuenta creada!\n\nCódigo de tu taller: ${orgId}\n\nDáselo a tus empleados para que puedan registrarse.`);
         window.location.href = 'dashboard.html';
