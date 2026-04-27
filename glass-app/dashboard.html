@@ -95,7 +95,9 @@
     .detail-label { color: #868e96; }
     .detail-val { font-weight: 600; color: #212529; }
     .modal-notes { background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 13px; color: #495057; margin-top: 12px; }
-    .btn-close { width: 100%; padding: 12px; margin-top: 16px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-close { width: 100%; padding: 12px; margin-top: 8px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+    .btn-delete { width: 100%; padding: 12px; margin-top: 16px; background: #fff5f5; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; }
+    .btn-delete:hover { background: #ffe3e3; }
 
     .empty-state { text-align: center; padding: 48px 20px; color: #868e96; font-size: 14px; }
     .loading { text-align: center; padding: 40px; color: #868e96; }
@@ -167,6 +169,7 @@
   <div class="modal" id="modal">
     <div class="modal-title" id="modal-title">Detalle</div>
     <div id="modal-body"></div>
+    <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
     <button class="btn-close" onclick="closeModal()">Cerrar</button>
   </div>
 </div>
@@ -201,6 +204,7 @@
     }
 
     // load jobs
+    window._db = db; window._orgId = orgId;
     const jobsRef = collection(db, 'orgs', orgId, 'jobs');
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
@@ -275,7 +279,9 @@
     window._jobs = jobs;
   }
 
+  window._currentJobIdx = null;
   window.openJob = (i) => {
+    window._currentJobIdx = i;
     const job = window._jobs[i];
     const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
     const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { hour:'2-digit', minute:'2-digit' });
@@ -296,6 +302,26 @@
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
+  };
+
+  window.deleteCurrentJob = async () => {
+    const i = window._currentJobIdx;
+    if (i === null || i === undefined) return;
+    const job = window._jobs[i];
+    if (!confirm(`¿Eliminar la medida de ${job.installerName || 'este técnico'}? Esta acción no se puede deshacer.`)) return;
+    try {
+      const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+      await deleteDoc(doc(window._db, 'orgs', window._orgId, 'jobs', job.id));
+      document.getElementById('modal-overlay').classList.remove('open');
+      // remove from local array and re-render
+      window._jobs.splice(i, 1);
+      window._currentJobIdx = null;
+      applyFilters();
+      // update stats
+      document.getElementById('stat-total').textContent = window._jobs.length;
+    } catch(e) {
+      alert('Error al eliminar: ' + e.message);
+    }
   };
 
   window.closeModal = (e) => {
