@@ -3,43 +3,42 @@
 ## App Logic
 - [x] Validation logic (PAREDES NO CUADRAN, TECHO/PISO NO CUADRAN, FALTAN NIVELES DE TECHO, FALTA MEDIDA DEL HUECO)
 - [x] LCD flicker on all inputs globally
-- [x] Bug fix: wall validation now compares offsets directly, not against hueco size
 - [ ] Spanish translation for all UI strings (full localization pass)
 - [ ] Spite project: RAADS-R in Microsoft Excel (to counter mom's Copilot Excel arc)
 
-## Firebase & Auth
-- [ ] Firebase setup (auth + Firestore) — project: nivelato-app, region: nam5
-- [ ] Organization / user division (shop = org, employees = users)
-- [ ] Auth flow: /accounts/login + /accounts/signup (email + password, NO passwordless)
-- [ ] Hardcoded constraint: 1 owner minimum per org (enforces $100/mo floor at 2 users)
-- [ ] Protect app behind login
-- [ ] Employee positions & permissions per org (owner, quoting, measuring, supervisor)
-- [ ] Job history: every submission saved to Firestore under orgs/{orgId}/jobs/{jobId}
-  - fields: installer uid, name, timestamp, hueco, all desniveles, warnings
-- [ ] Owner/quoting dashboard — list/filter past jobs by date, installer, status
-- [ ] Audit log of all actions (who measured what, when)
-- [ ] Account configurations & access control
+## Firebase & Auth ← IN PROGRESS
+- [x] Firebase project created (nivelato-app, nam5)
+- [x] firebase-config.js live on GitHub Pages
+- [x] login.html — email+password, role select, owner creates org + gets join code, employees use join code
+- [x] auth-guard.js — redirects unauthenticated users to login, injects user pill into header
+- [x] dashboard.html — owner/cotizador: stats, job history, filter by date/installer, tap to expand
+- [x] adhd.js — auto-saves job to Firestore on every "Compartir" tap
+- [x] firestore.rules — deployed (members create, owner deletes, all read within org)
+- [ ] TEST: create owner account → get join code → create employee account → take measurement → verify dashboard shows it
+- [ ] Hardcoded billing constraint UI (enforce min 1 owner + 1 user on signup flow)
+- [ ] Employee positions & permissions per org (owner, quoting, measuring, supervisor) — roles exist, permissions TBD
 - [ ] Device-specific access (e.g. only company tablet allowed, not personal phones)
+- [ ] Migrate to Firebase Hosting (bye GitHub Pages, hello custom domain)
 
 ## Marketing
-- [ ] Updated pitch email drafted (v2 with Firebase/cloud history benefits) — see below
+- [x] Pitch email v1 (Spanish) — sent to uncle
+- [x] Pitch email v2 with Firebase/cloud history benefits (Spanish) — sent to uncle
 - [ ] Landing page — professional and futuristic as FUCK
-      (hosting screenshots on GitHub: put them in /docs/screenshots/ or /assets/ and link raw.githubusercontent.com URLs)
-- [ ] Photography — workers measuring glass (Benj does mobile photography, needs editing similar to Apple Photos)
+- [ ] Photography — workers measuring glass
 - [ ] Link everything up (landing page → app → contact)
-- [ ] Pitch to other glass shops across PR (note: social communication deficits per DSM-5. plan accordingly 😭)
-- [ ] Convince uncle re: exclusivity — he won't find another tool if we pitch to other shops first
-- [ ] Copyright & trademark — formally register Nivelato™ as a trademark
+- [ ] Pitch to other glass shops across PR
+- [ ] Convince uncle re: exclusivity
+- [ ] Copyright & trademark — formally register Nivelato™
 
-## SaaS / Pricing (confirmed after tomorrow's test)
+## SaaS / Pricing
 - [ ] $100 initial setup — 1 month trial, up to 5 users
 - [ ] $50/mo/user after trial
-- [ ] On-call bugfix fee — $20? (feeling off about this one, revisit)
-- [ ] Pitch to uncle after successful hardware test tomorrow
+- [ ] On-call bugfix fee — $20? (revisit)
+- [ ] Pitch to uncle after successful hardware test
 
 ## Deployment
-- [x] GitHub Pages (legobele/nivelato)
-- [ ] Migrate to Firebase Hosting once auth is in (custom domain ready)
+- [x] GitHub Pages (legobele/nivelato) — live
+- [ ] Firebase Hosting migration (custom domain ready)
 
 ## Notes
 - Mom's product spec: "el técnico no tenga que pensar — la app hace las operaciones y le indica si algo está mal"
@@ -49,3 +48,4 @@
 - Hardware: Bosch GLM 20 (distance) at home, Hilti PMC 30 (laser level) at shop
 - Mom is on a Copilot/Excel arc. Nivelato is the answer. Stay the course.
 - Firebase project: nivelato-app, Firestore region: nam5, auth: email+password only
+- Org join code = first 6 chars of owner UID (uppercase). Owner sees it on signup alert.
