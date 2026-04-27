@@ -221,6 +221,30 @@ function showShare() {
   const block = document.getElementById('share-block');
   block?.classList.remove('hidden');
   setTimeout(() => block?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+  // save to Firestore
+  _saveCurrentJob(warnings);
+}
+
+function _saveCurrentJob(warnings) {
+  if (typeof window.saveJobToFirestore !== 'function') return;
+  const ancho = readVal('hueco-ancho-whole','hueco-ancho-frac');
+  const alto  = readVal('hueco-alto-whole', 'hueco-alto-frac');
+  const notas = document.getElementById('notas-field')?.value || '';
+  const jobData = {
+    hueco: { ancho, alto },
+    desniveles: {
+      paredIzq: results.paredIzq?.label || null,
+      paredDer: results.paredDer?.label || null,
+      techo:    results.techo?.label    || null,
+      piso:     results.piso?.label     || null,
+    },
+    warnings: warnings || [],
+    notas
+  };
+  window.saveJobToFirestore(jobData).then(() => {
+    const el = document.getElementById('save-status');
+    if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
+  }).catch(e => console.error('[Nivelato] save failed:', e));
 }
 
 function buildShareText() {
