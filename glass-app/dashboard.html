@@ -85,9 +85,32 @@
       background: #fff;
       border-radius: 16px;
       padding: 28px 24px;
-      width: 100%; max-width: 420px;
-      max-height: 85dvh;
+      width: 100%; max-width: 820px;
+      max-height: 90dvh;
       overflow-y: auto;
+    }
+    .modal-inner {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .modal-details { flex: 1; min-width: 0; }
+    .modal-canvas-wrap {
+      flex: 0 0 320px;
+      position: relative;
+    }
+    #modal-canvas {
+      border-radius: 10px;
+      background: #f0f4ff;
+      display: block;
+      width: 100%;
+      touch-action: none;
+      cursor: grab;
+    }
+    #modal-canvas:active { cursor: grabbing; }
+    @media (max-width: 640px) {
+      .modal-inner { flex-direction: column; }
+      .modal-canvas-wrap { flex: unset; width: 100%; }
     }
     .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #212529; }
     .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
@@ -169,10 +192,16 @@
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal">
     <div class="modal-title" id="modal-title">Detalle</div>
-    <div id="modal-body"></div>
-    <canvas id="modal-canvas" width="320" height="220" style="width:100%;border-radius:10px;background:#f0f4ff;margin:14px 0 4px;display:block;"></canvas>
-    <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
-    <button class="btn-close" onclick="closeModal()">Cerrar</button>
+    <div class="modal-inner">
+      <div class="modal-details">
+        <div id="modal-body"></div>
+        <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
+        <button class="btn-close" onclick="closeModal()">Cerrar</button>
+      </div>
+      <div class="modal-canvas-wrap">
+        <canvas id="modal-canvas" width="340" height="420"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -317,7 +346,8 @@
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
-    drawJobCanvas(job);
+    mcVp = { x: 0, y: 0, scale: 1 };
+    drawJobCanvas(job, mcVp);
   };
 
   window.deleteCurrentJob = async () => {
@@ -339,41 +369,103 @@
     }
   };
 
-  function drawJobCanvas(job) {
+  function drawJobCanvas(job, vp) {
     const mc = document.getElementById('modal-canvas');
-    if (!mc) return;
+    if (!mc || !job) return;
     const ctx = mc.getContext('2d');
     const W = mc.width, H = mc.height;
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = '#f0f4ff'; ctx.fillRect(0,0,W,H);
 
-    // parse desnivel labels to get rough direction strings
+    const scale = (vp?.scale || 1);
+    const ox = (vp?.x || 0), oy = (vp?.y || 0);
+
+    ctx.save();
+    ctx.translate(W/2 + ox, H/2 + oy);
+    ctx.scale(scale, scale);
+    ctx.translate(-W/2, -H/2);
+
     const pI = job.desniveles?.paredIzq || '';
     const pD = job.desniveles?.paredDer || '';
     const tc = job.desniveles?.techo    || '';
     const ps = job.desniveles?.piso     || '';
 
-    // simple rect for the glass opening
-    const pad = 52, gx = pad, gy = pad, gw = W - pad*2, gh = H - pad*2;
+    const pad = 64, gx = pad, gy = pad, gw = W - pad*2, gh = H - pad*2;
     ctx.fillStyle = '#d0e8ff';
     ctx.fillRect(gx, gy, gw, gh);
     ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 2;
     ctx.strokeRect(gx, gy, gw, gh);
 
-    // dimension labels
     const ancho = job.hueco?.ancho, alto = job.hueco?.alto;
-    ctx.fillStyle = '#212529'; ctx.font = 'bold 12px Inter,sans-serif';
+    ctx.fillStyle = '#212529'; ctx.font = 'bold 13px Inter,sans-serif';
     ctx.textAlign = 'center';
-    if (ancho) ctx.fillText(ancho + '"', gx + gw/2, gy - 10);
-    if (alto)  { ctx.save(); ctx.translate(gx - 12, gy + gh/2); ctx.rotate(-Math.PI/2); ctx.fillText(alto + '"', 0, 0); ctx.restore(); }
+    if (ancho) ctx.fillText(ancho + '"', gx + gw/2, gy - 14);
+    if (alto)  { ctx.save(); ctx.translate(gx - 16, gy + gh/2); ctx.rotate(-Math.PI/2); ctx.fillText(alto + '"', 0, 0); ctx.restore(); }
 
-    // desnivel labels on each side
-    ctx.font = 'bold 11px Inter,sans-serif'; ctx.fillStyle = '#e67700';
-    if (pI) { ctx.textAlign = 'right';  ctx.fillText(pI,  gx - 6, gy + gh/2); }
-    if (pD) { ctx.textAlign = 'left';   ctx.fillText(pD,  gx + gw + 6, gy + gh/2); }
-    if (tc) { ctx.textAlign = 'center'; ctx.fillText(tc,  gx + gw/2, gy - 24); }
-    if (ps) { ctx.textAlign = 'center'; ctx.fillText(ps,  gx + gw/2, gy + gh + 18); }
+    ctx.font = 'bold 12px Inter,sans-serif'; ctx.fillStyle = '#e67700';
+    if (pI) { ctx.textAlign = 'right';  ctx.fillText(pI,  gx - 8,       gy + gh/2); }
+    if (pD) { ctx.textAlign = 'left';   ctx.fillText(pD,  gx + gw + 8,  gy + gh/2); }
+    if (tc) { ctx.textAlign = 'center'; ctx.fillText(tc,  gx + gw/2,    gy - 30);   }
+    if (ps) { ctx.textAlign = 'center'; ctx.fillText(ps,  gx + gw/2,    gy + gh + 22); }
+
+    ctx.restore();
   }
+
+  // ── modal canvas drag ──────────────────────────────────────────────────
+  let mcVp = { x: 0, y: 0, scale: 1 };
+  let mcDrag = null;
+  let mcPinchDist = null;
+
+  function mcGetCanvas() { return document.getElementById('modal-canvas'); }
+
+  function mcApplyDrag(dx, dy) {
+    mcVp.x += dx; mcVp.y += dy;
+    const mc = mcGetCanvas();
+    if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
+  }
+
+  document.addEventListener('mousedown', e => {
+    if (e.target?.id !== 'modal-canvas') return;
+    mcDrag = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!mcDrag) return;
+    mcApplyDrag(e.clientX - mcDrag.x, e.clientY - mcDrag.y);
+    mcDrag = { x: e.clientX, y: e.clientY };
+  });
+  document.addEventListener('mouseup', () => { mcDrag = null; });
+
+  document.addEventListener('touchstart', e => {
+    if (e.target?.id !== 'modal-canvas') return;
+    if (e.touches.length === 1) {
+      mcDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+      mcPinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (e.target?.id !== 'modal-canvas') return;
+    if (e.touches.length === 1 && mcDrag) {
+      mcApplyDrag(e.touches[0].clientX - mcDrag.x, e.touches[0].clientY - mcDrag.y);
+      mcDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2 && mcPinchDist !== null) {
+      const d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      mcVp.scale = Math.min(4, Math.max(0.3, mcVp.scale * (d / mcPinchDist)));
+      mcPinchDist = d;
+      const mc = mcGetCanvas();
+      if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (e.touches.length === 0) { mcDrag = null; mcPinchDist = null; }
+  });
 
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
