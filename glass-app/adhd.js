@@ -471,10 +471,11 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   const midX = (ax1 + ax2) / 2;
   const midY = (ay1 + ay2) / 2;
   const labelOff = 10 / scale;
-  if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX - labelOff, midY); }
-  if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
-  if (side === 'top')    { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
-  if (side === 'bottom') { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, midX + labelOff, midY); }
+  const labelPad = 18 / scale;
+  if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.min(ax1, ax2) - labelPad, midY); }
+  if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.max(ax1, ax2) + labelPad, midY); }
+  if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(result.label, midX, Math.min(ay1, ay2) - labelPad); }
+  if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    ctx.fillText(result.label, midX, Math.max(ay1, ay2) + labelPad); }
 
   ctx.restore();
 }
