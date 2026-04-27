@@ -118,6 +118,8 @@
     .detail-label { color: #868e96; }
     .detail-val { font-weight: 600; color: #212529; }
     .modal-notes { background: #f8f9fa; border-radius: 8px; padding: 12px; font-size: 13px; color: #495057; margin-top: 12px; }
+    .detail-section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #adb5bd; margin: 16px 0 4px; }
+    .detail-section-title:first-child { margin-top: 0; }
     .btn-close { width: 100%; padding: 12px; margin-top: 8px; background: #f1f3f5; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
     .btn-delete { width: 100%; padding: 12px; margin-top: 16px; background: #fff5f5; border: 1.5px solid #ffc9c9; border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; color: #c92a2a; }
     .btn-delete:hover { background: #ffe3e3; }
@@ -330,16 +332,24 @@
     const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
     const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { hour:'2-digit', minute:'2-digit' });
     document.getElementById('modal-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
-    const rows = [
-      ['Técnico',     job.installerName || '—'],
-      ['Fecha',       dateStr],
-      ['Hueco',       job.hueco ? `${job.hueco.ancho}" × ${job.hueco.alto}"` : '—'],
-      ['Pared Izq.',  job.desniveles?.paredIzq || '—'],
-      ['Pared Der.',  job.desniveles?.paredDer || '—'],
-      ['Techo',       job.desniveles?.techo    || '—'],
-      ['Piso',        job.desniveles?.piso     || '—'],
-    ];
-    let html = rows.map(([l,v]) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`).join('');
+    const row = (l,v) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`;
+    const sec = (t) => `<div class="detail-section-title">${t}</div>`;
+    let html = '';
+    html += sec('General');
+    html += row('Técnico', job.installerName || '—');
+    html += row('Fecha', dateStr);
+    html += sec('Hueco (Abertura)');
+    if (job.hueco) {
+      html += row('Ancho superior', job.hueco.anchoTop ? job.hueco.anchoTop + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      html += row('Ancho inferior', job.hueco.anchoBottom ? job.hueco.anchoBottom + '"' : '—');
+      html += row('Alto izquierdo', job.hueco.altoLeft ? job.hueco.altoLeft + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
+      html += row('Alto derecho',   job.hueco.altoRight ? job.hueco.altoRight + '"' : '—');
+    } else { html += row('Hueco', '—'); }
+    html += sec('Desniveles');
+    html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
+    html += row('Pared Der.', job.desniveles?.paredDer || '—');
+    html += row('Techo',      job.desniveles?.techo    || '—');
+    html += row('Piso',       job.desniveles?.piso     || '—');
     if (job.warnings && job.warnings.length > 0) {
       html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${w}`).join('<br>')}</div>`;
     }
@@ -369,44 +379,139 @@
     }
   };
 
+  function parseDesnivel(str) {
+    // returns signed inches: positive = afuera/sube, negative = adentro/baja
+    if (!str || str === '—') return 0;
+    const m = str.match(/([\d\/\. ]+)"/);
+    if (!m) return 0;
+    const parts = m[1].trim().split(' ');
+    let val = 0;
+    parts.forEach(p => {
+      if (p.includes('/')) { const [n,d] = p.split('/'); val += parseFloat(n)/parseFloat(d); }
+      else val += parseFloat(p) || 0;
+    });
+    const low = str.toLowerCase();
+    if (low.includes('adentro') || low.includes('baja')) val = -val;
+    return val;
+  }
+
+  function dimLine(ctx, x1,y1,x2,y2,label,side) {
+    // draws a dimension line with arrows and label
+    const TICK = 6, OFF = 14;
+    const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+    if (len < 2) return;
+    const nx = -dy/len, ny = dx/len; // normal
+    const mx = (x1+x2)/2 + nx*OFF, my = (y1+y2)/2 + ny*OFF;
+    ctx.save();
+    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    // offset line
+    ctx.beginPath(); ctx.moveTo(x1+nx*OFF,y1+ny*OFF); ctx.lineTo(x2+nx*OFF,y2+ny*OFF); ctx.stroke();
+    ctx.setLineDash([]);
+    // tick marks
+    ctx.beginPath();
+    ctx.moveTo(x1,y1); ctx.lineTo(x1+nx*(OFF+TICK),y1+ny*(OFF+TICK)); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x2,y2); ctx.lineTo(x2+nx*(OFF+TICK),y2+ny*(OFF+TICK)); ctx.stroke();
+    // arrowheads on offset line
+    const ux=dx/len, uy=dy/len;
+    function arrow(ax,ay,dirx,diry) {
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      ctx.lineTo(ax-dirx*7+ny*3,ay-diry*7+nx*3);
+      ctx.lineTo(ax-dirx*7-ny*3,ay-diry*7-nx*3);
+      ctx.closePath(); ctx.fillStyle='#1971c2'; ctx.fill();
+    }
+    arrow(x1+nx*OFF,y1+ny*OFF, -ux,-uy);
+    arrow(x2+nx*OFF,y2+ny*OFF,  ux, uy);
+    // label
+    ctx.fillStyle='#1971c2'; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, mx, my);
+    ctx.restore();
+  }
+
   function drawJobCanvas(job, vp) {
     const mc = document.getElementById('modal-canvas');
     if (!mc || !job) return;
     const ctx = mc.getContext('2d');
     const W = mc.width, H = mc.height;
     ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = '#f0f4ff'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#f8faff'; ctx.fillRect(0,0,W,H);
 
     const scale = (vp?.scale || 1);
     const ox = (vp?.x || 0), oy = (vp?.y || 0);
-
     ctx.save();
     ctx.translate(W/2 + ox, H/2 + oy);
     ctx.scale(scale, scale);
     ctx.translate(-W/2, -H/2);
 
-    const pI = job.desniveles?.paredIzq || '';
-    const pD = job.desniveles?.paredDer || '';
-    const tc = job.desniveles?.techo    || '';
-    const ps = job.desniveles?.piso     || '';
+    // parse desniveles into pixel offsets
+    const SCALE_PX = 18; // px per inch of desnivel
+    const pIv = parseDesnivel(job.desniveles?.paredIzq);
+    const pDv = parseDesnivel(job.desniveles?.paredDer);
+    const tcv = parseDesnivel(job.desniveles?.techo);
+    const psv = parseDesnivel(job.desniveles?.piso);
 
-    const pad = 64, gx = pad, gy = pad, gw = W - pad*2, gh = H - pad*2;
-    ctx.fillStyle = '#d0e8ff';
-    ctx.fillRect(gx, gy, gw, gh);
-    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 2;
-    ctx.strokeRect(gx, gy, gw, gh);
+    const pad = 72;
+    const bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
 
-    const ancho = job.hueco?.ancho, alto = job.hueco?.alto;
-    ctx.fillStyle = '#212529'; ctx.font = 'bold 13px Inter,sans-serif';
-    ctx.textAlign = 'center';
-    if (ancho) ctx.fillText(ancho + '"', gx + gw/2, gy - 14);
-    if (alto)  { ctx.save(); ctx.translate(gx - 16, gy + gh/2); ctx.rotate(-Math.PI/2); ctx.fillText(alto + '"', 0, 0); ctx.restore(); }
+    // four corners of the skewed glass opening
+    // left wall: top-left shifts by pIv, bottom-left shifts by pIv (same wall lean)
+    // right wall: top-right shifts by pDv
+    // ceiling: top shifts by tcv (vertical)
+    // floor: bottom shifts by psv
+    const TL = { x: bx + pIv*SCALE_PX,          y: by  + tcv*SCALE_PX };
+    const TR = { x: bx + bw - pDv*SCALE_PX,      y: by  + tcv*SCALE_PX };
+    const BR = { x: bx + bw - pDv*SCALE_PX,      y: by + bh - psv*SCALE_PX };
+    const BL = { x: bx + pIv*SCALE_PX,           y: by + bh - psv*SCALE_PX };
 
-    ctx.font = 'bold 12px Inter,sans-serif'; ctx.fillStyle = '#e67700';
-    if (pI) { ctx.textAlign = 'right';  ctx.fillText(pI,  gx - 8,       gy + gh/2); }
-    if (pD) { ctx.textAlign = 'left';   ctx.fillText(pD,  gx + gw + 8,  gy + gh/2); }
-    if (tc) { ctx.textAlign = 'center'; ctx.fillText(tc,  gx + gw/2,    gy - 30);   }
-    if (ps) { ctx.textAlign = 'center'; ctx.fillText(ps,  gx + gw/2,    gy + gh + 22); }
+    // fill glass shape
+    ctx.beginPath();
+    ctx.moveTo(TL.x,TL.y); ctx.lineTo(TR.x,TR.y);
+    ctx.lineTo(BR.x,BR.y); ctx.lineTo(BL.x,BL.y);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(144,194,255,0.25)'; ctx.fill();
+    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // draw opening box (square reference)
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.setLineDash([]);
+
+    // desnivel arrows on each side if nonzero
+    function desArrow(x1,y1,x2,y2,label) {
+      if (!label || label==='—') return;
+      ctx.save();
+      ctx.strokeStyle='#e67700'; ctx.fillStyle='#e67700';
+      ctx.lineWidth=1.5; ctx.font='bold 10px Inter,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      const mx=(x1+x2)/2, my=(y1+y2)/2;
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+      ctx.fillText(label,mx,my-10);
+      ctx.restore();
+    }
+
+    // desnivel labels at sides
+    const pI = job.desniveles?.paredIzq, pD = job.desniveles?.paredDer;
+    const tc = job.desniveles?.techo,    ps = job.desniveles?.piso;
+    ctx.save();
+    ctx.font='bold 10px Inter,sans-serif'; ctx.fillStyle='#e67700';
+    if (pI && pI!=='—') { ctx.textAlign='right';  ctx.fillText(pI,  TL.x-8, (TL.y+BL.y)/2); }
+    if (pD && pD!=='—') { ctx.textAlign='left';   ctx.fillText(pD,  TR.x+8, (TR.y+BR.y)/2); }
+    if (tc && tc!=='—') { ctx.textAlign='center'; ctx.fillText(tc,  (TL.x+TR.x)/2, Math.min(TL.y,TR.y)-14); }
+    if (ps && ps!=='—') { ctx.textAlign='center'; ctx.fillText(ps,  (BL.x+BR.x)/2, Math.max(BL.y,BR.y)+16); }
+    ctx.restore();
+
+    // dimension lines
+    const anchoT = job.hueco?.anchoTop  || job.hueco?.ancho;
+    const anchoB = job.hueco?.anchoBottom;
+    const altoL  = job.hueco?.altoLeft  || job.hueco?.alto;
+    const altoR  = job.hueco?.altoRight;
+
+    if (anchoT) dimLine(ctx, TL.x,TL.y, TR.x,TR.y, anchoT+'"', 'top');
+    if (anchoB && anchoB !== anchoT) dimLine(ctx, BL.x,BL.y, BR.x,BR.y, anchoB+'"', 'bot');
+    if (altoL)  dimLine(ctx, TL.x,TL.y, BL.x,BL.y, altoL+'"',  'left');
+    if (altoR && altoR !== altoL) dimLine(ctx, TR.x,TR.y, BR.x,BR.y, altoR+'"', 'right');
 
     ctx.restore();
   }
