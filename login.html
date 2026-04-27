@@ -285,14 +285,18 @@
       } else {
         const joinCode = document.getElementById('signup-orgcode').value.trim().toUpperCase();
         if (!joinCode) throw { code: 'missing-code' };
-        // look up org by join code
-        const orgRef = doc(db, 'orgs', joinCode);
-        const orgSnap = await getDoc(orgRef);
-        if (!orgSnap.exists()) throw { code: 'invalid-code' };
-        orgId = joinCode;
-        // create user
+        // create auth FIRST so request.auth != null for Firestore reads
         const cred = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(cred.user, { displayName: name });
+        // NOW look up org by join code (auth is live)
+        const orgRef = doc(db, 'orgs', joinCode);
+        const orgSnap = await getDoc(orgRef);
+        if (!orgSnap.exists()) {
+          // delete the created auth account so they can retry
+          await cred.user.delete();
+          throw { code: 'invalid-code' };
+        }
+        orgId = joinCode;
         await setDoc(doc(db, 'users', cred.user.uid), {
           name, email, role, orgId,
           createdAt: serverTimestamp()
