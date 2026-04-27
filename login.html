@@ -299,9 +299,12 @@
         orgId = joinCode;
         await setDoc(doc(db, 'users', cred.user.uid), {
           name, email, role, orgId,
+          disabled: true,
           createdAt: serverTimestamp()
         });
-        window.location.href = 'index.html';
+        // show pending screen instead of redirecting
+        document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2>Cuenta creada</h2><p style="color:#868e96;max-width:320px">Tu cuenta está pendiente de aprobación por el dueño del taller. Te avisarán cuando tengas acceso.</p></div>';
+        return;
       }
     } catch(e) {
       errEl.textContent = friendlyError(e.code);
