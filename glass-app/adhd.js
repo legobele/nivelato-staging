@@ -163,17 +163,20 @@ function runValidation() {
   const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
   if (!anyEntered) return [];
 
-  if (alto > 0 && (pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
-    const netIzq = alto - (pI_A - pI_B);
-    const netDer = alto - (pD_A - pD_B);
-    if (Math.abs(netIzq - netDer) > TOLERANCE)
-      warnings.push(`Paredes no cuadran (dif: ${toFracStr(Math.abs(netIzq - netDer))})`);
+  if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
+    // Compare the desnivel (offset) of each wall — the hueco size doesn't change,
+    // only the tilt does. Walls cuadran if both have the same offset direction+amount.
+    const offsetIzq = pI_A - pI_B; // positive = adentro, negative = afuera
+    const offsetDer = pD_A - pD_B;
+    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
+      warnings.push(`Paredes no cuadran (dif: ${toFracStr(Math.abs(offsetIzq - offsetDer))})`);
   }
-  if (ancho > 0 && (t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
-    const netT = ancho - (t_A - t_B);
-    const netP = ancho - (p_A - p_B);
-    if (Math.abs(netT - netP) > TOLERANCE)
-      warnings.push(`Techo/Piso no cuadran (dif: ${toFracStr(Math.abs(netT - netP))})`);
+  if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
+    // Same for ceiling/floor — compare tilt offsets, not against ancho
+    const offsetTecho = t_A - t_B;
+    const offsetPiso  = p_A - p_B;
+    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
+      warnings.push(`Techo/Piso no cuadran (dif: ${toFracStr(Math.abs(offsetTecho - offsetPiso))})`);
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('Faltan niveles de techo');
