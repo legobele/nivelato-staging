@@ -242,9 +242,41 @@ function _saveCurrentJob(warnings) {
     notas
   };
   window.saveJobToFirestore(jobData).then(() => {
+    // big flashy save confirmation
     const el = document.getElementById('save-status');
-    if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
-  }).catch(e => console.error('[Nivelato] save failed:', e));
+    if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 4000); }
+    // full-screen flash overlay
+    const overlay = document.createElement('div');
+    overlay.innerHTML = '☁️ Guardado en la nube';
+    overlay.style.cssText = `
+      position:fixed; inset:0; z-index:9999;
+      background:rgba(25,135,84,0.92); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:700; letter-spacing:0.02em;
+      animation: fadeInOut 2.2s ease forwards;
+    `;
+    if (!document.getElementById('nube-anim-style')) {
+      const style = document.createElement('style');
+      style.id = 'nube-anim-style';
+      style.textContent = '@keyframes fadeInOut { 0%{opacity:0;transform:scale(0.95)} 15%{opacity:1;transform:scale(1)} 75%{opacity:1} 100%{opacity:0;transform:scale(1.03)} }';
+      document.head.appendChild(style);
+    }
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 2200);
+  }).catch(e => {
+    console.error('[Nivelato] save failed:', e);
+    const overlay = document.createElement('div');
+    overlay.innerHTML = '⚠️ Error al guardar';
+    overlay.style.cssText = `
+      position:fixed; inset:0; z-index:9999;
+      background:rgba(220,53,69,0.92); color:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:28px; font-weight:700;
+      animation: fadeInOut 2.2s ease forwards;
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 2200);
+  });
 }
 
 function buildShareText() {
