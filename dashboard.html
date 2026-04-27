@@ -169,6 +169,7 @@
   <div class="modal" id="modal">
     <div class="modal-title" id="modal-title">Detalle</div>
     <div id="modal-body"></div>
+    <canvas id="modal-canvas" width="320" height="220" style="width:100%;border-radius:10px;background:#f0f4ff;margin:14px 0 4px;display:block;"></canvas>
     <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
     <button class="btn-close" onclick="closeModal()">Cerrar</button>
   </div>
@@ -184,6 +185,13 @@
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
+    // check if account is pending approval
+    const { doc: _doc2, getDoc: _getDoc2 } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+    const userSnap = await _getDoc2(_doc2(db, 'users', user.uid));
+    if (userSnap.exists() && userSnap.data().disabled === true) {
+      document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;font-family:Inter,sans-serif;gap:16px;padding:32px;text-align:center"><div style="font-size:48px">⏳</div><h2 style="color:#212529">Cuenta pendiente de aprobación</h2><p style="color:#868e96;max-width:320px">Tu cuenta está siendo revisada. El administrador del taller te dará acceso en breve.</p><button onclick="firebase.auth().signOut().then(()=>location.href='login.html')" style="padding:12px 28px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">Cerrar sesión</button></div>';
+      return;
+    }
     currentUser = user;
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userData = userDoc.data();
@@ -302,6 +310,7 @@
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
+    drawJobCanvas(job);
   };
 
   window.deleteCurrentJob = async () => {
@@ -323,6 +332,42 @@
       alert('Error al eliminar: ' + e.message);
     }
   };
+
+  function drawJobCanvas(job) {
+    const mc = document.getElementById('modal-canvas');
+    if (!mc) return;
+    const ctx = mc.getContext('2d');
+    const W = mc.width, H = mc.height;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#f0f4ff'; ctx.fillRect(0,0,W,H);
+
+    // parse desnivel labels to get rough direction strings
+    const pI = job.desniveles?.paredIzq || '';
+    const pD = job.desniveles?.paredDer || '';
+    const tc = job.desniveles?.techo    || '';
+    const ps = job.desniveles?.piso     || '';
+
+    // simple rect for the glass opening
+    const pad = 52, gx = pad, gy = pad, gw = W - pad*2, gh = H - pad*2;
+    ctx.fillStyle = '#d0e8ff';
+    ctx.fillRect(gx, gy, gw, gh);
+    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 2;
+    ctx.strokeRect(gx, gy, gw, gh);
+
+    // dimension labels
+    const ancho = job.hueco?.ancho, alto = job.hueco?.alto;
+    ctx.fillStyle = '#212529'; ctx.font = 'bold 12px Inter,sans-serif';
+    ctx.textAlign = 'center';
+    if (ancho) ctx.fillText(ancho + '"', gx + gw/2, gy - 10);
+    if (alto)  { ctx.save(); ctx.translate(gx - 12, gy + gh/2); ctx.rotate(-Math.PI/2); ctx.fillText(alto + '"', 0, 0); ctx.restore(); }
+
+    // desnivel labels on each side
+    ctx.font = 'bold 11px Inter,sans-serif'; ctx.fillStyle = '#e67700';
+    if (pI) { ctx.textAlign = 'right';  ctx.fillText(pI,  gx - 6, gy + gh/2); }
+    if (pD) { ctx.textAlign = 'left';   ctx.fillText(pD,  gx + gw + 6, gy + gh/2); }
+    if (tc) { ctx.textAlign = 'center'; ctx.fillText(tc,  gx + gw/2, gy - 24); }
+    if (ps) { ctx.textAlign = 'center'; ctx.fillText(ps,  gx + gw/2, gy + gh + 18); }
+  }
 
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
