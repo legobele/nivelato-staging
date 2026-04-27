@@ -491,16 +491,39 @@
       ctx.restore();
     }
 
-    // desnivel labels at sides
+    // desnivel labels at sides — pill badges with breathing room
     const pI = job.desniveles?.paredIzq, pD = job.desniveles?.paredDer;
     const tc = job.desniveles?.techo,    ps = job.desniveles?.piso;
-    ctx.save();
-    ctx.font='bold 10px Inter,sans-serif'; ctx.fillStyle='#e67700';
-    if (pI && pI!=='—') { ctx.textAlign='right';  ctx.fillText(pI,  TL.x-8, (TL.y+BL.y)/2); }
-    if (pD && pD!=='—') { ctx.textAlign='left';   ctx.fillText(pD,  TR.x+8, (TR.y+BR.y)/2); }
-    if (tc && tc!=='—') { ctx.textAlign='center'; ctx.fillText(tc,  (TL.x+TR.x)/2, Math.min(TL.y,TR.y)-14); }
-    if (ps && ps!=='—') { ctx.textAlign='center'; ctx.fillText(ps,  (BL.x+BR.x)/2, Math.max(BL.y,BR.y)+16); }
-    ctx.restore();
+
+    function desPill(text, cx, cy, align) {
+      if (!text || text === '—') return;
+      ctx.save();
+      ctx.font = 'bold 10px Inter,sans-serif';
+      const tw = ctx.measureText(text).width;
+      const pw = tw + 12, ph = 18;
+      const px = align === 'right' ? cx - pw : align === 'center' ? cx - pw/2 : cx;
+      const py = cy - ph/2;
+      ctx.fillStyle = 'rgba(255,237,213,0.95)';
+      ctx.beginPath();
+      ctx.roundRect(px, py, pw, ph, 5);
+      ctx.fill();
+      ctx.strokeStyle = '#e67700'; ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#c05200';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, px + pw/2, cy);
+      ctx.restore();
+    }
+
+    const leftMidY  = (TL.y + BL.y) / 2;
+    const rightMidY = (TR.y + BR.y) / 2;
+    const topMidX   = (TL.x + TR.x) / 2;
+    const botMidX   = (BL.x + BR.x) / 2;
+
+    desPill(pI, Math.min(TL.x, BL.x) - 10,  leftMidY,  'right');
+    desPill(pD, Math.max(TR.x, BR.x) + 10,  rightMidY, 'left');
+    desPill(tc, topMidX, Math.min(TL.y, TR.y) - 24, 'center');
+    desPill(ps, botMidX, Math.max(BL.y, BR.y) + 24, 'center');
 
     // dimension lines
     const anchoT = job.hueco?.anchoTop  || job.hueco?.ancho;
