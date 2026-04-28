@@ -606,8 +606,8 @@ function drawCanvas() {
   // ── draw desnivel arrows on each edge ──
   drawDeformArrow(ctx, BL, TL, pI_shift_top,    'left',   results.paredIzq, sc);
   drawDeformArrow(ctx, TR, BR, pD_shift_top,    'right',  results.paredDer, sc);
-  drawDeformArrow(ctx, TL, TR, t_shift_left,    'top',    results.techo,    sc);
-  drawDeformArrow(ctx, BL, BR, p_shift_left,    'bottom', results.piso,     sc);
+  drawDeformArrow(ctx, TL, TR, -t_shift_left,   'top',    results.techo,    sc);
+  drawDeformArrow(ctx, BL, BR, -p_shift_left,   'bottom', results.piso,     sc);
 
   // ── step highlight (glow on active edge) ──
   drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
