@@ -148,16 +148,40 @@ function recalcAll() {
   drawCanvas();
 }
 
+function autofillFromReference(aId, bId, referenceResult) {
+  // autofill opposite side inputs from reference desnivel (same offset)
+  const aEl = document.getElementById(aId);
+  const bEl = document.getElementById(bId);
+  const aFracEl = document.getElementById(aId.replace('whole','frac'));
+  const bFracEl = document.getElementById(bId.replace('whole','frac'));
+  if (!aEl || !bEl) return;
+  const aVal = readVal(aId, aId.replace('whole','frac'));
+  const bVal = readVal(bId, bId.replace('whole','frac'));
+  if (aVal > 0 || bVal > 0) return; // don't overwrite if already filled
+  if (!referenceResult || referenceResult.val === 0) return;
+  // raw = a - b, so a = reference.raw + b. Keep b=0, set a = |raw|
+  const whole = Math.floor(referenceResult.val);
+  const frac  = referenceResult.val - whole;
+  const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
+                  frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
+                  frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
+  aEl.value = whole || '';
+  if (aFracEl) aFracEl.value = fracStr;
+  bEl.value = '';
+  if (bFracEl) bFracEl.value = '0';
+}
+
 function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
   const el = document.getElementById(noteId);
   if (!el) return;
   const aVal = readVal(aId, aId.replace('whole','frac'));
   const bVal = readVal(bId, bId.replace('whole','frac'));
   const hasBoth = aVal > 0 && bVal > 0;
-  // only show when reference has data but this side is empty or has only one point
   if (referenceResult && referenceResult.val > 0 && !hasBoth) {
+    // autofill if both are empty
+    autofillFromReference(aId, bId, referenceResult);
     el.style.display = 'block';
-    el.innerHTML = '⟳ Esperado (igual a opuesto): <strong>' + referenceResult.label + '</strong> — confirmar con láser';
+    el.innerHTML = '⟳ Autocompletado desde el opuesto: <strong>' + referenceResult.label + '</strong> — confirma con láser antes de continuar';
   } else {
     el.style.display = 'none';
   }
@@ -194,19 +218,19 @@ function runValidation() {
     const offsetIzq = pI_A - pI_B; // positive = adentro, negative = afuera
     const offsetDer = pD_A - pD_B;
     if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push(`Paredes no cuadran (dif: ${toFracStr(Math.abs(offsetIzq - offsetDer))})`);
+      warnings.push(`⚠ Paredes no cuadran — diferencia: ${toFracStr(Math.abs(offsetIzq - offsetDer))}" → revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B`);
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     // Same for ceiling/floor — compare tilt offsets, not against ancho
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
     if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push(`Techo/Piso no cuadran (dif: ${toFracStr(Math.abs(offsetTecho - offsetPiso))})`);
+      warnings.push(`⚠ Techo/Piso no cuadran — diferencia: ${toFracStr(Math.abs(offsetTecho - offsetPiso))}" → vuelve a medir el techo y el piso en los mismos puntos de referencia`);
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
-    warnings.push('Faltan niveles de techo');
+    warnings.push('⚠ Faltan niveles de techo — mide del láser al techo en punto A (izq) y punto B (der)');
   if (anyEntered && (anchoTop === 0 || anchoBot === 0 || altoIzq === 0 || altoDer === 0))
-    warnings.push('Falta medida del hueco (las 4 medidas son requeridas)');
+    warnings.push('⚠ Falta medida del hueco — ingresa las 4 medidas: Ancho Arriba, Ancho Abajo, Alto Izquierda, Alto Derecha');
   return warnings;
 }
 
