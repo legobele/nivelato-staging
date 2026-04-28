@@ -577,7 +577,7 @@ function drawCanvas() {
   const t_shift_right = 0;
 
   // floor: if p_A > p_B → left side lower → left corner shifts up
-  const p_shift_left  = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const p_shift_left  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
   const p_shift_right = 0;
 
   // ── compute the 4 corners of the deformed glass ──
