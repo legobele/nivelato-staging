@@ -879,31 +879,16 @@ window.addEventListener('mousemove', e => {
 window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
 canvas.style.cursor = 'grab';
 
-// touch drag (single finger)
+// ─── TOUCH + ZOOM HANDLING (unified, non-passive to prevent browser interference) ───
+let userZoomed   = false;
 let touchDragStart = null;
-canvas.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    touchDragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, vpx: vp.x, vpy: vp.y };
-  }
-}, { passive: true });
-canvas.addEventListener('touchmove', e => {
-  if (e.touches.length === 1 && touchDragStart) {
-    const dx = e.touches[0].clientX - touchDragStart.x;
-    const dy = e.touches[0].clientY - touchDragStart.y;
-    vp.x = touchDragStart.vpx + dx; vp.y = touchDragStart.vpy + dy;
-    vpTarget.x = vp.x; vpTarget.y = vp.y;
-    userZoomed = true;
-    drawCanvas();
-  }
-}, { passive: true });
-canvas.addEventListener('touchend', e => { if (e.touches.length === 0) touchDragStart = null; });
-
-// ─── MANUAL ZOOM (pinch + wheel) ──────────────────────────────────────────
-let userZoomed = false; // set true when user manually zooms — suppresses auto-animate
+let lastPinchDist  = null;
 
 function applyZoom(cx, cy, factor) {
+  // clamp factor per frame so a shaky pinch can't send it flying
+  const clampedFactor = Math.max(0.85, Math.min(1.18, factor));
   userZoomed = true;
-  const newScale = Math.max(0.3, Math.min(10, vp.scale * factor));
+  const newScale = Math.max(0.3, Math.min(10, vp.scale * clampedFactor));
   const sf = newScale / vp.scale;
   vp.x = cx - sf * (cx - vp.x);
   vp.y = cy - sf * (cy - vp.y);
@@ -912,39 +897,52 @@ function applyZoom(cx, cy, factor) {
   drawCanvas();
 }
 
-// mouse wheel zoom
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  const rect = canvas.getBoundingClientRect();
-  const cx = (e.clientX - rect.left);
-  const cy = (e.clientY - rect.top);
-  const factor = e.deltaY < 0 ? 1.12 : 0.88;
-  applyZoom(cx, cy, factor);
-}, { passive: false });
-
-// pinch-to-zoom
-let lastPinchDist = null;
+// non-passive so we can preventDefault on both drag and pinch
 canvas.addEventListener('touchstart', e => {
-  if (e.touches.length === 2) {
+  if (e.touches.length === 1) {
+    touchDragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, vpx: vp.x, vpy: vp.y };
+    lastPinchDist = null;
+  } else if (e.touches.length === 2) {
+    touchDragStart = null;
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
     lastPinchDist = Math.sqrt(dx*dx + dy*dy);
   }
-}, { passive: true });
+}, { passive: false });
+
 canvas.addEventListener('touchmove', e => {
-  if (e.touches.length === 2 && lastPinchDist !== null) {
-    e.preventDefault();
-    const dx = e.touches[0].clientX - e.touches[1].clientX;
-    const dy = e.touches[0].clientY - e.touches[1].clientY;
+  e.preventDefault(); // block native browser zoom/scroll on canvas entirely
+  if (e.touches.length === 1 && touchDragStart) {
+    const dx = e.touches[0].clientX - touchDragStart.x;
+    const dy = e.touches[0].clientY - touchDragStart.y;
+    vp.x = touchDragStart.vpx + dx;
+    vp.y = touchDragStart.vpy + dy;
+    vpTarget.x = vp.x; vpTarget.y = vp.y;
+    userZoomed = true;
+    drawCanvas();
+  } else if (e.touches.length === 2 && lastPinchDist !== null) {
+    const dx   = e.touches[0].clientX - e.touches[1].clientX;
+    const dy   = e.touches[0].clientY - e.touches[1].clientY;
     const dist = Math.sqrt(dx*dx + dy*dy);
     const rect = canvas.getBoundingClientRect();
-    const cx = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
-    const cy = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+    const cx   = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+    const cy   = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
     applyZoom(cx, cy, dist / lastPinchDist);
     lastPinchDist = dist;
   }
 }, { passive: false });
-canvas.addEventListener('touchend', e => { if (e.touches.length < 2) lastPinchDist = null; });
+
+canvas.addEventListener('touchend', e => {
+  if (e.touches.length === 0) { touchDragStart = null; lastPinchDist = null; }
+  if (e.touches.length < 2)   { lastPinchDist = null; }
+}, { passive: true });
+
+// mouse wheel zoom
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 0.88);
+}, { passive: false });
 
 // reset zoom button
 window.resetZoom = () => { userZoomed = false; animateCanvas(currentStep); };
