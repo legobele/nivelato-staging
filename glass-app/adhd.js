@@ -736,11 +736,11 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ax1 = xIdeal2;        ay1 = yTop;
     ax2 = xIdeal2 + shiftPx; ay2 = yTop;
   } else {
-    // techo: arrow at LEFT edge (min x), piso: arrow at LEFT edge too (opposite corners, no clash)
-    const xPos = Math.min(pAnchor.x, pShifted.x);
-    const yIdeal2 = (side === 'top') ? pAnchor.y : pAnchor.y;
-    ax1 = xPos; ay1 = yIdeal2;
-    ax2 = xPos; ay2 = yIdeal2 + shiftPx;
+    // techo: arrow at RIGHT edge, from ideal (pShifted.y) to actual (pAnchor.y)
+    // piso:  arrow at RIGHT edge, from ideal (pShifted.y) to actual (pAnchor.y)
+    const xPos = Math.max(pAnchor.x, pShifted.x) + 10 / scale;
+    ax1 = xPos; ay1 = pShifted.y;  // ideal = unshifted corner
+    ax2 = xPos; ay2 = pAnchor.y;   // actual = shifted corner
   }
 
   // dashed reference line showing the ideal straight edge at that point
