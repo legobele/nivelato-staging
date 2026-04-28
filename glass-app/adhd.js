@@ -234,6 +234,54 @@ function runValidation() {
   return warnings;
 }
 
+// ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
+function autoFix(warningText) {
+  if (warningText.includes('Paredes no cuadran')) {
+    // Copy pared izq desnivel into pared der inputs
+    const pI_A = readVal('pI-a-whole','pI-a-frac');
+    const pI_B = readVal('pI-b-whole','pI-b-frac');
+    const raw   = pI_A - pI_B; // same offset, so pD_A - pD_B = raw
+    const pD_A  = document.getElementById('pD-a-whole');
+    const pD_B  = document.getElementById('pD-b-whole');
+    if (pD_A && pD_B) {
+      const whole = Math.floor(Math.abs(raw));
+      pD_A.value = whole || '';
+      pD_B.value = '';
+      document.getElementById('pD-a-frac').value = '0';
+      document.getElementById('pD-b-frac').value = '0';
+      recalcAll();
+      goStep(2); // jump to pared derecha step
+    }
+    return;
+  }
+  if (warningText.includes('Techo/Piso no cuadran')) {
+    // Copy techo offset into piso inputs
+    const t_A = readVal('t-a-whole','t-a-frac');
+    const t_B = readVal('t-b-whole','t-b-frac');
+    const raw  = t_A - t_B;
+    const pA   = document.getElementById('p-a-whole');
+    const pB   = document.getElementById('p-b-whole');
+    if (pA && pB) {
+      const whole = Math.floor(Math.abs(raw));
+      pA.value = whole || '';
+      pB.value = '';
+      document.getElementById('p-a-frac').value = '0';
+      document.getElementById('p-b-frac').value = '0';
+      recalcAll();
+      goStep(4); // jump to piso step
+    }
+    return;
+  }
+  if (warningText.includes('Faltan niveles de techo')) {
+    goStep(3); // jump directly to techo step
+    return;
+  }
+  if (warningText.includes('Falta medida del hueco')) {
+    goStep(0); // jump to hueco step
+    return;
+  }
+}
+
 function renderValidation() {
   const el = document.getElementById('validation-block');
   if (!el) return;
@@ -242,7 +290,10 @@ function renderValidation() {
     el.textContent = '✓ Medidas OK';
     el.className = 'val-ok';
   } else {
-    el.innerHTML = warnings.map(w => `⚠ ${w}`).join('<br>');
+    el.innerHTML = warnings.map(w => {
+      const safeW = w.replace(/'/g, "\'");
+      return `<div style="margin-bottom:6px">${w} <button onclick="autoFix('${safeW}')" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>`;
+    }).join('');
     el.className = 'val-warn';
   }
 }
