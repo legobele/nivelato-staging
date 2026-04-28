@@ -114,7 +114,8 @@ function calcDesnivel_horiz(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const dir = diff > 0 ? 'BAJA DER' : 'SUBE DER';
+  // a=izquierda, b=derecha. b > a means right side is further from laser = right side is lower
+  const dir = diff > 0 ? 'SUBE DER' : 'BAJA DER';
   return { val, dir, label: `${toFracStr(val)} ${dir}`, raw: diff };
 }
 
@@ -606,8 +607,8 @@ function drawCanvas() {
   // ── draw desnivel arrows on each edge ──
   drawDeformArrow(ctx, BL, TL, pI_shift_top,    'left',   results.paredIzq, sc);
   drawDeformArrow(ctx, TR, BR, pD_shift_top,    'right',  results.paredDer, sc);
-  drawDeformArrow(ctx, TL, TR, -t_shift_left,   'top',    results.techo,    sc);
-  drawDeformArrow(ctx, BL, BR, -p_shift_left,   'bottom', results.piso,     sc);
+  drawDeformArrow(ctx, TL, TR, t_shift_left,    'top',    results.techo,    sc);
+  drawDeformArrow(ctx, BL, BR, p_shift_left,    'bottom', results.piso,     sc);
 
   // ── step highlight (glow on active edge) ──
   drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
