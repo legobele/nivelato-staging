@@ -341,7 +341,7 @@
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
       html += row('Ancho superior', job.hueco.anchoTop ? job.hueco.anchoTop + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
-      html += row('Ancho inferior', job.hueco.anchoBottom ? job.hueco.anchoBottom + '"' : '—');
+      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoBottom) + '"' : '—');
       html += row('Alto izquierdo', job.hueco.altoLeft ? job.hueco.altoLeft + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
       html += row('Alto derecho',   job.hueco.altoRight ? job.hueco.altoRight + '"' : '—');
     } else { html += row('Hueco', '—'); }
@@ -527,15 +527,16 @@
     desPill(ps, botMidX, Math.max(BL.y, BR.y) + 46, 'center');
 
     // dimension lines
-    const anchoT = job.hueco?.anchoTop  || job.hueco?.ancho;
-    const anchoB = job.hueco?.anchoBottom;
-    const altoL  = job.hueco?.altoLeft  || job.hueco?.alto;
-    const altoR  = job.hueco?.altoRight;
+    const anchoT = job.hueco?.anchoTop   || job.hueco?.ancho;
+    const anchoB = job.hueco?.anchoBot   || job.hueco?.anchoBottom;
+    const altoL  = job.hueco?.altoIzq   || job.hueco?.altoLeft  || job.hueco?.alto;
+    const altoR  = job.hueco?.altoDer   || job.hueco?.altoRight;
 
+    // Always show all 4 dimension lines
     if (anchoT) dimLine(ctx, TL.x,TL.y, TR.x,TR.y, anchoT+'"', 'top');
-    if (anchoB && anchoB !== anchoT) dimLine(ctx, BL.x,BL.y, BR.x,BR.y, anchoB+'"', 'bot');
+    if (anchoB) dimLine(ctx, BL.x,BL.y, BR.x,BR.y, anchoB+'"', 'bot');
     if (altoL)  dimLine(ctx, TL.x,TL.y, BL.x,BL.y, altoL+'"',  'left');
-    if (altoR && altoR !== altoL) dimLine(ctx, TR.x,TR.y, BR.x,BR.y, altoR+'"', 'right');
+    if (altoR)  dimLine(ctx, TR.x,TR.y, BR.x,BR.y, altoR+'"',  'right');
 
     ctx.restore();
   }
