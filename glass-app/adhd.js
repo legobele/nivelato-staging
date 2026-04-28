@@ -244,10 +244,15 @@ function autoFix(warningText) {
     const pD_A  = document.getElementById('pD-a-whole');
     const pD_B  = document.getElementById('pD-b-whole');
     if (pD_A && pD_B) {
-      const whole = Math.floor(Math.abs(raw));
+      const absRaw = Math.abs(raw);
+      const whole  = Math.floor(absRaw);
+      const frac   = absRaw - whole;
+      const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
+                      frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
+                      frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
       pD_A.value = whole || '';
       pD_B.value = '';
-      document.getElementById('pD-a-frac').value = '0';
+      document.getElementById('pD-a-frac').value = fracStr;
       document.getElementById('pD-b-frac').value = '0';
       recalcAll();
       goStep(2); // jump to pared derecha step
@@ -262,10 +267,15 @@ function autoFix(warningText) {
     const pA   = document.getElementById('p-a-whole');
     const pB   = document.getElementById('p-b-whole');
     if (pA && pB) {
-      const whole = Math.floor(Math.abs(raw));
+      const absRaw = Math.abs(raw);
+      const whole  = Math.floor(absRaw);
+      const frac   = absRaw - whole;
+      const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
+                      frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
+                      frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
       pA.value = whole || '';
       pB.value = '';
-      document.getElementById('p-a-frac').value = '0';
+      document.getElementById('p-a-frac').value = fracStr;
       document.getElementById('p-b-frac').value = '0';
       recalcAll();
       goStep(4); // jump to piso step
@@ -282,19 +292,25 @@ function autoFix(warningText) {
   }
 }
 
+// store last warnings so buttons can reference by index (avoids string escaping hell)
+let _lastWarnings = [];
+
 function renderValidation() {
   const el = document.getElementById('validation-block');
   if (!el) return;
   const warnings = runValidation();
+  _lastWarnings = warnings;
   if (warnings.length === 0) {
     el.textContent = '✓ Medidas OK';
     el.className = 'val-ok';
   } else {
-    el.innerHTML = warnings.map(w => {
-      const safeW = w.replace(/'/g, "\'");
-      return `<div style="margin-bottom:6px">${w} <button onclick="autoFix('${safeW}')" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>`;
-    }).join('');
+    el.innerHTML = warnings.map((w, i) =>
+      `<div style="margin-bottom:6px">${w} <button data-widx="${i}" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>`
+    ).join('');
     el.className = 'val-warn';
+    el.querySelectorAll('.arreglar-btn').forEach(btn => {
+      btn.addEventListener('click', () => autoFix(_lastWarnings[+btn.dataset.widx] || ''));
+    });
   }
 }
 
