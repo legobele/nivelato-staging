@@ -656,6 +656,60 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
 
 // drawDeformArrow: draws a perpendicular arrow at the shifted corner showing the desnivel amount
 // p1 = anchor corner (no shift), p2 = shifted corner
+function drawEdgeLabel(ctx, p1, p2, labelText, side, scale) {
+  // Draw a dimension label along the midpoint of an edge of the deformed glass
+  // labelText can contain \n for two lines (measurement + desnivel)
+  const PAD = 32 / scale;
+  const fs  = 13 / scale;
+  const lh  = 16 / scale; // line height
+
+  const midX = (p1.x + p2.x) / 2;
+  const midY = (p1.y + p2.y) / 2;
+
+  ctx.save();
+  ctx.font = `bold ${fs}px 'VT323', monospace`;
+  ctx.fillStyle = '#212529';
+
+  const lines = labelText.split('\n');
+
+  if (side === 'top') {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    lines.forEach((ln, i) => {
+      const yOff = (i === 0) ? (midY - PAD - lh * (lines.length - 1 - i)) : (midY - PAD - lh * (lines.length - 1 - i));
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.fillText(ln, midX, midY - PAD + (i * lh) - (lines.length * lh));
+    });
+  } else if (side === 'bottom') {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    lines.forEach((ln, i) => {
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.fillText(ln, midX, midY + PAD + i * lh);
+    });
+  } else if (side === 'left') {
+    ctx.save();
+    ctx.translate(midX - PAD, midY);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    lines.forEach((ln, i) => {
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.fillText(ln, 0, (i - lines.length + 1) * lh + lh * 0.5);
+    });
+    ctx.restore();
+  } else if (side === 'right') {
+    ctx.save();
+    ctx.translate(midX + PAD, midY);
+    ctx.rotate(Math.PI / 2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    lines.forEach((ln, i) => {
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.fillText(ln, 0, (i - lines.length + 1) * lh + lh * 0.5);
+    });
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
 function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   if (!result || result.val === 0) return;
   const COLOR = '#e67700';
