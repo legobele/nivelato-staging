@@ -577,7 +577,7 @@ function drawCanvas() {
   const t_shift_right = 0;
 
   // floor: if p_A > p_B → left side lower → left corner shifts up
-  const p_shift_left  = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const p_shift_left  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
   const p_shift_right = 0;
 
   // ── compute the 4 corners of the deformed glass ──
@@ -683,12 +683,9 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ax2 = xIdeal2 + shiftPx; ay2 = yTop;
   } else {
     // techo + piso: arrow at RIGHT edge (max x of the two corners)
-    const xRight  = Math.max(pAnchor.x, pShifted.x);
-    const yIdeal  = (side === 'top') ? Math.max(pAnchor.y, pShifted.y) - shiftPx
-                                     : Math.min(pAnchor.y, pShifted.y) - shiftPx;
-    const yIdeal2 = (side === 'top') ? pAnchor.y : pAnchor.y;
-    ax1 = xRight; ay1 = yIdeal2;
-    ax2 = xRight; ay2 = yIdeal2 + shiftPx;
+    const xPos = Math.max(pAnchor.x, pShifted.x) + 10 / scale;
+    ax1 = xPos; ay1 = pShifted.y;
+    ax2 = xPos; ay2 = pAnchor.y;
   }
 
   // dashed reference line showing the ideal straight edge at that point
