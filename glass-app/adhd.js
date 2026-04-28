@@ -613,16 +613,26 @@ function drawCanvas() {
   // ── step highlight (glow on active edge) ──
   drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
 
-  // ── dimension labels ──
-  if (ancho > 0) drawDimLine(ctx, gr.x, gr.y - 22, gr.x + gr.w, gr.y - 22, toFracStr(ancho), sc);
-  if (alto  > 0) drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto),  sc, true);
+  // ── dimension labels (all 4 edges: measurement + desnivel) ──
+  {
+    const labelTop    = anchoTop_c > 0 ? toFracStr(anchoTop_c) + (results.techo    && results.techo.val    > 0 ? '\n' + results.techo.label    : '') : null;
+    const labelBot    = anchoBot_c > 0 ? toFracStr(anchoBot_c) + (results.piso     && results.piso.val     > 0 ? '\n' + results.piso.label     : '') : null;
+    const labelLeft   = altoIzq_c  > 0 ? toFracStr(altoIzq_c)  + (results.paredIzq && results.paredIzq.val > 0 ? '\n' + results.paredIzq.label : '') : null;
+    const labelRight  = altoDer_c  > 0 ? toFracStr(altoDer_c)  + (results.paredDer && results.paredDer.val > 0 ? '\n' + results.paredDer.label : '') : null;
+    if (labelTop)   drawDimLine(ctx, TL.x, TL.y - 24/sc, TR.x, TR.y - 24/sc, labelTop,   sc, false);
+    if (labelBot)   drawDimLine(ctx, BL.x, BL.y + 24/sc, BR.x, BR.y + 24/sc, labelBot,   sc, false);
+    if (labelLeft)  drawDimLine(ctx, TL.x - 24/sc, TL.y, BL.x - 24/sc, BL.y, labelLeft,  sc, true);
+    if (labelRight) drawDimLine(ctx, TR.x + 24/sc, TR.y, BR.x + 24/sc, BR.y, labelRight, sc, true, true);
+  }
 
   ctx.restore();
   ctx.restore();
 }
 
-function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
+function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false, rightSide = false) {
   const tickLen = 6 / scale;
+  const lh = 14 / scale;
+  const lines = label ? label.split('\n') : [];
   ctx.save();
   ctx.strokeStyle = '#adb5bd';
   ctx.lineWidth = 1 / scale;
@@ -639,16 +649,32 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
     ctx.beginPath(); ctx.moveTo(x1 - tickLen, y1); ctx.lineTo(x1 + tickLen, y1); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(x2 - tickLen, y2); ctx.lineTo(x2 + tickLen, y2); ctx.stroke();
   }
-  ctx.fillStyle = '#495057';
-  ctx.font = `bold ${12 / scale}px Inter, system-ui, sans-serif`;
   if (!vertical) {
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText(label, (x1 + x2) / 2, y1 - 2 / scale);
+    const mx = (x1 + x2) / 2;
+    const baseY = y1 - 4 / scale;
+    lines.forEach((ln, i) => {
+      ctx.font = `bold ${12 / scale}px 'VT323', monospace`;
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.fillText(ln, mx, baseY - (lines.length - 1 - i) * lh);
+    });
   } else {
-    ctx.save(); ctx.translate((x1 + x2) / 2, (y1 + y2) / 2);
+    const my = (y1 + y2) / 2;
+    ctx.save();
+    ctx.translate((x1 + x2) / 2, my);
     ctx.rotate(-Math.PI / 2);
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText(label, 0, -2 / scale);
+    const totalH = lines.length * lh;
+    const baseOff = rightSide ? 4 / scale : -(4 / scale);
+    lines.forEach((ln, i) => {
+      ctx.font = `bold ${12 / scale}px 'VT323', monospace`;
+      ctx.fillStyle = i === 0 ? '#212529' : '#e67700';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = rightSide ? 'top' : 'bottom';
+      const yOff = rightSide
+        ? baseOff + i * lh
+        : baseOff - (lines.length - 1 - i) * lh;
+      ctx.fillText(ln, 0, yOff);
+    });
     ctx.restore();
   }
   ctx.restore();
