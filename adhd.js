@@ -145,7 +145,7 @@ function calcDesnivel_wall(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
@@ -156,7 +156,7 @@ function calcDesnivel_horiz(a, b) {
   // diff < 0: right is further from laser = right is LOWER = offset is DOWN on right = UP on left
   const leftIsLower = diff > 0;
   const dir = leftIsLower ? 'ABAJO' : 'ARRIBA';
-  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
 }
 
 function recalcAll() {

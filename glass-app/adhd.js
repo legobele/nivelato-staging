@@ -145,7 +145,7 @@ function calcDesnivel_wall(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
@@ -156,7 +156,7 @@ function calcDesnivel_horiz(a, b) {
   // diff < 0: right is further from laser = right is LOWER = offset is DOWN on right = UP on left
   const leftIsLower = diff > 0;
   const dir = leftIsLower ? 'ABAJO' : 'ARRIBA';
-  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
 }
 
 function recalcAll() {
@@ -218,13 +218,13 @@ function runValidation() {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
     if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push('⚠ Paredes no cuadran — diferencia: ' + toFracStr(Math.abs(offsetIzq - offsetDer)) + '" → revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B');
+      warnings.push('⚠ Paredes no cuadran — diferencia: ' + toFracStr(Math.abs(offsetIzq - offsetDer))→ revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B');
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
     if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push('⚠ Arriba/Abajo no cuadran — diferencia: ' + toFracStr(Math.abs(offsetTecho - offsetPiso)) + '" → vuelve a medir arriba y abajo en los mismos puntos de referencia');
+      warnings.push('⚠ Arriba/Abajo no cuadran — diferencia: ' + toFracStr(Math.abs(offsetTecho - offsetPiso))→ vuelve a medir arriba y abajo en los mismos puntos de referencia');
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
