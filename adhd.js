@@ -499,11 +499,9 @@ function drawCanvas() {
   const gr  = getGlassRect();
   const sc  = vp.scale;
 
-  const anchoBot_c = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
-  const anchoTop_c = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac') || 0;
-  const altoIzq_c  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
-  const altoDer_c  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac')  || 0;
-  const ancho = anchoBot_c; const alto = altoIzq_c;
+  // ── read values ──
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 36;
   const pI_A   = readVal('pI-a-whole','pI-a-frac');
   const pI_B   = readVal('pI-b-whole','pI-b-frac');
   const pD_A   = readVal('pD-a-whole','pD-a-frac');
@@ -513,7 +511,10 @@ function drawCanvas() {
   const p_A    = readVal('p-a-whole', 'p-a-frac');
   const p_B    = readVal('p-b-whole', 'p-b-frac');
 
-  const EXAG = gr.w * 0.18;
+  // ── compute desnivel offsets (in pixels) ──
+  // These represent how much the ROUGH OPENING deviates from the LEVEL reference
+  // Positive = wall leans IN (toward center), negative = wall leans OUT
+  const EXAG = Math.min(gr.w, gr.h) * 0.15;
   const clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
 
   const pIMax = Math.max(pI_A, pI_B, 1);
@@ -521,45 +522,85 @@ function drawCanvas() {
   const tMax  = Math.max(t_A,  t_B,  1);
   const pMax  = Math.max(p_A,  p_B,  1);
 
-  const pI_shift_top    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
-  const pI_shift_bottom = 0;
-  const pD_shift_top    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
-  const pD_shift_bottom = 0;
-  const t_shift_left  = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
-  const t_shift_right = 0;
-  const p_shift_left  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
-  const p_shift_right = 0;
+  // Left wall desnivel: pI_A vs pI_B
+  // If pI_A > pI_B: bottom is further out = top leans IN = top shifts RIGHT (toward center)
+  const leftOffsetTop    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
+  const leftOffsetBottom = 0;
 
-  const TL = { x: gr.x + pI_shift_top,    y: gr.y + t_shift_left  };
-  const TR = { x: gr.x + gr.w + pD_shift_top,    y: gr.y + t_shift_right };
-  const BR = { x: gr.x + gr.w + pD_shift_bottom, y: gr.y + gr.h + p_shift_right };
-  const BL = { x: gr.x + pI_shift_bottom, y: gr.y + gr.h + p_shift_left };
+  // Right wall desnivel: pD_A vs pD_B  
+  // If pD_A > pD_B: bottom is further out = top leans IN = top shifts LEFT (toward center)
+  const rightOffsetTop    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
+  const rightOffsetBottom = 0;
 
+  // Ceiling desnivel: t_A vs t_B
+  // If t_A > t_B: left is further = left side is LOWER = right side is HIGHER
+  // The rough opening ceiling slopes down to the right
+  const topOffsetLeft  = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
+  const topOffsetRight = 0;
+
+  // Floor desnivel: p_A vs p_B
+  // If p_A > p_B: left is further = left side is LOWER = right side is HIGHER
+  // The rough opening floor slopes up to the right
+  const bottomOffsetLeft  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const bottomOffsetRight = 0;
+
+  // ── LEVEL REFERENCE rectangle (dashed) = where the straight frame goes ──
+  const levelTL = { x: gr.x, y: gr.y };
+  const levelTR = { x: gr.x + gr.w, y: gr.y };
+  const levelBR = { x: gr.x + gr.w, y: gr.y + gr.h };
+  const levelBL = { x: gr.x, y: gr.y + gr.h };
+
+  // ── ROUGH OPENING (solid blue) = actual deformed wall opening ──
+  const roughTL = { x: gr.x + leftOffsetTop,    y: gr.y + topOffsetLeft };
+  const roughTR = { x: gr.x + gr.w + rightOffsetTop,   y: gr.y + topOffsetRight };
+  const roughBR = { x: gr.x + gr.w + rightOffsetBottom, y: gr.y + gr.h + bottomOffsetRight };
+  const roughBL = { x: gr.x + leftOffsetBottom,  y: gr.y + gr.h + bottomOffsetLeft };
+
+  // Draw level reference (dashed gray rectangle)
   ctx.save();
+  ctx.setLineDash([5 / sc, 5 / sc]);
+  ctx.strokeStyle = '#adb5bd';
+  ctx.lineWidth = 1.5 / sc;
   ctx.beginPath();
-  ctx.moveTo(TL.x, TL.y);
-  ctx.lineTo(TR.x, TR.y);
-  ctx.lineTo(BR.x, BR.y);
-  ctx.lineTo(BL.x, BL.y);
+  ctx.moveTo(levelTL.x, levelTL.y);
+  ctx.lineTo(levelTR.x, levelTR.y);
+  ctx.lineTo(levelBR.x, levelBR.y);
+  ctx.lineTo(levelBL.x, levelBL.y);
   ctx.closePath();
-  ctx.fillStyle = '#e7f5ff';
-  ctx.fill();
-  ctx.strokeStyle = '#1971c2';
-  ctx.lineWidth = 0.8 / sc;
   ctx.stroke();
   ctx.restore();
 
-  drawDeformArrow(ctx, BL, TL, pI_shift_top,    'left',   results.paredIzq, sc);
-  drawDeformArrow(ctx, TR, BR, pD_shift_top,    'right',  results.paredDer, sc);
-  drawDeformArrow(ctx, TL, TR, t_shift_left,    'top',    results.techo,    sc);
-  drawDeformArrow(ctx, BL, BR, p_shift_left,    'bottom', results.piso,     sc);
+  // Draw rough opening (solid blue shape)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(roughTL.x, roughTL.y);
+  ctx.lineTo(roughTR.x, roughTR.y);
+  ctx.lineTo(roughBR.x, roughBR.y);
+  ctx.lineTo(roughBL.x, roughBL.y);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(25, 113, 194, 0.08)';
+  ctx.fill();
+  ctx.strokeStyle = '#1971c2';
+  ctx.lineWidth = 2 / sc;
+  ctx.stroke();
+  ctx.restore();
 
-  drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
+  // ── draw desnivel arrows showing gap between level and rough ──
+  // Left edge: gap between level left edge and rough left edge
+  drawDesnivelArrow(ctx, levelTL, levelBL, roughTL, roughBL, 'left', results.paredIzq, sc);
+  // Right edge
+  drawDesnivelArrow(ctx, levelTR, levelBR, roughTR, roughBR, 'right', results.paredDer, sc);
+  // Top edge
+  drawDesnivelArrow(ctx, levelTL, levelTR, roughTL, roughTR, 'top', results.techo, sc);
+  // Bottom edge
+  drawDesnivelArrow(ctx, levelBL, levelBR, roughBL, roughBR, 'bottom', results.piso, sc);
 
-  // ── dimension labels ──
-  // Only show the base dimensions, not text inserts. The desnivel is shown visually by arrows.
-  if (ancho > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 22, gr.x + gr.w, gr.y + gr.h + 22, toFracStr(ancho), sc);
-  if (alto  > 0) drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto),  sc, true);
+  // ── step highlight ──
+  drawStepHighlight(ctx, roughTL, roughTR, roughBL, roughBR, currentStep, sc);
+
+  // ── dimension labels for base measurements ──
+  if (anchoBot > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 28, gr.x + gr.w, gr.y + gr.h + 28, toFracStr(anchoBot), sc);
+  if (altoIzq  > 0) drawDimLine(ctx, gr.x - 28, gr.y, gr.x - 28, gr.y + gr.h, toFracStr(altoIzq),  sc, true);
 
   ctx.restore();
   ctx.restore();
@@ -598,60 +639,76 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {
   ctx.restore();
 }
 
-function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
-  const visualShift = Math.abs(shiftPx);
-  const MIN_VISUAL = 0.5 / scale;
-  if (visualShift < MIN_VISUAL) return;
-
+function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result, scale) {
   const HAS_DESNIVEL = (result && result.val > 0);
   const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
-  const ARROW_HEAD = 10 / scale;
-  const fs = 13 / scale;
+  const ARROW_HEAD = 8 / scale;
+  const fs = 12 / scale;
+  const PAD = 18 / scale;
 
   ctx.save();
 
-  // Dashed reference line = where the edge WOULD be if perfectly level
-  ctx.save();
-  ctx.setLineDash([4/scale, 4/scale]);
-  ctx.strokeStyle = '#adb5bd';
-  ctx.lineWidth = 1.2 / scale;
-  ctx.beginPath();
-  if (side === 'left' || side === 'right') {
-    ctx.moveTo(pAnchor.x, pAnchor.y);
-    ctx.lineTo(pAnchor.x, pShifted.y);
-  } else {
-    ctx.moveTo(pAnchor.x, pAnchor.y);
-    ctx.lineTo(pShifted.x, pAnchor.y);
+  // Compute the offset at the "active" end of the edge
+  // For vertical edges (left/right): offset is horizontal at the TOP
+  // For horizontal edges (top/bottom): offset is vertical at the RIGHT
+  let offsetPx, arrowX, arrowY, labelX, labelY;
+
+  if (side === 'left') {
+    // Left edge: offset at top = roughTL.x - levelTL.x
+    offsetPx = roughP1.x - levelP1.x;
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.3; // arrow near top
+    arrowX = levelP1.x;
+    labelX = Math.min(levelP1.x, roughP1.x) - PAD;
+    labelY = arrowY;
+  } else if (side === 'right') {
+    // Right edge: offset at top = roughTR.x - levelTR.x
+    offsetPx = roughP1.x - levelP1.x;
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.3;
+    arrowX = levelP1.x;
+    labelX = Math.max(levelP1.x, roughP1.x) + PAD;
+    labelY = arrowY;
+  } else if (side === 'top') {
+    // Top edge: offset at right = roughTR.y - levelTR.y
+    offsetPx = roughP2.y - levelP2.y;
+    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.7; // arrow near right
+    arrowY = levelP1.y;
+    labelX = arrowX;
+    labelY = Math.min(levelP1.y, roughP1.y) - PAD;
+  } else { // bottom
+    // Bottom edge: offset at right = roughBR.y - levelBR.y
+    offsetPx = roughP2.y - levelP2.y;
+    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.7;
+    arrowY = levelP1.y;
+    labelX = arrowX;
+    labelY = Math.max(levelP1.y, roughP1.y) + PAD;
   }
-  ctx.stroke();
-  ctx.restore();
 
-  // Solid arrow showing actual displacement from level to actual
-  let ax1, ay1, ax2, ay2;
-
-  if (side === 'left' || side === 'right') {
-    const yTop = Math.min(pAnchor.y, pShifted.y);
-    ax1 = pAnchor.x;
-    ay1 = yTop;
-    ax2 = pShifted.x;
-    ay2 = yTop;
-  } else {
-    const xRight = Math.max(pAnchor.x, pShifted.x);
-    ax1 = xRight;
-    ay1 = pAnchor.y;
-    ax2 = xRight;
-    ay2 = pShifted.y;
+  const MIN_VISUAL = 0.5 / scale;
+  if (Math.abs(offsetPx) < MIN_VISUAL && !HAS_DESNIVEL) {
+    ctx.restore();
+    return;
   }
 
-  if (Math.abs(shiftPx) > 1 / scale) {
+  // Draw arrow from level position to rough position
+  if (Math.abs(offsetPx) > MIN_VISUAL) {
+    let ax2, ay2;
+    if (side === 'left' || side === 'right') {
+      ax2 = arrowX + offsetPx;
+      ay2 = arrowY;
+    } else {
+      ax2 = arrowX;
+      ay2 = arrowY + offsetPx;
+    }
+
     ctx.beginPath();
-    ctx.moveTo(ax1, ay1);
+    ctx.moveTo(arrowX, arrowY);
     ctx.lineTo(ax2, ay2);
     ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 2 / scale;
+    ctx.lineWidth = 1.8 / scale;
     ctx.stroke();
 
-    const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
+    // Arrowhead
+    const angle = Math.atan2(ay2 - arrowY, ax2 - arrowX);
     ctx.beginPath();
     ctx.moveTo(ax2, ay2);
     ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.5), ay2 - ARROW_HEAD * Math.sin(angle - 0.5));
@@ -659,21 +716,17 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ctx.closePath();
     ctx.fillStyle = COLOR;
     ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 0.8 / scale;
-    ctx.stroke();
   }
 
+  // Label
   if (HAS_DESNIVEL) {
     ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
     ctx.fillStyle = COLOR;
-    const midX = (ax1 + ax2) / 2;
-    const midY = (ay1 + ay2) / 2;
-    const labelPad = 22 / scale;
-    if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.min(ax1, ax2) - labelPad, midY); }
-    if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.max(ax1, ax2) + labelPad, midY); }
-    if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(result.label, midX, Math.min(ay1, ay2) - labelPad); }
-    if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    ctx.fillText(result.label, midX, Math.max(ay1, ay2) + labelPad); }
+    if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; }
+    if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; }
+    if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; }
+    if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    }
+    ctx.fillText(result.label, labelX, labelY);
   }
 
   ctx.restore();
