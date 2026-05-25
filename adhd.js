@@ -144,15 +144,18 @@ function calcDesnivel_wall(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const dir = diff > 0 ? 'SUBE DER' : 'BAJA DER';
-  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
+  // diff > 0: left is further from laser = left is LOWER = offset is DOWN on left
+  // diff < 0: right is further from laser = right is LOWER = offset is DOWN on right = UP on left
+  const leftIsLower = diff > 0;
+  const dir = leftIsLower ? 'ABAJO' : 'ARRIBA';
+  return { val: val, dir: dir, label: toFracStr(val) + '" ' + dir, raw: diff };
 }
 
 function recalcAll() {
@@ -653,6 +656,99 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {
 function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result, scale) {
   const HAS_DESNIVEL = (result && result.val > 0);
   const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
+  const fs = 12 / scale;
+  const PAD = 18 / scale;
+
+  ctx.save();
+
+  let offsetPx, arrowX, arrowY, labelX, labelY;
+
+  if (side === 'left') {
+    // Left wall: horizontal offset at top
+    offsetPx = roughP1.x - levelP1.x; // positive = rough is to the right = ADENTRO
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.25;
+    arrowX = levelP1.x;
+    labelX = Math.min(levelP1.x, roughP1.x) - PAD;
+    labelY = arrowY;
+  } else if (side === 'right') {
+    // Right wall: horizontal offset at top
+    offsetPx = roughP1.x - levelP1.x; // positive = rough is to the right (further out) = AFUERA
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.25;
+    arrowX = levelP1.x;
+    labelX = Math.max(levelP1.x, roughP1.x) + PAD;
+    labelY = arrowY;
+  } else if (side === 'top') {
+    // Ceiling: vertical offset at LEFT
+    offsetPx = roughP1.y - levelP1.y; // positive = rough is lower = ABAJO
+    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.25;
+    arrowY = levelP1.y;
+    labelX = arrowX;
+    labelY = Math.min(levelP1.y, roughP1.y) - PAD;
+  } else { // bottom
+    // Floor: vertical offset at LEFT
+    offsetPx = roughP1.y - levelP1.y; // positive = rough is lower = ABAJO
+    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.25;
+    arrowY = levelP1.y;
+    labelX = arrowX;
+    labelY = Math.max(levelP1.y, roughP1.y) + PAD;
+  }
+
+  const MIN_VISUAL = 0.5 / scale;
+  if (Math.abs(offsetPx) < MIN_VISUAL && !HAS_DESNIVEL) {
+    ctx.restore();
+    return;
+  }
+
+  // Draw line from level to rough
+  if (Math.abs(offsetPx) > MIN_VISUAL) {
+    let ax2, ay2;
+    if (side === 'left' || side === 'right') {
+      ax2 = arrowX + offsetPx;
+      ay2 = arrowY;
+    } else {
+      ax2 = arrowX;
+      ay2 = arrowY + offsetPx;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(arrowX, arrowY);
+    ctx.lineTo(ax2, ay2);
+    ctx.strokeStyle = COLOR;
+    ctx.lineWidth = 1.8 / scale;
+    ctx.stroke();
+
+    // Small tick at the rough end
+    const tickLen = 4 / scale;
+    ctx.strokeStyle = COLOR;
+    ctx.lineWidth = 1.5 / scale;
+    if (side === 'left' || side === 'right') {
+      ctx.beginPath();
+      ctx.moveTo(ax2, ay2 - tickLen);
+      ctx.lineTo(ax2, ay2 + tickLen);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(ax2 - tickLen, ay2);
+      ctx.lineTo(ax2 + tickLen, ay2);
+      ctx.stroke();
+    }
+  }
+
+  // Label
+  if (HAS_DESNIVEL) {
+    ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
+    ctx.fillStyle = COLOR;
+    if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; }
+    if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; }
+    if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; }
+    if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    }
+    ctx.fillText(result.label, labelX, labelY);
+  }
+
+  ctx.restore();
+}function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result, scale) {
+  const HAS_DESNIVEL = (result && result.val > 0);
+  const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
   const ARROW_HEAD = 8 / scale;
   const fs = 12 / scale;
   const PAD = 18 / scale;
@@ -718,46 +814,19 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
     ctx.lineWidth = 1.8 / scale;
     ctx.stroke();
 
-    // Arrowhead
-    const angle = Math.atan2(ay2 - arrowY, ax2 - arrowX);
-    ctx.beginPath();
-    ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.5), ay2 - ARROW_HEAD * Math.sin(angle - 0.5));
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.5), ay2 - ARROW_HEAD * Math.sin(angle + 0.5));
-    ctx.closePath();
-    ctx.fillStyle = COLOR;
-    ctx.fill();
-  }
-
-  // Label
-  if (HAS_DESNIVEL) {
-    ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
-    ctx.fillStyle = COLOR;
-    if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; }
-    if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; }
-    if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; }
-    if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    }
-    ctx.fillText(result.label, labelX, labelY);
-  }
-
-  ctx.restore();
-}
-
-function drawStepHighlight(ctx, TL, TR, BL, BR, step, scale) {
-  if (step === 0 || step === 5) return;
-  ctx.save();
-  ctx.strokeStyle = '#1971c2';
-  ctx.lineWidth = 2 / scale;
-  ctx.shadowColor = 'rgba(25, 113, 194, 0.4)';
-  ctx.shadowBlur  = 6 / scale;
-  ctx.lineCap = 'round';
-
-  ctx.beginPath();
-  if (step === 1) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(TL.x, TL.y); }
-  if (step === 2) { ctx.moveTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); }
-  if (step === 3) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); }
-  if (step === 4) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(BR.x, BR.y); }
-  ctx.stroke();
+        // Small tick mark at the end (no arrowhead)
+    const tickLen = 4 / scale;
+    if (side === 'left' || side === 'right') {
+      ctx.beginPath();
+      ctx.moveTo(ax2, ay2 - tickLen);
+      ctx.lineTo(ax2, ay2 + tickLen);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(ax2 - tickLen, ay2);
+      ctx.lineTo(ax2 + tickLen, ay2);
+      ctx.stroke();
+    }
   ctx.restore();
 }
 
@@ -912,7 +981,7 @@ canvas.addEventListener('touchmove', function(e) {
     const rect = canvas.getBoundingClientRect();
     const cx   = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
     const cy   = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
-    applyZoom(cx, cy, dist / lastPinchDist);
+    applyZoom(cx, cy, 1 + (dist / lastPinchDist - 1) * 0.3);
     lastPinchDist = dist;
   }
 }, { passive: false });
@@ -926,7 +995,7 @@ canvas.addEventListener('touchend', function(e) {
 canvas.addEventListener('wheel', function(e) {
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
-  applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 0.88);
+  applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
 }, { passive: false });
 
 // reset zoom button
