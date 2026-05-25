@@ -16,7 +16,6 @@ function setVal(wholeId, fracId, decimal) {
   const fracEl = document.getElementById(fracId);
   if (wholeEl) wholeEl.value = whole || '';
   if (fracEl) {
-    // Find the closest fraction option
     const options = Array.from(fracEl.options);
     let closest = options[0];
     let minDiff = Infinity;
@@ -47,7 +46,7 @@ function toFracStr(decimal) {
 // ─── STEP STATE ────────────────────────────────────────────────────────────
 let currentStep = 0;
 const TOTAL_STEPS = 5;
-let _historyPushed = 0; // track how many history entries we pushed
+let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
   if (leavingStep === 1) {
@@ -81,10 +80,10 @@ function getLingerView(leavingStep) {
   return null;
 }
 
-function goStep(n, skipHistory = false) {
+function goStep(n, skipHistory) {
   const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById(`step-${n}`)?.classList.add('active');
+  document.getElementById('step-' + n)?.classList.add('active');
   currentStep = n;
   document.getElementById('step-num').textContent = n;
   const pct = (n / TOTAL_STEPS) * 100;
@@ -92,9 +91,8 @@ function goStep(n, skipHistory = false) {
   recalcAll();
   if (n === TOTAL_STEPS) renderSummary();
 
-  // Push history state for back button support
   if (!skipHistory) {
-    history.pushState({ step: n }, '', `#step-${n}`);
+    history.pushState({ step: n }, '', '#step-' + n);
     _historyPushed++;
   }
 
@@ -118,23 +116,15 @@ function goStep(n, skipHistory = false) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function nextStep() {
-  if (currentStep < TOTAL_STEPS) goStep(currentStep + 1);
-}
+function nextStep() { if (currentStep < TOTAL_STEPS) goStep(currentStep + 1); }
+function prevStep() { if (currentStep > 0)           goStep(currentStep - 1); }
 
-function prevStep() {
-  if (currentStep > 0) goStep(currentStep - 1);
-}
-
-// Handle browser back/forward buttons
-window.addEventListener('popstate', (e) => {
-  // If there's a state with step info, navigate to it
+window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {
     const targetStep = e.state.step;
     if (targetStep >= 0 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
-      // Don't push history again when handling popstate
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-      document.getElementById(`step-${targetStep}`)?.classList.add('active');
+      document.getElementById('step-' + targetStep)?.classList.add('active');
       currentStep = targetStep;
       document.getElementById('step-num').textContent = targetStep;
       const pct = (targetStep / TOTAL_STEPS) * 100;
@@ -154,7 +144,7 @@ function calcDesnivel_wall(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val, dir, label: `${toFracStr(val)} ${dir}`, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
@@ -162,7 +152,7 @@ function calcDesnivel_horiz(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'SUBE DER' : 'BAJA DER';
-  return { val, dir, label: `${toFracStr(val)} ${dir}`, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
 }
 
 function recalcAll() {
@@ -185,7 +175,6 @@ function recalcAll() {
   updatePill('desn-techo',     results.techo);
   updatePill('desn-piso',      results.piso);
 
-  // Calculate derived hueco measurements from base + desniveles
   calcDerivedHueco();
 
   showDerivedNote('derived-pared-der-note', results.paredIzq, results.paredDer,
@@ -196,7 +185,6 @@ function recalcAll() {
   drawCanvas();
 }
 
-// NEW: Calculate top width and right height from base measurements + desniveles
 function calcDerivedHueco() {
   const anchoBot = readVal('hueco-ancho-bot-whole', 'hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
@@ -209,51 +197,37 @@ function calcDerivedHueco() {
   const p_A  = readVal('p-a-whole',  'p-a-frac');
   const p_B  = readVal('p-b-whole',  'p-b-frac');
 
-  // Only calculate if we have base measurements
   if (anchoBot <= 0 || altoIzq <= 0) return;
 
   let anchoTop = anchoBot;
   let altoDer = altoIzq;
 
-  // Adjust top width based on wall desniveles
-  // If left wall leans in (ADENTRO = pI_A > pI_B), top is narrower
-  // If right wall leans in (ADENTRO = pD_A > pD_B), top is narrower
   if (pI_A > 0 && pI_B > 0) {
-    const pI_raw = pI_A - pI_B; // positive = adentro = top shifts right = width decreases
+    const pI_raw = pI_A - pI_B;
     anchoTop -= pI_raw;
   }
   if (pD_A > 0 && pD_B > 0) {
-    const pD_raw = pD_A - pD_B; // positive = adentro = top shifts left = width decreases
+    const pD_raw = pD_A - pD_B;
     anchoTop -= pD_raw;
   }
-
-  // Adjust right height based on ceiling/floor desniveles
-  // If ceiling slopes down right (t_A > t_B = SUBE DER), right side is lower = taller
-  // If floor slopes down right (p_A > p_B = BAJA DER), right side is lower = taller... wait
-  // t_A = laser-to-ceiling-left, t_B = laser-to-ceiling-right
-  // t_A > t_B means left ceiling is further = left side is lower = right side is higher = right height is SHORTER
   if (t_A > 0 && t_B > 0) {
-    const t_raw = t_A - t_B; // positive = left lower = right higher = right height decreases
+    const t_raw = t_A - t_B;
     altoDer -= t_raw;
   }
   if (p_A > 0 && p_B > 0) {
-    const p_raw = p_A - p_B; // positive = left lower = right higher = right height decreases... wait
-    // p_A = laser-to-floor-left, p_B = laser-to-floor-right
-    // p_A > p_B means left floor is further = left side is higher = right side is lower = right height SHORTER
+    const p_raw = p_A - p_B;
     altoDer -= p_raw;
   }
 
-  // Update the calculated fields
   if (anchoTop > 0) setVal('hueco-ancho-top-whole', 'hueco-ancho-top-frac', anchoTop);
   if (altoDer > 0) setVal('hueco-alto-der-whole', 'hueco-alto-der-frac', altoDer);
 
-  // Show note about derived values
   const noteEl = document.getElementById('derived-hueco-note');
   if (noteEl) {
     const hasAnyDesnivel = (pI_A > 0 && pI_B > 0) || (pD_A > 0 && pD_B > 0) || (t_A > 0 && t_B > 0) || (p_A > 0 && p_B > 0);
     if (hasAnyDesnivel) {
       noteEl.style.display = 'block';
-      noteEl.innerHTML = `Ancho arriba: <strong>${toFracStr(anchoTop)}"</strong> · Alto derecha: <strong>${toFracStr(altoDer)}"</strong> (calculado)`;
+      noteEl.innerHTML = 'Ancho arriba: <strong>' + toFracStr(anchoTop) + '"</strong> &middot; Alto derecha: <strong>' + toFracStr(altoDer) + '"</strong> (calculado)';
     } else {
       noteEl.style.display = 'none';
     }
@@ -290,7 +264,7 @@ function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
   if (referenceResult && referenceResult.val > 0 && !hasBoth) {
     autofillFromReference(aId, bId, referenceResult);
     el.style.display = 'block';
-    el.innerHTML = '⟳ Autocompletado desde el opuesto: <strong>' + referenceResult.label + '</strong> — confirma con láser antes de continuar';
+    el.innerHTML = '&#x27F3; Autocompletado desde el opuesto: <strong>' + referenceResult.label + '</strong> — confirma con láser antes de continuar';
   } else {
     el.style.display = 'none';
   }
@@ -315,8 +289,6 @@ function runValidation() {
   const p_A  = readVal('p-a-whole', 'p-a-frac'),  p_B  = readVal('p-b-whole', 'p-b-frac');
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
-  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
   const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
   if (!anyEntered) return [];
 
@@ -324,13 +296,13 @@ function runValidation() {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
     if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push(`⚠ Paredes no cuadran — diferencia: ${toFracStr(Math.abs(offsetIzq - offsetDer))}" → revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B`);
+      warnings.push('⚠ Paredes no cuadran — diferencia: ' + toFracStr(Math.abs(offsetIzq - offsetDer)) + '" → revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B');
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
     if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push(`⚠ Arriba/Abajo no cuadran — diferencia: ${toFracStr(Math.abs(offsetTecho - offsetPiso))}" → vuelve a medir arriba y abajo en los mismos puntos de referencia`);
+      warnings.push('⚠ Arriba/Abajo no cuadran — diferencia: ' + toFracStr(Math.abs(offsetTecho - offsetPiso)) + '" → vuelve a medir arriba y abajo en los mismos puntos de referencia');
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
@@ -406,12 +378,12 @@ function renderValidation() {
     el.textContent = '✓ Medidas OK';
     el.className = 'val-ok';
   } else {
-    el.innerHTML = warnings.map((w, i) =>
-      `<div style="margin-bottom:6px">${w} <button data-widx="${i}" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>`
-    ).join('');
+    el.innerHTML = warnings.map(function(w, i) {
+      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>';
+    }).join('');
     el.className = 'val-warn';
-    el.querySelectorAll('.arreglar-btn').forEach(btn => {
-      btn.addEventListener('click', () => autoFix(_lastWarnings[+btn.dataset.widx] || ''));
+    el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { autoFix(_lastWarnings[+btn.dataset.widx] || ''); });
     });
   }
 }
@@ -422,8 +394,8 @@ function renderSummary() {
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
   const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
-  const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-  set('res-area',      `${anchoBot > 0 ? toFracStr(anchoBot) : '—'} × ${altoIzq > 0 ? toFracStr(altoIzq) : '—'} (base)`);
+  const set = function(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; };
+  set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—') + ' (base)');
   set('res-pared-izq', results.paredIzq?.label || '—');
   set('res-pared-der', results.paredDer?.label || '—');
   set('res-techo',     results.techo?.label    || '—');
@@ -435,17 +407,14 @@ function renderSummary() {
 function showShare() {
   const warnings = runValidation();
   if (warnings.length > 0) {
-    const ok = confirm('Hay advertencias en las medidas:
-
-' + warnings.join('
-') + '
-
-¿Continuar de todas formas?');
+    const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n¿Continuar de todas formas?');
     if (!ok) return;
   }
   const block = document.getElementById('share-block');
-  block?.classList.remove('hidden');
-  setTimeout(() => block?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 50);
+  if (block) block.classList.remove('hidden');
+  setTimeout(function() {
+    if (block) block.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, 50);
   _saveCurrentJob(warnings);
 }
 
@@ -457,7 +426,7 @@ function _saveCurrentJob(warnings) {
   const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
   const notas = document.getElementById('notas-field')?.value || '';
   const jobData = {
-    hueco: { anchoBot, altoIzq, anchoTop, altoDer },
+    hueco: { anchoBot: anchoBot, altoIzq: altoIzq, anchoTop: anchoTop, altoDer: altoDer },
     desniveles: {
       paredIzq: results.paredIzq?.label || null,
       paredDer: results.paredDer?.label || null,
@@ -465,20 +434,14 @@ function _saveCurrentJob(warnings) {
       piso:     results.piso?.label     || null,
     },
     warnings: warnings || [],
-    notas
+    notas: notas
   };
-  window.saveJobToFirestore(jobData).then(() => {
+  window.saveJobToFirestore(jobData).then(function() {
     const el = document.getElementById('save-status');
-    if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 4000); }
+    if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
     overlay.innerHTML = '☁️ Guardado en la nube';
-    overlay.style.cssText = `
-      position:fixed; inset:0; z-index:9999;
-      background:rgba(25,135,84,0.92); color:#fff;
-      display:flex; align-items:center; justify-content:center;
-      font-size:28px; font-weight:700; letter-spacing:0.02em;
-      animation: fadeInOut 2.2s ease forwards;
-    `;
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(25,135,84,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; letter-spacing:0.02em; animation: fadeInOut 2.2s ease forwards;';
     if (!document.getElementById('nube-anim-style')) {
       const style = document.createElement('style');
       style.id = 'nube-anim-style';
@@ -486,20 +449,14 @@ function _saveCurrentJob(warnings) {
       document.head.appendChild(style);
     }
     document.body.appendChild(overlay);
-    setTimeout(() => overlay.remove(), 2200);
-  }).catch(e => {
+    setTimeout(function() { overlay.remove(); }, 2200);
+  }).catch(function(e) {
     console.error('[Nivelato] save failed:', e);
     const overlay = document.createElement('div');
     overlay.innerHTML = '⚠️ Error al guardar';
-    overlay.style.cssText = `
-      position:fixed; inset:0; z-index:9999;
-      background:rgba(220,53,69,0.92); color:#fff;
-      display:flex; align-items:center; justify-content:center;
-      font-size:28px; font-weight:700;
-      animation: fadeInOut 2.2s ease forwards;
-    `;
+    overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; animation: fadeInOut 2.2s ease forwards;';
     document.body.appendChild(overlay);
-    setTimeout(() => overlay.remove(), 2200);
+    setTimeout(function() { overlay.remove(); }, 2200);
   });
 }
 
@@ -512,22 +469,21 @@ function buildShareText() {
   const warnings = runValidation();
   const lines = [
     'NIVELATO — MEDIDAS',
-    `HUECO BASE: ${anchoBot > 0 ? toFracStr(anchoBot) : '—'} × ${altoIzq > 0 ? toFracStr(altoIzq) : '—'}`,
-    `HUECO CALC: ${anchoTop > 0 ? toFracStr(anchoTop) : '—'} × ${altoDer > 0 ? toFracStr(altoDer) : '—'}`,
+    'HUECO BASE: ' + (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—'),
+    'HUECO CALC: ' + (anchoTop > 0 ? toFracStr(anchoTop) : '—') + ' × ' + (altoDer > 0 ? toFracStr(altoDer) : '—'),
     '─────────────────',
-    `ARRIBA:    ${results.techo?.label    || '—'}`,
-    `ABAJO:     ${results.piso?.label     || '—'}`,
-    `PARED IZQ: ${results.paredIzq?.label || '—'}`,
-    `PARED DER: ${results.paredDer?.label || '—'}`,
+    'ARRIBA:    ' + (results.techo?.label    || '—'),
+    'ABAJO:     ' + (results.piso?.label     || '—'),
+    'PARED IZQ: ' + (results.paredIzq?.label || '—'),
+    'PARED DER: ' + (results.paredDer?.label || '—'),
   ];
-  if (warnings.length > 0) { lines.push('─────────────────'); warnings.forEach(w => lines.push(`⚠ ${w}`)); }
-  if (notas) lines.push(`NOTAS: ${notas}`);
-  return lines.join('
-');
+  if (warnings.length > 0) { lines.push('─────────────────'); warnings.forEach(function(w) { lines.push('⚠ ' + w); }); }
+  if (notas) lines.push('NOTAS: ' + notas);
+  return lines.join('\n');
 }
 
-function shareViaSMS()      { window.location.href = `sms:?body=${encodeURIComponent(buildShareText())}`; }
-function shareViaWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(buildShareText())}`, '_blank'); }
+function shareViaSMS()      { window.location.href = 'sms:?body=' + encodeURIComponent(buildShareText()); }
+function shareViaWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank'); }
 
 // ─── CANVAS ENGINE ─────────────────────────────────────────────────────────
 const canvas  = document.getElementById('drawing-canvas');
@@ -558,7 +514,6 @@ const STEP_VIEWS = [
 function getGlassRect() {
   const W = canvas.width  / window.devicePixelRatio;
   const H = canvas.height / window.devicePixelRatio;
-  // FIX: use the correct IDs that actually exist in the HTML
   const ancho = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
   const alto  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 36;
   const aspect = ancho / alto;
@@ -634,7 +589,6 @@ function drawCanvas() {
   const gr  = getGlassRect();
   const sc  = vp.scale;
 
-  // ── read raw values ──
   const anchoBot_c = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const anchoTop_c = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac') || 0;
   const altoIzq_c  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
@@ -649,42 +603,28 @@ function drawCanvas() {
   const p_A    = readVal('p-a-whole', 'p-a-frac');
   const p_B    = readVal('p-b-whole', 'p-b-frac');
 
-  // ── compute pixel offset for each corner based on desnivelation ──
   const EXAG = gr.w * 0.18;
-  const clamp = (v, lim) => Math.max(-lim, Math.min(lim, v));
+  const clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
 
   const pIMax = Math.max(pI_A, pI_B, 1);
   const pDMax = Math.max(pD_A, pD_B, 1);
   const tMax  = Math.max(t_A,  t_B,  1);
   const pMax  = Math.max(p_A,  p_B,  1);
 
-  // left wall: pI_A vs pI_B. positive diff = bottom further out = top shifts inward (right)
   const pI_shift_top    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
   const pI_shift_bottom = 0;
-
-  // right wall: pD_A vs pD_B. positive diff = bottom further out = top shifts inward (left)
   const pD_shift_top    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
   const pD_shift_bottom = 0;
-
-  // ceiling: t_A vs t_B. positive diff = left further = left corner shifts down
   const t_shift_left  = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
   const t_shift_right = 0;
-
-  // floor: p_A vs p_B. positive diff = left further = left corner shifts up
-  // FIX: this was the bug — piso desnivel arrows weren't showing because
-  // the shift was being calculated but the arrow drawing logic had issues.
-  // The actual fix is in drawDeformArrow — it was checking result.val === 0
-  // but we also need to make sure the shift magnitude is visible.
   const p_shift_left  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
   const p_shift_right = 0;
 
-  // ── compute the 4 corners of the deformed glass ──
   const TL = { x: gr.x + pI_shift_top,    y: gr.y + t_shift_left  };
   const TR = { x: gr.x + gr.w + pD_shift_top,    y: gr.y + t_shift_right };
   const BR = { x: gr.x + gr.w + pD_shift_bottom, y: gr.y + gr.h + p_shift_right };
   const BL = { x: gr.x + pI_shift_bottom, y: gr.y + gr.h + p_shift_left };
 
-  // ── draw deformed glass shape ──
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(TL.x, TL.y);
@@ -699,34 +639,24 @@ function drawCanvas() {
   ctx.stroke();
   ctx.restore();
 
-  // ── draw desnivel arrows on each edge ──
-  // FIX: draw all four edges explicitly, including floor (bottom)
   drawDeformArrow(ctx, BL, TL, pI_shift_top,    'left',   results.paredIzq, sc);
   drawDeformArrow(ctx, TR, BR, pD_shift_top,    'right',  results.paredDer, sc);
   drawDeformArrow(ctx, TL, TR, t_shift_left,    'top',    results.techo,    sc);
   drawDeformArrow(ctx, BL, BR, p_shift_left,    'bottom', results.piso,     sc);
 
-  // ── step highlight ──
   drawStepHighlight(ctx, TL, TR, BL, BR, currentStep, sc);
 
   // ── dimension labels ──
-  // FIX: show all 4 dimensions when on step 0 or 5
-  if (currentStep === 0 || currentStep === 5) {
-    if (anchoTop_c > 0) drawDimLine(ctx, gr.x, gr.y - 22, gr.x + gr.w, gr.y - 22, toFracStr(anchoTop_c), sc);
-    if (anchoBot_c > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 22, gr.x + gr.w, gr.y + gr.h + 22, toFracStr(anchoBot_c), sc);
-    if (altoIzq_c > 0)  drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(altoIzq_c),  sc, true);
-    if (altoDer_c > 0)  drawDimLine(ctx, gr.x + gr.w + 22, gr.y, gr.x + gr.w + 22, gr.y + gr.h, toFracStr(altoDer_c),  sc, true);
-  } else {
-    // On measurement steps, show the relevant dimension
-    if (ancho > 0) drawDimLine(ctx, gr.x, gr.y - 22, gr.x + gr.w, gr.y - 22, toFracStr(ancho), sc);
-    if (alto  > 0) drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto),  sc, true);
-  }
+  // Only show the base dimensions, not text inserts. The desnivel is shown visually by arrows.
+  if (ancho > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 22, gr.x + gr.w, gr.y + gr.h + 22, toFracStr(ancho), sc);
+  if (alto  > 0) drawDimLine(ctx, gr.x - 22, gr.y, gr.x - 22, gr.y + gr.h, toFracStr(alto),  sc, true);
 
   ctx.restore();
   ctx.restore();
 }
 
-function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
+function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {
+  vertical = vertical || false;
   const tickLen = 6 / scale;
   ctx.save();
   ctx.strokeStyle = '#adb5bd';
@@ -744,7 +674,7 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
     ctx.beginPath(); ctx.moveTo(x2 - tickLen, y2); ctx.lineTo(x2 + tickLen, y2); ctx.stroke();
   }
   ctx.fillStyle = '#495057';
-  ctx.font = `bold ${12 / scale}px Inter, system-ui, sans-serif`;
+  ctx.font = 'bold ' + (12 / scale) + 'px Inter, system-ui, sans-serif';
   if (!vertical) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     ctx.fillText(label, (x1 + x2) / 2, y1 - 2 / scale);
@@ -759,18 +689,12 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical = false) {
 }
 
 function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
-  // FIX: always draw if there's any shift, even if result says NIVEL
-  // The issue was that result.val === 0 for NIVEL, but we still want to show
-  // the deformation visually even when it's within tolerance.
-  // Actually, let me be smarter: draw if shift is visually significant.
   const visualShift = Math.abs(shiftPx);
-  const MIN_VISUAL = 1 / scale; // at least 1 pixel at current zoom
-
+  const MIN_VISUAL = 1 / scale;
   if (visualShift < MIN_VISUAL) return;
 
-  const COLOR = result && result.val > 0 ? '#e67700' : '#868e96'; // orange for desnivel, gray for nivel
+  const COLOR = (result && result.val > 0) ? '#e67700' : '#868e96';
   const ARROW_HEAD = 14 / scale;
-  const ARROW_WIDTH = 4 / scale;
   const fs = 14 / scale;
 
   ctx.save();
@@ -791,7 +715,6 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ax2 = xPos; ay2 = pAnchor.y;
   }
 
-  // dashed reference line
   ctx.save();
   ctx.setLineDash([3/scale, 3/scale]);
   ctx.strokeStyle = '#adb5bd';
@@ -807,7 +730,6 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   ctx.stroke();
   ctx.restore();
 
-  // solid arrow from ideal to shifted
   if (Math.abs(shiftPx) > 2 / scale) {
     ctx.beginPath();
     ctx.moveTo(ax1, ay1);
@@ -829,9 +751,8 @@ function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
     ctx.fill();
   }
 
-  // label
   if (result && result.val > 0) {
-    ctx.font = `bold ${fs}px Inter, system-ui, sans-serif`;
+    ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
     ctx.fillStyle = COLOR;
     const midX = (ax1 + ax2) / 2;
     const midY = (ay1 + ay2) / 2;
@@ -915,27 +836,27 @@ function blurField() {
 }
 
 // ─── WIRE UP INPUTS ────────────────────────────────────────────────────────
-document.addEventListener('input',  e => { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
-document.addEventListener('change', e => { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
+document.addEventListener('input',  function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
+document.addEventListener('change', function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
 
-document.addEventListener('focusin', e => {
+document.addEventListener('focusin', function(e) {
   const id = e.target.id;
   if (FIELD_VIEWS[id]) focusField(id);
 });
 
-document.addEventListener('focusout', e => {
+document.addEventListener('focusout', function(e) {
   const id = e.target.id;
   if (FIELD_VIEWS[id]) blurField();
 });
 
-document.addEventListener('mouseover', e => {
+document.addEventListener('mouseover', function(e) {
   const col = e.target.closest('.input-col');
   if (!col) return;
   const inp = col.querySelector('input[type="number"]');
   if (inp && FIELD_VIEWS[inp.id]) focusField(inp.id);
 });
 
-document.addEventListener('mouseout', e => {
+document.addEventListener('mouseout', function(e) {
   const col = e.target.closest('.input-col');
   if (!col) return;
   const related = e.relatedTarget;
@@ -949,14 +870,14 @@ let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let vpAtDrag  = { x: 0, y: 0 };
 
-canvas.addEventListener('mousedown', e => {
+canvas.addEventListener('mousedown', function(e) {
   if (e.button !== 0) return;
   isDragging = true;
   dragStart = { x: e.clientX, y: e.clientY };
   vpAtDrag  = { x: vp.x, y: vp.y };
   canvas.style.cursor = 'grabbing';
 });
-window.addEventListener('mousemove', e => {
+window.addEventListener('mousemove', function(e) {
   if (!isDragging) return;
   const dx = e.clientX - dragStart.x;
   const dy = e.clientY - dragStart.y;
@@ -965,7 +886,7 @@ window.addEventListener('mousemove', e => {
   userZoomed = true;
   drawCanvas();
 });
-window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'grab'; });
+window.addEventListener('mouseup', function() { isDragging = false; canvas.style.cursor = 'grab'; });
 canvas.style.cursor = 'grab';
 
 // ─── TOUCH + ZOOM HANDLING ───
@@ -985,7 +906,7 @@ function applyZoom(cx, cy, factor) {
   drawCanvas();
 }
 
-canvas.addEventListener('touchstart', e => {
+canvas.addEventListener('touchstart', function(e) {
   if (e.touches.length === 1) {
     touchDragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, vpx: vp.x, vpy: vp.y };
     lastPinchDist = null;
@@ -997,7 +918,7 @@ canvas.addEventListener('touchstart', e => {
   }
 }, { passive: false });
 
-canvas.addEventListener('touchmove', e => {
+canvas.addEventListener('touchmove', function(e) {
   e.preventDefault();
   if (e.touches.length === 1 && touchDragStart) {
     const dx = e.touches[0].clientX - touchDragStart.x;
@@ -1019,23 +940,22 @@ canvas.addEventListener('touchmove', e => {
   }
 }, { passive: false });
 
-canvas.addEventListener('touchend', e => {
+canvas.addEventListener('touchend', function(e) {
   if (e.touches.length === 0) { touchDragStart = null; lastPinchDist = null; }
   if (e.touches.length < 2)   { lastPinchDist = null; }
 }, { passive: true });
 
 // mouse wheel zoom
-canvas.addEventListener('wheel', e => {
+canvas.addEventListener('wheel', function(e) {
   e.preventDefault();
   const rect = canvas.getBoundingClientRect();
   applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 0.88);
 }, { passive: false });
 
 // reset zoom button
-window.resetZoom = () => { userZoomed = false; animateCanvas(currentStep); };
+window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 resizeCanvas();
-// Replace initial history state so back button works from step 0 too
 history.replaceState({ step: 0 }, '', '#step-0');
-goStep(0, true); // skipHistory=true because we just did replaceState
+goStep(0, true);
