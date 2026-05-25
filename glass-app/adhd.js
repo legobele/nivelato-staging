@@ -598,9 +598,20 @@ function drawCanvas() {
   // ── step highlight ──
   drawStepHighlight(ctx, roughTL, roughTR, roughBL, roughBR, currentStep, sc);
 
-  // ── dimension labels for base measurements ──
+  // ── dimension labels: show all 4 calculated measurements ──
+  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac') || anchoBot;
+  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac')  || altoIzq;
+
+  // Bottom width (base)
   if (anchoBot > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 28, gr.x + gr.w, gr.y + gr.h + 28, toFracStr(anchoBot), sc);
-  if (altoIzq  > 0) drawDimLine(ctx, gr.x - 28, gr.y, gr.x - 28, gr.y + gr.h, toFracStr(altoIzq),  sc, true);
+  // Top width (calculated)
+  if (anchoTop > 0 && anchoTop !== anchoBot) 
+    drawDimLine(ctx, gr.x, gr.y - 28, gr.x + gr.w, gr.y - 28, toFracStr(anchoTop), sc);
+  // Left height (base)
+  if (altoIzq > 0) drawDimLine(ctx, gr.x - 28, gr.y, gr.x - 28, gr.y + gr.h, toFracStr(altoIzq), sc, true);
+  // Right height (calculated)
+  if (altoDer > 0 && altoDer !== altoIzq) 
+    drawDimLine(ctx, gr.x + gr.w + 28, gr.y, gr.x + gr.w + 28, gr.y + gr.h, toFracStr(altoDer), sc, true);
 
   ctx.restore();
   ctx.restore();
@@ -668,16 +679,16 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
   } else if (side === 'top') {
-    // Top edge: offset at right = roughTR.y - levelTR.y
-    offsetPx = roughP2.y - levelP2.y;
-    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.7; // arrow near right
+    // Top edge: offset at LEFT = roughTL.y - levelTL.y
+    offsetPx = roughP1.y - levelP1.y;
+    arrowX = levelP1.x; // arrow at left
     arrowY = levelP1.y;
     labelX = arrowX;
     labelY = Math.min(levelP1.y, roughP1.y) - PAD;
   } else { // bottom
-    // Bottom edge: offset at right = roughBR.y - levelBR.y
-    offsetPx = roughP2.y - levelP2.y;
-    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.7;
+    // Bottom edge: offset at LEFT = roughBL.y - levelBL.y
+    offsetPx = roughP1.y - levelP1.y;
+    arrowX = levelP1.x; // arrow at left
     arrowY = levelP1.y;
     labelX = arrowX;
     labelY = Math.max(levelP1.y, roughP1.y) + PAD;
