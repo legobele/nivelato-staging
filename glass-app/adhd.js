@@ -81,6 +81,7 @@ function getLingerView(leavingStep) {
 }
 
 function goStep(n, skipHistory) {
+  userZoomed = false; // reset auto-focus on each step transition
   const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('step-' + n)?.classList.add('active');
@@ -173,12 +174,19 @@ function recalcAll() {
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   results.piso     = calcDesnivel_horiz(p_A, p_B);
 
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
+
+  // Computed dimensions from desniveles
+  // Top width = bottom width - left wall lean - right wall lean
+  // Right height = left height + ceiling tilt - floor tilt
+  results.anchoTop = anchoBot > 0 ? anchoBot - results.paredIzq.raw - results.paredDer.raw : 0;
+  results.altoDer  = altoIzq > 0  ? altoIzq + results.techo.raw - results.piso.raw : 0;
+
   updatePill('desn-pared-izq', results.paredIzq);
   updatePill('desn-pared-der', results.paredDer);
   updatePill('desn-techo',     results.techo);
   updatePill('desn-piso',      results.piso);
-
-
 
   drawCanvas();
 }
@@ -305,8 +313,8 @@ function renderValidation() {
 function renderSummary() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
-  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const anchoTop = results.anchoTop || 0;
+  const altoDer  = results.altoDer  || 0;
   const set = function(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; };
   set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—') + ' (base)');
   set('res-pared-izq', results.paredIzq?.label || '—');
@@ -335,8 +343,8 @@ function _saveCurrentJob(warnings) {
   if (typeof window.saveJobToFirestore !== 'function') return;
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
-  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const anchoTop = results.anchoTop || 0;
+  const altoDer  = results.altoDer  || 0;
   const notas = document.getElementById('notas-field')?.value || '';
   const jobData = {
     hueco: { anchoBot: anchoBot, altoIzq: altoIzq, anchoTop: anchoTop, altoDer: altoDer },
@@ -377,8 +385,8 @@ function buildShareText() {
   const notas    = document.getElementById('notas-field')?.value?.trim();
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac');
-  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac');
+  const anchoTop = results.anchoTop || 0;
+  const altoDer  = results.altoDer  || 0;
   const warnings = runValidation();
   const lines = [
     'NIVELATO — MEDIDAS',
@@ -601,9 +609,9 @@ function drawCanvas() {
   // ── step highlight ──
   drawStepHighlight(ctx, roughTL, roughTR, roughBL, roughBR, currentStep, sc);
 
-  // ── dimension labels: show all 4 calculated measurements ──
-  const anchoTop = readVal('hueco-ancho-top-whole','hueco-ancho-top-frac') || anchoBot;
-  const altoDer  = readVal('hueco-alto-der-whole', 'hueco-alto-der-frac')  || altoIzq;
+    // ── dimension labels: show all 4 calculated measurements ──
+  const anchoTop = results.anchoTop || anchoBot;
+  const altoDer  = results.altoDer  || altoIzq;
 
   // Bottom width (base)
   if (anchoBot > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 28, gr.x + gr.w, gr.y + gr.h + 28, toFracStr(anchoBot), sc);
@@ -734,6 +742,24 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
     }
+  }
+  ctx.restore();
+}
+
+// ── step highlight: glow the active edge ──
+function drawStepHighlight(ctx, TL, TR, BL, BR, step, sc) {
+  if (step === 0 || step === 5) return;
+  ctx.save();
+  ctx.strokeStyle = '#f59f00';
+  ctx.lineWidth = 4 / sc;
+  ctx.shadowColor = '#f59f00';
+  ctx.shadowBlur = 8 / sc;
+  ctx.beginPath();
+  if (step === 1) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(BL.x, BL.y); }
+  else if (step === 2) { ctx.moveTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); }
+  else if (step === 3) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); }
+  else if (step === 4) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(BR.x, BR.y); }
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -908,7 +934,6 @@ canvas.addEventListener('wheel', function(e) {
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
-}
 // ─── INIT ──────────────────────────────────────────────────────────────────
 resizeCanvas();
 history.replaceState({ step: 0 }, '', '#step-0');
