@@ -175,99 +175,9 @@ function recalcAll() {
   updatePill('desn-techo',     results.techo);
   updatePill('desn-piso',      results.piso);
 
-  calcDerivedHueco();
 
-  showDerivedNote('derived-pared-der-note', results.paredIzq, results.paredDer,
-    'pD-a-whole', 'pD-b-whole');
-  showDerivedNote('derived-piso-note', results.techo, results.piso,
-    'p-a-whole', 'p-b-whole');
 
   drawCanvas();
-}
-
-function calcDerivedHueco() {
-  const anchoBot = readVal('hueco-ancho-bot-whole', 'hueco-ancho-bot-frac');
-  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const pI_A = readVal('pI-a-whole', 'pI-a-frac');
-  const pI_B = readVal('pI-b-whole', 'pI-b-frac');
-  const pD_A = readVal('pD-a-whole', 'pD-a-frac');
-  const pD_B = readVal('pD-b-whole', 'pD-b-frac');
-  const t_A  = readVal('t-a-whole',  't-a-frac');
-  const t_B  = readVal('t-b-whole',  't-b-frac');
-  const p_A  = readVal('p-a-whole',  'p-a-frac');
-  const p_B  = readVal('p-b-whole',  'p-b-frac');
-
-  if (anchoBot <= 0 || altoIzq <= 0) return;
-
-  let anchoTop = anchoBot;
-  let altoDer = altoIzq;
-
-  if (pI_A > 0 && pI_B > 0) {
-    const pI_raw = pI_A - pI_B;
-    anchoTop -= pI_raw;
-  }
-  if (pD_A > 0 && pD_B > 0) {
-    const pD_raw = pD_A - pD_B;
-    anchoTop -= pD_raw;
-  }
-  if (t_A > 0 && t_B > 0) {
-    const t_raw = t_A - t_B;
-    altoDer -= t_raw;
-  }
-  if (p_A > 0 && p_B > 0) {
-    const p_raw = p_A - p_B;
-    altoDer -= p_raw;
-  }
-
-  if (anchoTop > 0) setVal('hueco-ancho-top-whole', 'hueco-ancho-top-frac', anchoTop);
-  if (altoDer > 0) setVal('hueco-alto-der-whole', 'hueco-alto-der-frac', altoDer);
-
-  const noteEl = document.getElementById('derived-hueco-note');
-  if (noteEl) {
-    const hasAnyDesnivel = (pI_A > 0 && pI_B > 0) || (pD_A > 0 && pD_B > 0) || (t_A > 0 && t_B > 0) || (p_A > 0 && p_B > 0);
-    if (hasAnyDesnivel) {
-      noteEl.style.display = 'block';
-      noteEl.innerHTML = 'Ancho arriba: <strong>' + toFracStr(anchoTop) + '"</strong> &middot; Alto derecha: <strong>' + toFracStr(altoDer) + '"</strong> (calculado)';
-    } else {
-      noteEl.style.display = 'none';
-    }
-  }
-}
-
-function autofillFromReference(aId, bId, referenceResult) {
-  const aEl = document.getElementById(aId);
-  const bEl = document.getElementById(bId);
-  const aFracEl = document.getElementById(aId.replace('whole','frac'));
-  const bFracEl = document.getElementById(bId.replace('whole','frac'));
-  if (!aEl || !bEl) return;
-  const aVal = readVal(aId, aId.replace('whole','frac'));
-  const bVal = readVal(bId, bId.replace('whole','frac'));
-  if (aVal > 0 || bVal > 0) return;
-  if (!referenceResult || referenceResult.val === 0) return;
-  const whole = Math.floor(referenceResult.val);
-  const frac  = referenceResult.val - whole;
-  const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
-                  frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
-                  frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
-  aEl.value = whole || '';
-  if (aFracEl) aFracEl.value = fracStr;
-  bEl.value = '';
-  if (bFracEl) bFracEl.value = '0';
-}
-
-function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
-  const el = document.getElementById(noteId);
-  if (!el) return;
-  const aVal = readVal(aId, aId.replace('whole','frac'));
-  const bVal = readVal(bId, bId.replace('whole','frac'));
-  const hasBoth = aVal > 0 && bVal > 0;
-  if (referenceResult && referenceResult.val > 0 && !hasBoth) {
-    autofillFromReference(aId, bId, referenceResult);
-    el.style.display = 'block';
-    el.innerHTML = '&#x27F3; Autocompletado desde el opuesto: <strong>' + referenceResult.label + '</strong> — confirma con láser antes de continuar';
-  } else {
-    el.style.display = 'none';
-  }
 }
 
 function updatePill(id, result) {
@@ -690,73 +600,76 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {
 
 function drawDeformArrow(ctx, pAnchor, pShifted, shiftPx, side, result, scale) {
   const visualShift = Math.abs(shiftPx);
-  const MIN_VISUAL = 1 / scale;
+  const MIN_VISUAL = 0.5 / scale;
   if (visualShift < MIN_VISUAL) return;
 
-  const COLOR = (result && result.val > 0) ? '#e67700' : '#868e96';
-  const ARROW_HEAD = 14 / scale;
-  const fs = 14 / scale;
+  const HAS_DESNIVEL = (result && result.val > 0);
+  const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
+  const ARROW_HEAD = 10 / scale;
+  const fs = 13 / scale;
 
   ctx.save();
-  ctx.strokeStyle = COLOR;
-  ctx.fillStyle   = COLOR;
-  ctx.lineWidth   = 3 / scale;
 
-  let ax1, ay1, ax2, ay2;
-
-  if (side === 'left' || side === 'right') {
-    const yTop    = Math.min(pAnchor.y, pShifted.y);
-    const xIdeal2 = (side === 'left') ? pAnchor.x : pAnchor.x;
-    ax1 = xIdeal2;        ay1 = yTop;
-    ax2 = xIdeal2 + shiftPx; ay2 = yTop;
-  } else {
-    const xPos = Math.max(pAnchor.x, pShifted.x) + 10 / scale;
-    ax1 = xPos; ay1 = pShifted.y;
-    ax2 = xPos; ay2 = pAnchor.y;
-  }
-
+  // Dashed reference line = where the edge WOULD be if perfectly level
   ctx.save();
-  ctx.setLineDash([3/scale, 3/scale]);
+  ctx.setLineDash([4/scale, 4/scale]);
   ctx.strokeStyle = '#adb5bd';
-  ctx.lineWidth = 0.8 / scale;
+  ctx.lineWidth = 1.2 / scale;
   ctx.beginPath();
   if (side === 'left' || side === 'right') {
-    ctx.moveTo(ax1, Math.min(pAnchor.y, pShifted.y));
-    ctx.lineTo(ax1, Math.max(pAnchor.y, pShifted.y));
+    ctx.moveTo(pAnchor.x, pAnchor.y);
+    ctx.lineTo(pAnchor.x, pShifted.y);
   } else {
-    ctx.moveTo(Math.min(pAnchor.x, pShifted.x), ay1);
-    ctx.lineTo(Math.max(pAnchor.x, pShifted.x), ay1);
+    ctx.moveTo(pAnchor.x, pAnchor.y);
+    ctx.lineTo(pShifted.x, pAnchor.y);
   }
   ctx.stroke();
   ctx.restore();
 
-  if (Math.abs(shiftPx) > 2 / scale) {
+  // Solid arrow showing actual displacement from level to actual
+  let ax1, ay1, ax2, ay2;
+
+  if (side === 'left' || side === 'right') {
+    const yTop = Math.min(pAnchor.y, pShifted.y);
+    ax1 = pAnchor.x;
+    ay1 = yTop;
+    ax2 = pShifted.x;
+    ay2 = yTop;
+  } else {
+    const xRight = Math.max(pAnchor.x, pShifted.x);
+    ax1 = xRight;
+    ay1 = pAnchor.y;
+    ax2 = xRight;
+    ay2 = pShifted.y;
+  }
+
+  if (Math.abs(shiftPx) > 1 / scale) {
     ctx.beginPath();
     ctx.moveTo(ax1, ay1);
     ctx.lineTo(ax2, ay2);
     ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 1.5 / scale;
+    ctx.lineWidth = 2 / scale;
     ctx.stroke();
 
     const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
     ctx.beginPath();
     ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.45), ay2 - ARROW_HEAD * Math.sin(angle - 0.45));
-    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.45), ay2 - ARROW_HEAD * Math.sin(angle + 0.45));
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle - 0.5), ay2 - ARROW_HEAD * Math.sin(angle - 0.5));
+    ctx.lineTo(ax2 - ARROW_HEAD * Math.cos(angle + 0.5), ay2 - ARROW_HEAD * Math.sin(angle + 0.5));
     ctx.closePath();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 2.5 / scale;
-    ctx.stroke();
     ctx.fillStyle = COLOR;
     ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 0.8 / scale;
+    ctx.stroke();
   }
 
-  if (result && result.val > 0) {
+  if (HAS_DESNIVEL) {
     ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
     ctx.fillStyle = COLOR;
     const midX = (ax1 + ax2) / 2;
     const midY = (ay1 + ay2) / 2;
-    const labelPad = 26 / scale;
+    const labelPad = 22 / scale;
     if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.min(ax1, ax2) - labelPad, midY); }
     if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; ctx.fillText(result.label, Math.max(ax1, ax2) + labelPad, midY); }
     if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText(result.label, midX, Math.min(ay1, ay2) - labelPad); }
