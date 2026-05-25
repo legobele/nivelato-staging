@@ -396,8 +396,8 @@
   }
 
   function dimLine(ctx, x1,y1,x2,y2,label,side) {
-    // draws a dimension line with arrows and label
-    const TICK = 6, OFF = 14;
+    // draws a dimension line with arrows and label (supports \n for two lines)
+    const TICK = 6, OFF = 14, LH = 14;
     const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
     if (len < 2) return;
     const nx = -dy/len, ny = dx/len; // normal
@@ -423,9 +423,29 @@
     }
     arrow(x1+nx*OFF,y1+ny*OFF, -ux,-uy);
     arrow(x2+nx*OFF,y2+ny*OFF,  ux, uy);
-    // label
-    ctx.fillStyle='#1971c2'; ctx.font='bold 11px Inter,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(label, mx, my);
+    // multi-line label
+    const lines = label ? label.split('\n') : [];
+    const isVertical = (side === 'left' || side === 'right');
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    if (!isVertical) {
+      const totalH = lines.length * LH;
+      lines.forEach((ln, i) => {
+        ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
+        ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
+        ctx.fillText(ln, mx, my - totalH/2 + LH*i + LH/2);
+      });
+    } else {
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(-Math.PI/2);
+      const totalH = lines.length * LH;
+      lines.forEach((ln, i) => {
+        ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
+        ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
+        ctx.fillText(ln, 0, -totalH/2 + LH*i + LH/2);
+      });
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -520,11 +540,8 @@
     const topMidX   = (TL.x + TR.x) / 2;
     const botMidX   = (BL.x + BR.x) / 2;
 
-    // Pills sit 40px outside the glass edge to clear dimension lines (OFF=14 + arrow + 15px gap)
-    desPill(pI, Math.min(TL.x, BL.x) - 42,  leftMidY,  'right');
-    desPill(pD, Math.max(TR.x, BR.x) + 42,  rightMidY, 'left');
-    desPill(tc, topMidX, Math.min(TL.y, TR.y) - 46, 'center');
-    desPill(ps, botMidX, Math.max(BL.y, BR.y) + 46, 'center');
+    // Desnivel now shown inline on dimension lines (second line, orange)
+    // desPill calls removed to avoid redundancy
 
     // dimension lines
     const anchoT = job.hueco?.anchoTop   || job.hueco?.ancho;
@@ -532,11 +549,15 @@
     const altoL  = job.hueco?.altoIzq   || job.hueco?.altoLeft  || job.hueco?.alto;
     const altoR  = job.hueco?.altoDer   || job.hueco?.altoRight;
 
-    // Always show all 4 dimension lines
-    if (anchoT) dimLine(ctx, TL.x,TL.y, TR.x,TR.y, anchoT+'"', 'top');
-    if (anchoB) dimLine(ctx, BL.x,BL.y, BR.x,BR.y, anchoB+'"', 'bot');
-    if (altoL)  dimLine(ctx, TL.x,TL.y, BL.x,BL.y, altoL+'"',  'left');
-    if (altoR)  dimLine(ctx, TR.x,TR.y, BR.x,BR.y, altoR+'"',  'right');
+    // Always show all 4 dimension lines (measurement + desnivel on second line)
+    const topLabel   = anchoT ? anchoT + '"' + (tc && tc !== '—' ? '\n' + tc : '') : null;
+    const botLabel   = anchoB ? anchoB + '"' + (ps && ps !== '—' ? '\n' + ps : '') : null;
+    const leftLabel  = altoL  ? altoL  + '"' + (pI && pI !== '—' ? '\n' + pI : '') : null;
+    const rightLabel = altoR  ? altoR  + '"' + (pD && pD !== '—' ? '\n' + pD : '') : null;
+    if (topLabel)   dimLine(ctx, TL.x,TL.y, TR.x,TR.y, topLabel,   'top');
+    if (botLabel)   dimLine(ctx, BL.x,BL.y, BR.x,BR.y, botLabel,   'bot');
+    if (leftLabel)  dimLine(ctx, TL.x,TL.y, BL.x,BL.y, leftLabel,  'left');
+    if (rightLabel) dimLine(ctx, TR.x,TR.y, BR.x,BR.y, rightLabel, 'right');
 
     ctx.restore();
   }
