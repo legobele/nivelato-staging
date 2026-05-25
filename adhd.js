@@ -188,7 +188,50 @@ function recalcAll() {
   updatePill('desn-techo',     results.techo);
   updatePill('desn-piso',      results.piso);
 
+  // derived: if pared izq has both points but pared der is missing, show expected
+  showDerivedNote('derived-pared-der-note', results.paredIzq, results.paredDer,
+    'pD-a-whole', 'pD-b-whole');
+  // derived: if techo has both points but piso is missing, show expected
+  showDerivedNote('derived-piso-note', results.techo, results.piso,
+    'p-a-whole', 'p-b-whole');
+
   drawCanvas();
+}
+
+function autofillFromReference(aId, bId, referenceResult) {
+  const aEl = document.getElementById(aId);
+  const bEl = document.getElementById(bId);
+  const aFracEl = document.getElementById(aId.replace('whole','frac'));
+  const bFracEl = document.getElementById(bId.replace('whole','frac'));
+  if (!aEl || !bEl) return;
+  const aVal = readVal(aId, aId.replace('whole','frac'));
+  const bVal = readVal(bId, bId.replace('whole','frac'));
+  if (aVal > 0 || bVal > 0) return;
+  if (!referenceResult || referenceResult.val === 0) return;
+  const whole = Math.floor(referenceResult.val);
+  const frac  = referenceResult.val - whole;
+  const fracStr = frac < 0.001 ? '0' : frac < 0.14 ? '1/8' : frac < 0.2 ? '3/16' :
+                  frac < 0.27 ? '1/4' : frac < 0.39 ? '3/8' : frac < 0.52 ? '1/2' :
+                  frac < 0.64 ? '5/8' : frac < 0.77 ? '3/4' : frac < 0.89 ? '7/8' : '0';
+  aEl.value = whole || '';
+  if (aFracEl) aFracEl.value = fracStr;
+  bEl.value = '';
+  if (bFracEl) bFracEl.value = '0';
+}
+
+function showDerivedNote(noteId, referenceResult, actualResult, aId, bId) {
+  const el = document.getElementById(noteId);
+  if (!el) return;
+  const aVal = readVal(aId, aId.replace('whole','frac'));
+  const bVal = readVal(bId, bId.replace('whole','frac'));
+  const hasBoth = aVal > 0 && bVal > 0;
+  if (referenceResult && referenceResult.val > 0 && !hasBoth) {
+    autofillFromReference(aId, bId, referenceResult);
+    el.style.display = 'block';
+    el.innerHTML = '⟳ Autocompletado desde el opuesto: <strong>' + referenceResult.label + '</strong> — confirma con láser antes de continuar';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 function updatePill(id, result) {
