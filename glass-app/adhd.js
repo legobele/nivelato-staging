@@ -614,15 +614,13 @@ function drawCanvas() {
   const altoDer  = results.altoDer  || altoIzq;
 
   // Bottom width (base)
-  if (anchoBot > 0) drawDimLine(ctx, gr.x, gr.y + gr.h + 28, gr.x + gr.w, gr.y + gr.h + 28, toFracStr(anchoBot), sc);
+  if (anchoBot > 0) drawDimLine(ctx, roughBL.x, roughBL.y + 24/sc, roughBR.x, roughBR.y + 24/sc, toFracStr(anchoBot), sc);
   // Top width (calculated)
-  if (anchoTop > 0 && anchoTop !== anchoBot) 
-    drawDimLine(ctx, gr.x, gr.y - 28, gr.x + gr.w, gr.y - 28, toFracStr(anchoTop), sc);
+  if (anchoBot > 0) drawDimLine(ctx, roughTL.x, roughTL.y - 24/sc, roughTR.x, roughTR.y - 24/sc, toFracStr(anchoTop), sc);
   // Left height (base)
-  if (altoIzq > 0) drawDimLine(ctx, gr.x - 28, gr.y, gr.x - 28, gr.y + gr.h, toFracStr(altoIzq), sc, true);
+  if (altoIzq > 0) drawDimLine(ctx, roughTL.x - 24/sc, roughTL.y, roughBL.x - 24/sc, roughBL.y, toFracStr(altoIzq), sc, true);
   // Right height (calculated)
-  if (altoDer > 0 && altoDer !== altoIzq) 
-    drawDimLine(ctx, gr.x + gr.w + 28, gr.y, gr.x + gr.w + 28, gr.y + gr.h, toFracStr(altoDer), sc, true);
+  if (altoIzq > 0) drawDimLine(ctx, roughTR.x + 24/sc, roughTR.y, roughBR.x + 24/sc, roughBR.y, toFracStr(altoDer), sc, true);
 
   ctx.restore();
   ctx.restore();
