@@ -1,47 +1,52 @@
-# nivelato
+# Nivelato
 
-a glass shop measurement tool for calculating wall/roof/floor out-of-squareness (descuadre).
+Field measurement tool for glass shop technicians in Puerto Ricocalculates out-of-squareness (desnivel / descuadre) for door and window openings using laser measurements.
 
-built for production use at a family glass shop in puerto rico. employees use it in the field to figure out how off a door/window opening is before cutting glass.
+## What it does
 
-## what it does
+A mobile-first 5-step wizard that takes laser measurements from walls, ceiling, and floor, then visualizes the deformed opening with exact dimensions.
 
-takes laser measurements from walls, roof, and floor — outputs the exact desnivel (deviation) for each surface in inches + fractions, with direction (izquierda/derecha).
+**6 steps:**
+1. **Hueco**  enter bottom width and left height (base dimensions)
+2. **Pared Izquierda**  laser to left wall at bottom (A) and top (B)
+3. **Pared Derecha**  laser to right wall at bottom (A) and top (B)
+4. **Arriba**  laser to ceiling at left (A) and right (B)
+5. **Abajo**  laser to floor at left (A) and right (B)
+6. **Resumen**  validation, computed dimensions, share via WhatsApp/SMS
 
-**4 tabs:**
-- **Paredes** — left wall (A/B) + right wall (C/D) measurements + opening dimensions
-- **Techo** — roof laser measurements (a/b)
-- **Piso** — floor laser measurements (e/f)
-- **Medidas** — results screen with interactive diagram. tap any side to edit that section. share via SMS or WhatsApp.
+**Key features:**
+- Interactive canvas showing level reference (dashed) + actual deformed opening (solid blue)
+- Desnivel arrows on each edge showing deviation direction and amount
+- Step highlight that glows the active edge
+- All 4 dimension lines displayed (bottom, top, left, right) with computed values
+- Auto-fills opposite-side measurements from reference data
+- Pinch-zoom, drag-to-pan, per-field focus
+- Firebase Firestore save + org-based dashboard
+- Join code system for employees
 
-## math
+## Stack
 
-| measurement | logic |
+- Pure HTML + CSS + JS  no framework, no build step
+- Firebase Auth + Firestore
+- GitHub Pages
+- Cloudflare Workers + Fly.io
+
+## Files
+
+| File | Purpose |
 |---|---|
-| left wall | A=bottom, B=top. diff = B-A. positive → leans left, negative → leans right |
-| right wall | C=bottom, D=top. diff = C-D. positive → leans left, negative → leans right |
-| techo | a=left, b=right. diff = a-b. positive → drops right, negative → rises right |
-| piso | e=left, f=right. same logic as techo |
+| index.html | Main 5-step tool |
+| dashboard.html | Owner/supervisor dashboard |
+| login.html | Auth, org creation, join codes |
+| adhd.js | All logic, canvas, calculations |
+| autism.css | Styles |
+| auth-guard.js | Auth routing + Firestore save |
+| firebase-config.js | Firebase init |
 
-outputs in whole + fraction inches (e.g. `3/8" IZQ`).
+## File naming convention
 
-## stack
+The file names are correct. Do not rename them.
 
-literally just:
-- `index.html`
-- `autism.css`
-- `adhd.js`
+## Author
 
-no build step. no dependencies. no framework. open `index.html` and go.
-
-## deployment
-
-github pages. that's it.
-
-## file naming convention
-
-the file names are correct. do not rename them.
-
-## author
-
-benj (14, AuDHD, the main owner's nephew)
+Benj (14, AuDHD, the main owner's nephew)
