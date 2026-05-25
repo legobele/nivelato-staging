@@ -656,99 +656,6 @@ function drawDimLine(ctx, x1, y1, x2, y2, label, scale, vertical) {
 function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result, scale) {
   const HAS_DESNIVEL = (result && result.val > 0);
   const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
-  const fs = 12 / scale;
-  const PAD = 18 / scale;
-
-  ctx.save();
-
-  let offsetPx, arrowX, arrowY, labelX, labelY;
-
-  if (side === 'left') {
-    // Left wall: horizontal offset at top
-    offsetPx = roughP1.x - levelP1.x; // positive = rough is to the right = ADENTRO
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.25;
-    arrowX = levelP1.x;
-    labelX = Math.min(levelP1.x, roughP1.x) - PAD;
-    labelY = arrowY;
-  } else if (side === 'right') {
-    // Right wall: horizontal offset at top
-    offsetPx = roughP1.x - levelP1.x; // positive = rough is to the right (further out) = AFUERA
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.25;
-    arrowX = levelP1.x;
-    labelX = Math.max(levelP1.x, roughP1.x) + PAD;
-    labelY = arrowY;
-  } else if (side === 'top') {
-    // Ceiling: vertical offset at LEFT
-    offsetPx = roughP1.y - levelP1.y; // positive = rough is lower = ABAJO
-    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.25;
-    arrowY = levelP1.y;
-    labelX = arrowX;
-    labelY = Math.min(levelP1.y, roughP1.y) - PAD;
-  } else { // bottom
-    // Floor: vertical offset at LEFT
-    offsetPx = roughP1.y - levelP1.y; // positive = rough is lower = ABAJO
-    arrowX = levelP1.x + (levelP2.x - levelP1.x) * 0.25;
-    arrowY = levelP1.y;
-    labelX = arrowX;
-    labelY = Math.max(levelP1.y, roughP1.y) + PAD;
-  }
-
-  const MIN_VISUAL = 0.5 / scale;
-  if (Math.abs(offsetPx) < MIN_VISUAL && !HAS_DESNIVEL) {
-    ctx.restore();
-    return;
-  }
-
-  // Draw line from level to rough
-  if (Math.abs(offsetPx) > MIN_VISUAL) {
-    let ax2, ay2;
-    if (side === 'left' || side === 'right') {
-      ax2 = arrowX + offsetPx;
-      ay2 = arrowY;
-    } else {
-      ax2 = arrowX;
-      ay2 = arrowY + offsetPx;
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(arrowX, arrowY);
-    ctx.lineTo(ax2, ay2);
-    ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 1.8 / scale;
-    ctx.stroke();
-
-    // Small tick at the rough end
-    const tickLen = 4 / scale;
-    ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 1.5 / scale;
-    if (side === 'left' || side === 'right') {
-      ctx.beginPath();
-      ctx.moveTo(ax2, ay2 - tickLen);
-      ctx.lineTo(ax2, ay2 + tickLen);
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(ax2 - tickLen, ay2);
-      ctx.lineTo(ax2 + tickLen, ay2);
-      ctx.stroke();
-    }
-  }
-
-  // Label
-  if (HAS_DESNIVEL) {
-    ctx.font = 'bold ' + fs + 'px Inter, system-ui, sans-serif';
-    ctx.fillStyle = COLOR;
-    if (side === 'left')   { ctx.textAlign = 'right';  ctx.textBaseline = 'middle'; }
-    if (side === 'right')  { ctx.textAlign = 'left';   ctx.textBaseline = 'middle'; }
-    if (side === 'top')    { ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; }
-    if (side === 'bottom') { ctx.textAlign = 'center'; ctx.textBaseline = 'top';    }
-    ctx.fillText(result.label, labelX, labelY);
-  }
-
-  ctx.restore();
-}function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result, scale) {
-  const HAS_DESNIVEL = (result && result.val > 0);
-  const COLOR = HAS_DESNIVEL ? '#e67700' : '#868e96';
   const ARROW_HEAD = 8 / scale;
   const fs = 12 / scale;
   const PAD = 18 / scale;
@@ -1001,6 +908,7 @@ canvas.addEventListener('wheel', function(e) {
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
+}
 // ─── INIT ──────────────────────────────────────────────────────────────────
 resizeCanvas();
 history.replaceState({ step: 0 }, '', '#step-0');
