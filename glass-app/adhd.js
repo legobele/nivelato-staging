@@ -1,4 +1,4 @@
-﻿// adhd.js — Nivelato logic + canvas engine
+// adhd.js — Nivelato logic + canvas engine
 
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
