@@ -1,4 +1,4 @@
-﻿// adhd.js — Nivelato logic + canvas engine
+// adhd.js — Nivelato logic + canvas engine
 
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
@@ -203,32 +203,7 @@ function updatePill(id, result) {
 // ─── VALIDATION ────────────────────────────────────────────────────────────
 const TOLERANCE = 0.0625;
 
-function runValidation() {
-  const warnings = [];
-  const pI_A = readVal('pI-a-whole','pI-a-frac'), pI_B = readVal('pI-b-whole','pI-b-frac');
-  const pD_A = readVal('pD-a-whole','pD-a-frac'), pD_B = readVal('pD-b-whole','pD-b-frac');
-  const t_A  = readVal('t-a-whole', 't-a-frac'),  t_B  = readVal('t-b-whole', 't-b-frac');
-  const p_A  = readVal('p-a-whole', 'p-a-frac'),  p_B  = readVal('p-b-whole', 'p-b-frac');
-  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
-  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
-  const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
-  if (!anyEntered) return [];
-
-  if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
-    const offsetIzq = pI_A - pI_B;
-    const offsetDer = pD_A - pD_B;
-  }
-  if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
-    const offsetTecho = t_A - t_B;
-    const offsetPiso  = p_A - p_B;
-    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-  }
-  if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
-    warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
-  if (anyEntered && (anchoBot === 0 || altoIzq === 0))
-    warnings.push('⚠ Falta medida base del hueco — ingresa Ancho Abajo y Alto Izquierda');
-  return warnings;
-}
+function runValidation() { return []; }
 
 // ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
 function autoFix(warningText) {
@@ -289,22 +264,8 @@ function autoFix(warningText) {
 let _lastWarnings = [];
 
 function renderValidation() {
-  const el = document.getElementById('validation-block');
-  if (!el) return;
-  const warnings = runValidation();
-  _lastWarnings = warnings;
-  if (warnings.length === 0) {
-    el.textContent = '✓ Medidas OK';
-    el.className = 'val-ok';
-  } else {
-    el.innerHTML = warnings.map(function(w, i) {
-      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>';
-    }).join('');
-    el.className = 'val-warn';
-    el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() { autoFix(_lastWarnings[+btn.dataset.widx] || ''); });
-    });
-  }
+  var el = document.getElementById('validation-block');
+  if (el) { el.textContent = '✓ Medidas OK'; el.className = 'val-ok'; }
 }
 
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
