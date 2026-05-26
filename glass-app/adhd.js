@@ -1,4 +1,4 @@
-// adhd.js — Nivelato logic + canvas engine
+﻿// adhd.js — Nivelato logic + canvas engine
 
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
@@ -218,13 +218,10 @@ function runValidation() {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
     if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
-      warnings.push('⚠ Paredes no cuadran — diferencia: ' + toFracStr(Math.abs(offsetIzq - offsetDer))→ revisa que ambas paredes tengan el mismo desnivel, o verifica los puntos A/B');
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
     const offsetPiso  = p_A - p_B;
-    if (Math.abs(offsetTecho - offsetPiso) > TOLERANCE)
-      warnings.push('⚠ Arriba/Abajo no cuadran — diferencia: ' + toFracStr(Math.abs(offsetTecho - offsetPiso))→ vuelve a medir arriba y abajo en los mismos puntos de referencia');
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
     warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
