@@ -1,4 +1,4 @@
-// adhd.js — Nivelato logic + canvas engine
+﻿// adhd.js — Nivelato logic + canvas engine
 
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
@@ -145,7 +145,7 @@ function calcDesnivel_wall(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
@@ -156,7 +156,7 @@ function calcDesnivel_horiz(a, b) {
   // diff < 0: right is further from laser = right is LOWER = offset is DOWN on right = UP on left
   const leftIsLower = diff > 0;
   const dir = leftIsLower ? 'ABAJO' : 'ARRIBA';
-  return { val: val, dir: dir, label: toFracStr(val) + ' ' + dir, raw: diff };
+  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
 }
 
 function recalcAll() {
@@ -172,7 +172,12 @@ function recalcAll() {
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
   results.techo    = calcDesnivel_horiz(t_A, t_B);
-  results.piso     = calcDesnivel_horiz(p_A, p_B);
+  const pisoResult = calcDesnivel_horiz(p_A, p_B);
+  // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
+  if (pisoResult.dir === 'ARRIBA') pisoResult.dir = 'ABAJO';
+  else if (pisoResult.dir === 'ABAJO') pisoResult.dir = 'ARRIBA';
+  pisoResult.label = (pisoResult.val > 0 ? toFracStr(pisoResult.val) + " " + pisoResult.dir : 'Nivel');
+  results.piso     = pisoResult;
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
@@ -203,7 +208,32 @@ function updatePill(id, result) {
 // ─── VALIDATION ────────────────────────────────────────────────────────────
 const TOLERANCE = 0.0625;
 
-function runValidation() { return []; }
+function runValidation() {
+  const warnings = [];
+  const pI_A = readVal('pI-a-whole','pI-a-frac'), pI_B = readVal('pI-b-whole','pI-b-frac');
+  const pD_A = readVal('pD-a-whole','pD-a-frac'), pD_B = readVal('pD-b-whole','pD-b-frac');
+  const t_A  = readVal('t-a-whole', 't-a-frac'),  t_B  = readVal('t-b-whole', 't-b-frac');
+  const p_A  = readVal('p-a-whole', 'p-a-frac'),  p_B  = readVal('p-b-whole', 'p-b-frac');
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
+  const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
+  const anyEntered = pI_A||pI_B||pD_A||pD_B||t_A||t_B||p_A||p_B;
+  if (!anyEntered) return [];
+
+  if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
+    const offsetIzq = pI_A - pI_B;
+    const offsetDer = pD_A - pD_B;
+    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
+  }
+  if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
+    const offsetTecho = t_A - t_B;
+    const offsetPiso  = p_A - p_B;
+  }
+  if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
+    warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
+  if (anyEntered && (anchoBot === 0 || altoIzq === 0))
+    warnings.push('⚠ Falta medida base del hueco — ingresa Ancho Abajo y Alto Izquierda');
+  return warnings;
+}
 
 // ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
 function autoFix(warningText) {
@@ -264,8 +294,22 @@ function autoFix(warningText) {
 let _lastWarnings = [];
 
 function renderValidation() {
-  var el = document.getElementById('validation-block');
-  if (el) { el.textContent = '✓ Medidas OK'; el.className = 'val-ok'; }
+  const el = document.getElementById('validation-block');
+  if (!el) return;
+  const warnings = runValidation();
+  _lastWarnings = warnings;
+  if (warnings.length === 0) {
+    el.textContent = '✓ Medidas OK';
+    el.className = 'val-ok';
+  } else {
+    el.innerHTML = warnings.map(function(w, i) {
+      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>';
+    }).join('');
+    el.className = 'val-warn';
+    el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { autoFix(_lastWarnings[+btn.dataset.widx] || ''); });
+    });
+  }
 }
 
 // ─── SUMMARY ───────────────────────────────────────────────────────────────
@@ -683,33 +727,29 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
     ctx.moveTo(arrowX, arrowY);
     ctx.lineTo(ax2, ay2);
     ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 2 / scale;
+    ctx.lineWidth = 1.8 / scale;
     ctx.stroke();
 
-    // Arrowhead
-    var ah = 6 / scale;
-    var angle = Math.atan2(ay2 - arrowY, ax2 - arrowX);
-    ctx.beginPath();
-    ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - ah * Math.cos(angle - 0.5), ay2 - ah * Math.sin(angle - 0.5));
-    ctx.moveTo(ax2, ay2);
-    ctx.lineTo(ax2 - ah * Math.cos(angle + 0.5), ay2 - ah * Math.sin(angle + 0.5));
-    ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 2 / scale;
-    ctx.stroke();
-
-        // Small tick mark at the end (no arrowhead)
+        // Tick + measurement label at the offset point
     const tickLen = 4 / scale;
-    if (side === 'left' || side === 'right') {
+    ctx.fillStyle = COLOR;
+    ctx.font = "bold " + (11 / scale) + "px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    if (side === "left" || side === "right") {
       ctx.beginPath();
       ctx.moveTo(ax2, ay2 - tickLen);
       ctx.lineTo(ax2, ay2 + tickLen);
       ctx.stroke();
+      ctx.textAlign = side === "left" ? "right" : "left";
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2 + (side === "left" ? -6/scale : 6/scale), ay2);
     } else {
       ctx.beginPath();
       ctx.moveTo(ax2 - tickLen, ay2);
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
+      ctx.textBaseline = side === "top" ? "bottom" : "top";
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + (side === "top" ? -6/scale : 6/scale));
     }
   }
   ctx.restore();

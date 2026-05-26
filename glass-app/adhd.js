@@ -1,4 +1,4 @@
-// adhd.js — Nivelato logic + canvas engine
+﻿// adhd.js — Nivelato logic + canvas engine
 
 // ─── FRACTION HELPERS ──────────────────────────────────────────────────────
 function readVal(wholeId, fracId) {
@@ -172,7 +172,12 @@ function recalcAll() {
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
   results.techo    = calcDesnivel_horiz(t_A, t_B);
-  results.piso     = calcDesnivel_horiz(p_A, p_B);
+  const pisoResult = calcDesnivel_horiz(p_A, p_B);
+  // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
+  if (pisoResult.dir === 'ARRIBA') pisoResult.dir = 'ABAJO';
+  else if (pisoResult.dir === 'ABAJO') pisoResult.dir = 'ARRIBA';
+  pisoResult.label = (pisoResult.val > 0 ? toFracStr(pisoResult.val) + " " + pisoResult.dir : 'Nivel');
+  results.piso     = pisoResult;
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
@@ -725,18 +730,26 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
     ctx.lineWidth = 1.8 / scale;
     ctx.stroke();
 
-        // Small tick mark at the end (no arrowhead)
+        // Tick + measurement label at the offset point
     const tickLen = 4 / scale;
-    if (side === 'left' || side === 'right') {
+    ctx.fillStyle = COLOR;
+    ctx.font = "bold " + (11 / scale) + "px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    if (side === "left" || side === "right") {
       ctx.beginPath();
       ctx.moveTo(ax2, ay2 - tickLen);
       ctx.lineTo(ax2, ay2 + tickLen);
       ctx.stroke();
+      ctx.textAlign = side === "left" ? "right" : "left";
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2 + (side === "left" ? -6/scale : 6/scale), ay2);
     } else {
       ctx.beginPath();
       ctx.moveTo(ax2 - tickLen, ay2);
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
+      ctx.textBaseline = side === "top" ? "bottom" : "top";
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + (side === "top" ? -6/scale : 6/scale));
     }
   }
   ctx.restore();
