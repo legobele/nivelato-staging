@@ -222,7 +222,7 @@ function runValidation() {
   if ((pI_A > 0||pI_B > 0) && (pD_A > 0||pD_B > 0)) {
     const offsetIzq = pI_A - pI_B;
     const offsetDer = pD_A - pD_B;
-    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE)
+    if (Math.abs(offsetIzq - offsetDer) > TOLERANCE) {}
   }
   if ((t_A > 0||t_B > 0) && (p_A > 0||p_B > 0)) {
     const offsetTecho = t_A - t_B;
