@@ -683,7 +683,19 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
     ctx.moveTo(arrowX, arrowY);
     ctx.lineTo(ax2, ay2);
     ctx.strokeStyle = COLOR;
-    ctx.lineWidth = 1.8 / scale;
+    ctx.lineWidth = 2 / scale;
+    ctx.stroke();
+
+    // Arrowhead
+    var ah = 6 / scale;
+    var angle = Math.atan2(ay2 - arrowY, ax2 - arrowX);
+    ctx.beginPath();
+    ctx.moveTo(ax2, ay2);
+    ctx.lineTo(ax2 - ah * Math.cos(angle - 0.5), ay2 - ah * Math.sin(angle - 0.5));
+    ctx.moveTo(ax2, ay2);
+    ctx.lineTo(ax2 - ah * Math.cos(angle + 0.5), ay2 - ah * Math.sin(angle + 0.5));
+    ctx.strokeStyle = COLOR;
+    ctx.lineWidth = 2 / scale;
     ctx.stroke();
 
         // Small tick mark at the end (no arrowhead)
