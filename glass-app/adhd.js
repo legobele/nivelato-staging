@@ -144,19 +144,17 @@ function calcDesnivel_wall(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const dir = diff > 0 ? 'ADENTRO' : 'AFUERA';
-  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
+  const arrow = diff > 0 ? '⟨' : '⟩';
+  return { val: val, dir: dir, label: arrow + ' ' + toFracStr(val), raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  // diff > 0: left is further from laser = left is LOWER = offset is DOWN on left
-  // diff < 0: right is further from laser = right is LOWER = offset is DOWN on right = UP on left
-  const leftIsLower = diff > 0;
-  const dir = leftIsLower ? 'ABAJO' : 'ARRIBA';
-  return { val: val, dir: dir, label: toFracStr(val) + " "+ dir, raw: diff };
+  // offset on RIGHT side: diff>0 = right higher = ↑, diff<0 = right lower = ↓
+  const dir = diff > 0 ? '↑' : '↓';
+  return { val: val, dir: dir, label: dir + ' ' + toFracStr(val), raw: diff };
 }
 
 function recalcAll() {
@@ -546,17 +544,13 @@ function drawCanvas() {
   const rightOffsetTop    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
   const rightOffsetBottom = 0;
 
-  // Ceiling desnivel: t_A vs t_B
-  // If t_A > t_B: left is further = left side is LOWER = right side is HIGHER
-  // The rough opening ceiling slopes down to the right
-  const topOffsetLeft  = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
-  const topOffsetRight = 0;
+  // Ceiling desnivel: t_A vs t_B — LEFT is 0,0, offset is on RIGHT
+  const topOffsetLeft  = 0;
+  const topOffsetRight = clamp(-((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
 
-  // Floor desnivel: p_A vs p_B
-  // If p_A > p_B: left is further = left side is LOWER = right side is HIGHER
-  // The rough opening floor slopes up to the right
-  const bottomOffsetLeft  = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
-  const bottomOffsetRight = 0;
+  // Floor desnivel: p_A vs p_B — LEFT is 0,0, offset is on RIGHT
+  const bottomOffsetLeft  = 0;
+  const bottomOffsetRight = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
 
   // ── LEVEL REFERENCE rectangle (dashed) = where the straight frame goes ──
   const levelTL = { x: gr.x, y: gr.y };
@@ -679,7 +673,7 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   if (side === 'left') {
     // Left edge: offset at top = roughTL.x - levelTL.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.3; // arrow near top
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5; // arrow at mid
     arrowX = levelP1.x;
     labelX = Math.min(levelP1.x, roughP1.x) - PAD;
     labelY = arrowY;
