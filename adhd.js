@@ -934,6 +934,7 @@ canvas.addEventListener('wheel', function(e) {
   applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
 }, { passive: false });
 
+// 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
