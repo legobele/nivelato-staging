@@ -308,7 +308,7 @@
       const tag = hasWarn
         ? `<span class="job-tag tag-warn">⚠ Advertencias</span>`
         : `<span class="job-tag tag-ok">✓ OK</span>`;
-      const hueco = job.hueco ? `${job.hueco.ancho}" × ${job.hueco.alto}"` : '—';
+      const hueco = job.hueco ? `${job.hueco.anchoBot || job.hueco.ancho || job.hueco.anchoBottom || '?'}" × ${job.hueco.altoIzq || job.hueco.alto || job.hueco.altoLeft || '?'}"` : '—';
       return `
         <div class="job-card" onclick="openJob(${i})">
           <div class="job-card-top">
@@ -340,10 +340,10 @@
     html += row('Fecha', dateStr);
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
-      html += row('Ancho superior', job.hueco.anchoTop ? job.hueco.anchoTop + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
-      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoBottom) + '"' : '—');
-      html += row('Alto izquierdo', job.hueco.altoLeft ? job.hueco.altoLeft + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
-      html += row('Alto derecho',   job.hueco.altoRight ? job.hueco.altoRight + '"' : '—');
+      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo) ? (job.hueco.anchoBot||job.hueco.anchoBottom) + '"' : '—');
+      html += row('Alto izquierdo', job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
+      html += row('Alto derecho',   job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
     } else { html += row('Hueco', '—'); }
     html += sec('Desniveles');
     html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
@@ -546,8 +546,8 @@
     // dimension lines
     const anchoT = job.hueco?.anchoTop   || job.hueco?.ancho;
     const anchoB = job.hueco?.anchoBot   || job.hueco?.anchoBottom;
-    const altoL  = job.hueco?.altoIzq   || job.hueco?.altoLeft  || job.hueco?.alto;
-    const altoR  = job.hueco?.altoDer   || job.hueco?.altoRight;
+    const altoL  = job.hueco?.altoIzq   || job.hueco?.altoIzquierda  || job.hueco?.alto;
+    const altoR  = job.hueco?.altoDer   || job.hueco?.altoDerecha;
 
     // Always show all 4 dimension lines (measurement + desnivel on second line)
     const topLabel   = anchoT ? anchoT + '"' + (tc && tc !== '—' ? '\n' + tc : '') : null;
