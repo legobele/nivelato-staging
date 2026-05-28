@@ -144,16 +144,16 @@ function calcDesnivel_wall(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const arrow = diff > 0 ? '⟨' : '⟩';
-  return { val: val, dir: dir, label: arrow + ' ' + toFracStr(val), raw: diff };
+  const arrow = diff > 0 ? '⟩' : '⟨';
+  return { val: val, dir: arrow, label: arrow + ' ' + toFracStr(val), raw: diff };
 }
 
 function calcDesnivel_horiz(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  // offset on RIGHT side: diff>0 = right higher = ↑, diff<0 = right lower = ↓
-  const dir = diff > 0 ? '↑' : '↓';
+  // offset on LEFT reference: if right is higher the ceiling drops on left = ↓
+  const dir = diff > 0 ? '↓' : '↑';
   return { val: val, dir: dir, label: dir + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -172,9 +172,9 @@ function recalcAll() {
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   const pisoResult = calcDesnivel_horiz(p_A, p_B);
   // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
-  if (pisoResult.dir === 'ARRIBA') pisoResult.dir = 'ABAJO';
-  else if (pisoResult.dir === 'ABAJO') pisoResult.dir = 'ARRIBA';
-  pisoResult.label = (pisoResult.val > 0 ? toFracStr(pisoResult.val) + " " + pisoResult.dir : 'Nivel');
+  if (pisoResult.dir === '↓') pisoResult.dir = '↑';
+  else if (pisoResult.dir === '↑') pisoResult.dir = '↓';
+  // floor label — already inverted above
   results.piso     = pisoResult;
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
@@ -934,6 +934,7 @@ canvas.addEventListener('wheel', function(e) {
   applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
 }, { passive: false });
 
+// 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
