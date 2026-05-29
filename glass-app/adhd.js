@@ -730,14 +730,14 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
       ctx.lineTo(ax2, ay2 + tickLen);
       ctx.stroke();
       ctx.textAlign = side === "left" ? "right" : "left";
-      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2 + (side === "left" ? -6/scale : 6/scale), ay2);
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2 + (side === "left" ? -14/scale : 14/scale), ay2);
     } else {
       ctx.beginPath();
       ctx.moveTo(ax2 - tickLen, ay2);
       ctx.lineTo(ax2 + tickLen, ay2);
       ctx.stroke();
       ctx.textBaseline = side === "top" ? "bottom" : "top";
-      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + (side === "top" ? -6/scale : 6/scale));
+      ctx.fillText(HAS_DESNIVEL ? result.label : "", ax2, ay2 + (side === "top" ? -14/scale : 14/scale));
     }
   }
   ctx.restore();
