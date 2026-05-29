@@ -276,11 +276,11 @@
         if (!j.createdAt) return false;
         const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
         return d.toISOString().slice(0,10) === date;
-      };
+      });
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
     renderJobs(filtered);
-  };
+  });
 
   function renderJobs(jobs) {
     const list = document.getElementById('job-list');
@@ -357,7 +357,7 @@
     document.getElementById('modal-overlay').classList.add('open');
     mcVp = { x: 0, y: 0, scale: 1 };
     drawJobCanvas(job, mcVp);
-  };
+  });
 
   window.deleteCurrentJob = async () => {
     const i = window._currentJobIdx;
@@ -376,7 +376,7 @@
     } catch(e) {
       alert('Error al eliminar: ' + e.message);
     }
-  };
+  });
 
   function parseDesnivel(str) {
     // returns signed inches: positive = afuera/sube, negative = adentro/baja
@@ -388,7 +388,7 @@
     parts.forEach(p => {
       if (p.includes('/')) { const [n,d] = p.split('/'); val += parseFloat(n)/parseFloat(d); }
       else val += parseFloat(p) || 0;
-    };
+    });
     const low = str.toLowerCase();
     if (low.includes('adentro') || low.includes('baja')) val = -val;
     return val;
@@ -432,7 +432,7 @@
         ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
         ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
         ctx.fillText(ln, mx, my - totalH/2 + LH*i + LH/2);
-      };
+      });
     } else {
       ctx.save();
       ctx.translate(mx, my);
@@ -442,7 +442,7 @@
         ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
         ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
         ctx.fillText(ln, 0, -totalH/2 + LH*i + LH/2);
-      };
+      });
       ctx.restore();
     }
     ctx.restore();
@@ -578,12 +578,12 @@
     if (e.target?.id !== 'modal-canvas') return;
     mcDrag = { x: e.clientX, y: e.clientY };
     e.preventDefault();
-  };
+  });
   document.addEventListener('mousemove', e => {
     if (!mcDrag) return;
     mcApplyDrag(e.clientX - mcDrag.x, e.clientY - mcDrag.y);
     mcDrag = { x: e.clientX, y: e.clientY };
-  };
+  });
   document.addEventListener('mouseup', () => { mcDrag = null; });
 
   document.addEventListener('touchstart', e => {
@@ -621,7 +621,7 @@
     if (!e || e.target === document.getElementById('modal-overlay')) {
       document.getElementById('modal-overlay').classList.remove('open');
     }
-  };
+  });
 
   window.copyJoinCode = () => {
     const code = document.getElementById('join-code-display').textContent;
@@ -629,13 +629,13 @@
       const btn = document.getElementById('copy-btn');
       btn.textContent = '✓ Copiado';
       setTimeout(() => btn.textContent = '📋 Copiar', 2000);
-    };
-  };
+    });
+  });
 
   window.doLogout = async () => {
     await signOut(auth);
     window.location.href = 'login.html';
-  };
+  });
 </script>
 </body>
 </html>
