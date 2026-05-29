@@ -673,14 +673,14 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   if (side === 'left') {
     // Left edge: offset at top = roughTL.x - levelTL.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.35; // arrow at mid
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.10; // arrow at mid
     arrowX = levelP1.x;
     labelX = Math.min(levelP1.x, roughP1.x) - PAD;
     labelY = arrowY;
   } else if (side === 'right') {
     // Right edge: offset at top = roughTR.x - levelTR.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.35;
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.10;
     arrowX = levelP1.x;
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
