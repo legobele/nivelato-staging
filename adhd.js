@@ -541,7 +541,7 @@ function drawCanvas() {
 
   // Right wall desnivel: pD_A vs pD_B  
   // If pD_A > pD_B: bottom is further out = top leans IN = top shifts LEFT (toward center)
-  const rightOffsetTop    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
+  const rightOffsetTop    = clamp(((pD_A - pD_B) / pDMax) * EXAG, EXAG);
   const rightOffsetBottom = 0;
 
   // Ceiling desnivel: t_A vs t_B — LEFT is 0,0, offset is on RIGHT
