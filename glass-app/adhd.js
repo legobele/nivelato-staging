@@ -1,6 +1,6 @@
-﻿// adhd.js — Nivelato logic + canvas engine
+﻿// adhd.js � Nivelato logic + canvas engine
 
-// ─── FRACTION HELPERS ──────────────────────────────────────────────────────
+// --- FRACTION HELPERS ------------------------------------------------------
 function readVal(wholeId, fracId) {
   const whole = parseFloat(document.getElementById(wholeId)?.value) || 0;
   const frac  = parseFloat(document.getElementById(fracId)?.value)  || 0;
@@ -43,7 +43,7 @@ function toFracStr(decimal) {
   return `${sign}${whole} ${n}/${d}"`;
 }
 
-// ─── STEP STATE ────────────────────────────────────────────────────────────
+// --- STEP STATE ------------------------------------------------------------
 let currentStep = 0;
 const TOTAL_STEPS = 5;
 let _historyPushed = 0;
@@ -137,7 +137,7 @@ window.addEventListener('popstate', function(e) {
   }
 });
 
-// ─── CALCULATIONS ──────────────────────────────────────────────────────────
+// --- CALCULATIONS ----------------------------------------------------------
 let results = {};
 
 function calcDesnivel_wall(a, b) {
@@ -152,8 +152,8 @@ function calcDesnivel_horiz(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  // offset on LEFT reference: if right is higher the ceiling drops on left = ↓
-  const dir = diff > 0 ? '↓' : '↑';
+  // offset on LEFT reference: if right is higher the ceiling drops on left = ?
+  const dir = diff > 0 ? '↑' : '↓';
   return { val: val, dir: dir, label: dir + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -171,10 +171,10 @@ function recalcAll() {
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   const pisoResult = calcDesnivel_horiz(p_A, p_B);
-  // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
-  if (pisoResult.dir === '↓') pisoResult.dir = '↑';
-  else if (pisoResult.dir === '↑') pisoResult.dir = '↓';
-  // floor label — already inverted above
+  // Floor direction is inverted � flip ABOJO?ARRIBA relative to ceiling logic
+  if (pisoResult.dir === '?') pisoResult.dir = '?';
+  else if (pisoResult.dir === '?') pisoResult.dir = '?';
+  // floor label � already inverted above
   results.piso     = pisoResult;
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
@@ -203,7 +203,7 @@ function updatePill(id, result) {
   else el.classList.remove('has-value');
 }
 
-// ─── VALIDATION ────────────────────────────────────────────────────────────
+// --- VALIDATION ------------------------------------------------------------
 const TOLERANCE = 0.0625;
 
 function runValidation() {
@@ -227,13 +227,13 @@ function runValidation() {
     const offsetPiso  = p_A - p_B;
   }
   if ((pI_A||pI_B||pD_A||pD_B||p_A||p_B) && t_A === 0 && t_B === 0)
-    warnings.push('⚠ Faltan niveles de arriba — mide del láser arriba en punto A (izq) y punto B (der)');
+    warnings.push('? Faltan niveles de arriba � mide del l�ser arriba en punto A (izq) y punto B (der)');
   if (anyEntered && (anchoBot === 0 || altoIzq === 0))
-    warnings.push('⚠ Falta medida base del hueco — ingresa Ancho Abajo y Alto Izquierda');
+    warnings.push('? Falta medida base del hueco � ingresa Ancho Abajo y Alto Izquierda');
   return warnings;
 }
 
-// ─── AUTO-FIX ACTIONS ──────────────────────────────────────────────────────
+// --- AUTO-FIX ACTIONS ------------------------------------------------------
 function autoFix(warningText) {
   if (warningText.includes('Paredes no cuadran')) {
     const pI_A = readVal('pI-a-whole','pI-a-frac');
@@ -297,11 +297,11 @@ function renderValidation() {
   const warnings = runValidation();
   _lastWarnings = warnings;
   if (warnings.length === 0) {
-    el.textContent = '✓ Medidas OK';
+    el.textContent = '? Medidas OK';
     el.className = 'val-ok';
   } else {
     el.innerHTML = warnings.map(function(w, i) {
-      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar →</button></div>';
+      return '<div style="margin-bottom:6px">' + w + ' <button data-widx="' + i + '" class="arreglar-btn" style="margin-left:8px;padding:2px 10px;border-radius:12px;border:none;background:#e07b00;color:#fff;font-size:12px;cursor:pointer;font-weight:600">Arreglar ?</button></div>';
     }).join('');
     el.className = 'val-warn';
     el.querySelectorAll('.arreglar-btn').forEach(function(btn) {
@@ -310,26 +310,26 @@ function renderValidation() {
   }
 }
 
-// ─── SUMMARY ───────────────────────────────────────────────────────────────
+// --- SUMMARY ---------------------------------------------------------------
 function renderSummary() {
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac');
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac');
   const anchoTop = results.anchoTop || 0;
   const altoDer  = results.altoDer  || 0;
   const set = function(id, val) { const e = document.getElementById(id); if (e) e.textContent = val; };
-  set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—') + ' (base)');
-  set('res-pared-izq', results.paredIzq?.label || '—');
-  set('res-pared-der', results.paredDer?.label || '—');
-  set('res-techo',     results.techo?.label    || '—');
-  set('res-piso',      results.piso?.label     || '—');
+  set('res-area', (anchoBot > 0 ? toFracStr(anchoBot) : '�') + ' � ' + (altoIzq > 0 ? toFracStr(altoIzq) : '�') + ' (base)');
+  set('res-pared-izq', results.paredIzq?.label || '�');
+  set('res-pared-der', results.paredDer?.label || '�');
+  set('res-techo',     results.techo?.label    || '�');
+  set('res-piso',      results.piso?.label     || '�');
   renderValidation();
 }
 
-// ─── SHARE ─────────────────────────────────────────────────────────────────
+// --- SHARE -----------------------------------------------------------------
 function showShare() {
   const warnings = runValidation();
   if (warnings.length > 0) {
-    const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n¿Continuar de todas formas?');
+    const ok = confirm('Hay advertencias en las medidas:\n\n' + warnings.join('\n') + '\n\n�Continuar de todas formas?');
     if (!ok) return;
   }
   const block = document.getElementById('share-block');
@@ -362,7 +362,7 @@ function _saveCurrentJob(warnings) {
     const el = document.getElementById('save-status');
     if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
-    overlay.innerHTML = '☁️ Guardado en la nube';
+    overlay.innerHTML = '?? Guardado en la nube';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(25,135,84,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; letter-spacing:0.02em; animation: fadeInOut 2.2s ease forwards;';
     if (!document.getElementById('nube-anim-style')) {
       const style = document.createElement('style');
@@ -375,7 +375,7 @@ function _saveCurrentJob(warnings) {
   }).catch(function(e) {
     console.error('[Nivelato] save failed:', e);
     const overlay = document.createElement('div');
-    overlay.innerHTML = '⚠️ Error al guardar';
+    overlay.innerHTML = '?? Error al guardar';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(220,53,69,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; animation: fadeInOut 2.2s ease forwards;';
     document.body.appendChild(overlay);
     setTimeout(function() { overlay.remove(); }, 2200);
@@ -390,16 +390,16 @@ function buildShareText() {
   const altoDer  = results.altoDer  || 0;
   const warnings = runValidation();
   const lines = [
-    'NIVELATO — MEDIDAS',
-    'HUECO BASE: ' + (anchoBot > 0 ? toFracStr(anchoBot) : '—') + ' × ' + (altoIzq > 0 ? toFracStr(altoIzq) : '—'),
-    'HUECO CALC: ' + (anchoTop > 0 ? toFracStr(anchoTop) : '—') + ' × ' + (altoDer > 0 ? toFracStr(altoDer) : '—'),
-    '─────────────────',
-    'ARRIBA:    ' + (results.techo?.label    || '—'),
-    'ABAJO:     ' + (results.piso?.label     || '—'),
-    'PARED IZQ: ' + (results.paredIzq?.label || '—'),
-    'PARED DER: ' + (results.paredDer?.label || '—'),
+    'NIVELATO � MEDIDAS',
+    'HUECO BASE: ' + (anchoBot > 0 ? toFracStr(anchoBot) : '�') + ' � ' + (altoIzq > 0 ? toFracStr(altoIzq) : '�'),
+    'HUECO CALC: ' + (anchoTop > 0 ? toFracStr(anchoTop) : '�') + ' � ' + (altoDer > 0 ? toFracStr(altoDer) : '�'),
+    '-----------------',
+    'ARRIBA:    ' + (results.techo?.label    || '�'),
+    'ABAJO:     ' + (results.piso?.label     || '�'),
+    'PARED IZQ: ' + (results.paredIzq?.label || '�'),
+    'PARED DER: ' + (results.paredDer?.label || '�'),
   ];
-  if (warnings.length > 0) { lines.push('─────────────────'); warnings.forEach(function(w) { lines.push('⚠ ' + w); }); }
+  if (warnings.length > 0) { lines.push('-----------------'); warnings.forEach(function(w) { lines.push('? ' + w); }); }
   if (notas) lines.push('NOTAS: ' + notas);
   return lines.join('\n');
 }
@@ -407,7 +407,7 @@ function buildShareText() {
 function shareViaSMS()      { window.location.href = 'sms:?body=' + encodeURIComponent(buildShareText()); }
 function shareViaWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank'); }
 
-// ─── CANVAS ENGINE ─────────────────────────────────────────────────────────
+// --- CANVAS ENGINE ---------------------------------------------------------
 const canvas  = document.getElementById('drawing-canvas');
 const ctx     = canvas.getContext('2d');
 
@@ -511,7 +511,7 @@ function drawCanvas() {
   const gr  = getGlassRect();
   const sc  = vp.scale;
 
-  // ── read values ──
+  // -- read values --
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 48;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 36;
   const pI_A   = readVal('pI-a-whole','pI-a-frac');
@@ -523,7 +523,7 @@ function drawCanvas() {
   const p_A    = readVal('p-a-whole', 'p-a-frac');
   const p_B    = readVal('p-b-whole', 'p-b-frac');
 
-  // ── compute desnivel offsets (in pixels) ──
+  // -- compute desnivel offsets (in pixels) --
   // These represent how much the ROUGH OPENING deviates from the LEVEL reference
   // Positive = wall leans IN (toward center), negative = wall leans OUT
   const EXAG = Math.min(gr.w, gr.h) * 0.15;
@@ -544,21 +544,21 @@ function drawCanvas() {
   const rightOffsetTop    = clamp(-((pD_A - pD_B) / pDMax) * EXAG, EXAG);
   const rightOffsetBottom = 0;
 
-  // Ceiling desnivel: t_A vs t_B — LEFT is 0,0, offset is on RIGHT
+  // Ceiling desnivel: t_A vs t_B � LEFT is 0,0, offset is on RIGHT
   const topOffsetLeft  = 0;
   const topOffsetRight = clamp(-((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
 
-  // Floor desnivel: p_A vs p_B — LEFT is 0,0, offset is on RIGHT
+  // Floor desnivel: p_A vs p_B � LEFT is 0,0, offset is on RIGHT
   const bottomOffsetLeft  = 0;
   const bottomOffsetRight = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
 
-  // ── LEVEL REFERENCE rectangle (dashed) = where the straight frame goes ──
+  // -- LEVEL REFERENCE rectangle (dashed) = where the straight frame goes --
   const levelTL = { x: gr.x, y: gr.y };
   const levelTR = { x: gr.x + gr.w, y: gr.y };
   const levelBR = { x: gr.x + gr.w, y: gr.y + gr.h };
   const levelBL = { x: gr.x, y: gr.y + gr.h };
 
-  // ── ROUGH OPENING (solid blue) = actual deformed wall opening ──
+  // -- ROUGH OPENING (solid blue) = actual deformed wall opening --
   const roughTL = { x: gr.x + leftOffsetTop,    y: gr.y + topOffsetLeft };
   const roughTR = { x: gr.x + gr.w + rightOffsetTop,   y: gr.y + topOffsetRight };
   const roughBR = { x: gr.x + gr.w + rightOffsetBottom, y: gr.y + gr.h + bottomOffsetRight };
@@ -593,7 +593,7 @@ function drawCanvas() {
   ctx.stroke();
   ctx.restore();
 
-  // ── draw desnivel arrows showing gap between level and rough ──
+  // -- draw desnivel arrows showing gap between level and rough --
   // Left edge: gap between level left edge and rough left edge
   drawDesnivelArrow(ctx, levelTL, levelBL, roughTL, roughBL, 'left', results.paredIzq, sc);
   // Right edge
@@ -603,10 +603,10 @@ function drawCanvas() {
   // Bottom edge
   drawDesnivelArrow(ctx, levelBL, levelBR, roughBL, roughBR, 'bottom', results.piso, sc);
 
-  // ── step highlight ──
+  // -- step highlight --
   drawStepHighlight(ctx, roughTL, roughTR, roughBL, roughBR, currentStep, sc);
 
-    // ── dimension labels: show all 4 calculated measurements ──
+    // -- dimension labels: show all 4 calculated measurements --
   const anchoTop = results.anchoTop || anchoBot;
   const altoDer  = results.altoDer  || altoIzq;
 
@@ -680,11 +680,11 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   } else if (side === 'right') {
     // Right edge: offset at top = roughTR.x - levelTR.x
     offsetPx = roughP1.x - levelP1.x;
-    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.3;
+    arrowY = levelP1.y + (levelP2.y - levelP1.y) * 0.5;
     arrowX = levelP1.x;
     labelX = Math.max(levelP1.x, roughP1.x) + PAD;
     labelY = arrowY;
-  } else { // top / bottom — offset at RIGHT end (P2)
+  } else { // top / bottom � offset at RIGHT end (P2)
     offsetPx = roughP2.y - levelP2.y;
     arrowX = levelP2.x;
     arrowY = levelP2.y;
@@ -743,7 +743,7 @@ function drawDesnivelArrow(ctx, levelP1, levelP2, roughP1, roughP2, side, result
   ctx.restore();
 }
 
-// ── step highlight: glow the active edge ──
+// -- step highlight: glow the active edge --
 function drawStepHighlight(ctx, TL, TR, BL, BR, step, sc) {
   if (step === 0 || step === 5) return;
   ctx.save();
@@ -760,7 +760,7 @@ function drawStepHighlight(ctx, TL, TR, BL, BR, step, sc) {
   ctx.restore();
 }
 
-// ─── PER-FIELD FOCUS VIEWS ───────────────────────────────────────────────
+// --- PER-FIELD FOCUS VIEWS -----------------------------------------------
 const FIELD_VIEWS = {
   'pI-a-whole': { focusX: 0.0, focusY: 1.0, zoom: 4.8 },
   'pI-a-frac':  { focusX: 0.0, focusY: 1.0, zoom: 4.8 },
@@ -811,7 +811,7 @@ function blurField() {
   animateCanvas(currentStep);
 }
 
-// ─── WIRE UP INPUTS ────────────────────────────────────────────────────────
+// --- WIRE UP INPUTS --------------------------------------------------------
 document.addEventListener('input',  function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
 document.addEventListener('change', function(e) { if (['input','select'].includes(e.target.tagName.toLowerCase())) recalcAll(); });
 
@@ -841,7 +841,7 @@ document.addEventListener('mouseout', function(e) {
 
 window.addEventListener('resize', resizeCanvas);
 
-// ─── DRAG TO PAN ──────────────────────────────────────────────────────────
+// --- DRAG TO PAN ----------------------------------------------------------
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let vpAtDrag  = { x: 0, y: 0 };
@@ -865,7 +865,7 @@ window.addEventListener('mousemove', function(e) {
 window.addEventListener('mouseup', function() { isDragging = false; canvas.style.cursor = 'grab'; });
 canvas.style.cursor = 'grab';
 
-// ─── TOUCH + ZOOM HANDLING ───
+// --- TOUCH + ZOOM HANDLING ---
 let userZoomed   = false;
 let touchDragStart = null;
 let lastPinchDist  = null;
@@ -928,11 +928,12 @@ canvas.addEventListener('wheel', function(e) {
   applyZoom(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.03 : 0.97);
 }, { passive: false });
 
-// 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash
+// ?????? trans rights � built with love by benj & deepseek v4 flash
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
+// --- INIT ------------------------------------------------------------------
 resizeCanvas();
 history.replaceState({ step: 0 }, '', '#step-0');
 goStep(0, true);
+
