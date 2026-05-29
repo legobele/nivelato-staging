@@ -263,10 +263,10 @@
       const opt = document.createElement('option');
       opt.value = name; opt.textContent = name;
       sel.appendChild(opt);
-    });
+    };
 
     renderJobs(allJobs);
-  });
+  };
 
   window.applyFilters = () => {
     const date = document.getElementById('filter-date').value;
@@ -277,7 +277,7 @@
         if (!j.createdAt) return false;
         const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
         return d.toISOString().slice(0,10) === date;
-      });
+      };
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
     renderJobs(filtered);
@@ -291,7 +291,7 @@
       if (!j.createdAt) return false;
       const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
       return d.toISOString().slice(0,10) === today;
-    }).length;
+    }.length;
     const warnCount = allJobs.filter(j => j.warnings && j.warnings.length > 0).length;
     document.getElementById('stat-total').textContent = allJobs.length;
     document.getElementById('stat-today').textContent = todayCount;
@@ -321,7 +321,7 @@
             ${job.notas ? `<span>📝 ${job.notas.slice(0,30)}${job.notas.length>30?'…':''}</span>` : ''}
           </div>
         </div>`;
-    }).join('');
+    }).join('';
     window._jobs = jobs;
   }
 
@@ -340,10 +340,10 @@
     html += row('Fecha', dateStr);
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
-      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—')));
-      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—'));
-      html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—')));
-      html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—'));
+      html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      html += row('Ancho inferior', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—');
+      html += row('Alto izquierdo', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
+      html += row('Alto derecho',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
     } else { html += row('Hueco', '—'); }
     html += sec('Desniveles');
     html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
@@ -389,7 +389,7 @@
     parts.forEach(p => {
       if (p.includes('/')) { const [n,d] = p.split('/'); val += parseFloat(n)/parseFloat(d); }
       else val += parseFloat(p) || 0;
-    });
+    };
     const low = str.toLowerCase();
     if (low.includes('adentro') || low.includes('baja')) val = -val;
     return val;
@@ -433,7 +433,7 @@
         ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
         ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
         ctx.fillText(ln, mx, my - totalH/2 + LH*i + LH/2);
-      });
+      };
     } else {
       ctx.save();
       ctx.translate(mx, my);
@@ -443,7 +443,7 @@
         ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
         ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
         ctx.fillText(ln, 0, -totalH/2 + LH*i + LH/2);
-      });
+      };
       ctx.restore();
     }
     ctx.restore();
@@ -579,12 +579,12 @@
     if (e.target?.id !== 'modal-canvas') return;
     mcDrag = { x: e.clientX, y: e.clientY };
     e.preventDefault();
-  });
+  };
   document.addEventListener('mousemove', e => {
     if (!mcDrag) return;
     mcApplyDrag(e.clientX - mcDrag.x, e.clientY - mcDrag.y);
     mcDrag = { x: e.clientX, y: e.clientY };
-  });
+  };
   document.addEventListener('mouseup', () => { mcDrag = null; });
 
   document.addEventListener('touchstart', e => {
@@ -595,9 +595,9 @@
       mcPinchDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-      );
+      ;
     }
-  }, { passive: true });
+  }, { passive: true };
   document.addEventListener('touchmove', e => {
     if (e.target?.id !== 'modal-canvas') return;
     if (e.touches.length === 1 && mcDrag) {
@@ -607,16 +607,16 @@
       const d = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-      );
+      ;
       mcVp.scale = Math.min(4, Math.max(0.3, mcVp.scale * (d / mcPinchDist)));
       mcPinchDist = d;
       const mc = mcGetCanvas();
       if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
     }
-  }, { passive: true });
+  }, { passive: true };
   document.addEventListener('touchend', e => {
     if (e.touches.length === 0) { mcDrag = null; mcPinchDist = null; }
-  });
+  };
 
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
@@ -630,7 +630,7 @@
       const btn = document.getElementById('copy-btn');
       btn.textContent = '✓ Copiado';
       setTimeout(() => btn.textContent = '📋 Copiar', 2000);
-    });
+    };
   };
 
   window.doLogout = async () => {
