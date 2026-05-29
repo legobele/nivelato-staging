@@ -290,7 +290,7 @@
       if (!j.createdAt) return false;
       const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
       return d.toISOString().slice(0,10) === today;
-    }.length;
+    }).length;
     const warnCount = allJobs.filter(j => j.warnings && j.warnings.length > 0).length;
     document.getElementById('stat-total').textContent = allJobs.length;
     document.getElementById('stat-today').textContent = todayCount;
