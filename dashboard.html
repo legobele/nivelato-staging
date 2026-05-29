@@ -277,7 +277,7 @@
         if (!j.createdAt) return false;
         const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
         return d.toISOString().slice(0,10) === date;
-      };
+      });
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
     renderJobs(filtered);
