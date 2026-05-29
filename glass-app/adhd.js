@@ -153,7 +153,7 @@ function calcDesnivel_horiz(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   // offset on LEFT reference: if right is higher the ceiling drops on left = ?
-  const dir = diff > 0 ? ↓ : ↑;
+  const dir = diff > 0 ? "↓" : "↑";
   return { val: val, dir: dir, label: dir + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -936,4 +936,16 @@ window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); 
 resizeCanvas();
 history.replaceState({ step: 0 }, '', '#step-0');
 goStep(0, true);
+
+function resetZoom() {
+  if (window.zoomLevel > 1 || window.panX || window.panY) {
+    window.zoomLevel = 1;
+    window.panX = 0;
+    window.panY = 0;
+    if (typeof drawCanvas === 'function') drawCanvas();
+    var btn = document.getElementById('reset-zoom-btn');
+    if (btn) btn.style.display = 'none';
+  }
+}
+
 
