@@ -261,6 +261,7 @@
     });
 
     renderJobs(allJobs);
+  });
 
   window.applyFilters = () => {
     const date = document.getElementById('filter-date').value;
@@ -363,11 +364,9 @@
       await deleteDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id));
       document.getElementById('modal-overlay').classList.remove('open');
       // remove from local array and re-render
-      window._jobs.splice(i, 1);
+      allJobs = allJobs.filter(j => j.id !== job.id);
       window._currentJobIdx = null;
       applyFilters();
-      // update stats
-      document.getElementById('stat-total').textContent = window._jobs.length;
     } catch(e) {
       alert('Error al eliminar: ' + e.message);
     }
@@ -589,9 +588,9 @@
       mcPinchDist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-      ;
+      );
     }
-  }, { passive: true };
+  }, { passive: true });
   document.addEventListener('touchmove', e => {
     if (e.target?.id !== 'modal-canvas') return;
     if (e.touches.length === 1 && mcDrag) {
@@ -601,22 +600,22 @@
       const d = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-      ;
+      );
       mcVp.scale = Math.min(4, Math.max(0.3, mcVp.scale * (d / mcPinchDist)));
       mcPinchDist = d;
       const mc = mcGetCanvas();
       if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
     }
-  }, { passive: true };
+  }, { passive: true });
   document.addEventListener('touchend', e => {
     if (e.touches.length === 0) { mcDrag = null; mcPinchDist = null; }
-  };
+  });
 
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
       document.getElementById('modal-overlay').classList.remove('open');
     }
-  });
+  };
 
   window.copyJoinCode = () => {
     const code = document.getElementById('join-code-display').textContent;
@@ -625,12 +624,12 @@
       btn.textContent = '✓ Copiado';
       setTimeout(() => btn.textContent = '📋 Copiar', 2000);
     });
-  });
+  };
 
   window.doLogout = async () => {
     await signOut(auth);
     window.location.href = 'login.html';
-  });
+  };
 </script>
 </body>
 </html>
