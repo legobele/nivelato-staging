@@ -169,6 +169,8 @@ function recalcAll() {
 
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
+  if (results.paredDer.dir === '⟩') results.paredDer.dir = '⟨';
+  else if (results.paredDer.dir === '⟨') results.paredDer.dir = '⟩';
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   const pisoResult = calcDesnivel_horiz(p_A, p_B);
   // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
