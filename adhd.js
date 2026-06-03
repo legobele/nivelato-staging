@@ -144,7 +144,7 @@ function calcDesnivel_wall(a, b) {
   const diff = a - b;
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
-  const arrow = diff > 0 ? '⟩' : '⟨';
+  const arrow = diff > 0 ? '⟨' : '⟩';
   return { val: val, dir: arrow, label: arrow + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -169,8 +169,6 @@ function recalcAll() {
 
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
-  if (results.paredDer.dir === '⟩') results.paredDer.dir = '⟨';
-  else if (results.paredDer.dir === '⟨') results.paredDer.dir = '⟩';
   results.techo    = calcDesnivel_horiz(t_A, t_B);
   const pisoResult = calcDesnivel_horiz(p_A, p_B);
   // Floor direction is inverted — flip ABOJO↔ARRIBA relative to ceiling logic
