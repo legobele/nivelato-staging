@@ -210,7 +210,7 @@
 <script>
   let allJobs = [];
 
-  if (typeof onAuthStateChanged === "undefined") { document.getElementById("dash-loading").textContent = "Conectando..."; setTimeout(() => { if (typeof onAuthStateChanged === "undefined") window.location.href = "./index.html"; }, 3000); }
+  if (typeof onAuthStateChanged === "undefined") { const dl = document.querySelector(".loading"); if(dl) dl.textContent = "Conectando..."; setTimeout(() => { if (typeof onAuthStateChanged === "undefined") window.location.href = "./index.html"; }, 3000); }
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
     // check if account is pending approval
