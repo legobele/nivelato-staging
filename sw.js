@@ -1,28 +1,31 @@
 const CACHE = 'nivelato-v1';
 const URLS = [
-  '/nivelato/',
-  '/nivelato/index.html',
-  '/nivelato/dashboard.html',
-  '/nivelato/login.html',
-  '/nivelato/adhd.js',
-  '/nivelato/dashboard.js',
-  '/nivelato/style.css',
-  '/nivelato/autism.css',
-  '/nivelato/firebase-config.js',
-  '/nivelato/auth-guard.js',
-  '/nivelato/manifest.json'
+  './index.html',
+  './dashboard.html',
+  './adhd.js',
+  './style.css',
+  './autism.css',
+  './manifest.json',
+  './favicon.ico',
+  './160.png',
+  './192.png',
+  './512.png',
+  './maskable-192.png',
+  './maskable-512.png'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(URLS))
+    caches.open(CACHE).then(c => c.addAll(URLS.map(u => new Request(u, {mode: 'no-cors'}))).catch(() => {/* cache what we can */}))
   );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', e => {
   e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-      return caches.open(CACHE).then(c => { c.put(e.request, res.clone()); return res; });
-    }))
+    caches.match(e.request).then(r => r || fetch(e.request).catch(() => new Response('offline', {status: 503})))
   );
 });
