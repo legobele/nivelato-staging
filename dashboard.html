@@ -209,7 +209,10 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { auth, db } from &apos;./firebase-config.js&apos;;
+import { onAuthStateChanged, signOut } from &quot;https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js&quot;;
+import { getDoc, doc, setDoc, collection, query, where, orderBy, getDocs } from &quot;https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js&quot;;
   let allJobs = [];
 
   if (typeof onAuthStateChanged === "undefined") {
