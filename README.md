@@ -1,18 +1,18 @@
 # Nivelato
 
-Field measurement tool for glass shop technicians in Puerto Ricocalculates out-of-squareness (desnivel / descuadre) for door and window openings using laser measurements.
+Field measurement tool for glass shop technicians in Puerto Ricocalculates out-of-squareness (desnivel / descuadre) for door and window openings using laser measurements.
 
 ## What it does
 
 A mobile-first 5-step wizard that takes laser measurements from walls, ceiling, and floor, then visualizes the deformed opening with exact dimensions.
 
 **6 steps:**
-1. **Hueco**  enter bottom width and left height (base dimensions)
-2. **Pared Izquierda**  laser to left wall at bottom (A) and top (B)
-3. **Pared Derecha**  laser to right wall at bottom (A) and top (B)
-4. **Arriba**  laser to ceiling at left (A) and right (B)
-5. **Abajo**  laser to floor at left (A) and right (B)
-6. **Resumen**  validation, computed dimensions, share via WhatsApp/SMS
+1. **Hueco**  enter bottom width and left height (base dimensions)
+2. **Pared Izquierda**  laser to left wall at bottom (A) and top (B)
+3. **Pared Derecha**  laser to right wall at bottom (A) and top (B)
+4. **Arriba**  laser to ceiling at left (A) and right (B)
+5. **Abajo**  laser to floor at left (A) and right (B)
+6. **Resumen**  validation, computed dimensions, share via WhatsApp/SMS
 
 **Key features:**
 - Interactive canvas showing level reference (dashed) + actual deformed opening (solid blue)
@@ -26,7 +26,7 @@ A mobile-first 5-step wizard that takes laser measurements from walls, ceiling, 
 
 ## Stack
 
-- Pure HTML + CSS + JS  no framework, no build step
+- Pure HTML + CSS + JS  no framework, no build step
 - Firebase Auth + Firestore
 - GitHub Pages
 - Cloudflare Workers + Fly.io
