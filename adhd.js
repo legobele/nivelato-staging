@@ -153,7 +153,7 @@ function calcDesnivel_horiz(a, b) {
   if (Math.abs(diff) < 0.001) return { val: 0, dir: 'NIVEL', label: 'Nivel', raw: 0 };
   const val = Math.abs(diff);
   // offset on LEFT reference: if right is higher the ceiling drops on left = ↓
-  const dir = diff > 0 ? "↑" : "↓";
+  const dir = diff > 0 ? "↓" : "↑";
   return { val: val, dir: dir, label: dir + ' ' + toFracStr(val), raw: diff };
 }
 
@@ -539,7 +539,7 @@ function drawCanvas() {
 
   // Left wall desnivel: pI_A vs pI_B
   // If pI_A > pI_B: bottom is further out = top leans IN = top shifts RIGHT (toward center)
-  const leftOffsetTop    = -clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
+  const leftOffsetTop    = clamp(((pI_A - pI_B) / pIMax) * EXAG, EXAG);
   const leftOffsetBottom = 0;
 
   // Right wall desnivel: pD_A vs pD_B  
