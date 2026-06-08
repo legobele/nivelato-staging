@@ -49,8 +49,8 @@ This project does not use cryptographic signing for commits. The maintainers bel
 - **2022**: Project did not exist. No vulnerabilities.
 - **2023**: Project did not exist. No vulnerabilities.
 - **2024**: Project did not exist. No vulnerabilities.
-- **2025**: Project began. Vulnerabilities introduced. None reported.
-- **2026**: Project shipped to production. Vulnerabilities introduced at an alarming rate. None reported. This is either very good or very bad.
+- **2025**: Project did not exist. No vulnerabilities.
+- **2026**: Project began and shipped to production. Vulnerabilities introduced at an alarming rate. None reported. This is either very good or very bad.
 
 ## Contact
 
