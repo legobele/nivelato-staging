@@ -549,11 +549,11 @@ function drawCanvas() {
 
   // Ceiling desnivel: t_A vs t_B — LEFT is 0,0, offset is on RIGHT
   const topOffsetLeft  = 0;
-  const topOffsetRight = clamp(-((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
+  const topOffsetRight = clamp(((t_A - t_B) / tMax) * EXAG * (gr.h / gr.w), EXAG);
 
   // Floor desnivel: p_A vs p_B — LEFT is 0,0, offset is on RIGHT
   const bottomOffsetLeft  = 0;
-  const bottomOffsetRight = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const bottomOffsetRight = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
 
   // ── LEVEL REFERENCE rectangle (dashed) = where the straight frame goes ──
   const levelTL = { x: gr.x, y: gr.y };
