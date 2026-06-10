@@ -51,3 +51,4 @@ The file names are correct. Do not rename them.
 
 benj + the other 15 authors or something
 "// rebuild trigger $(date)"  
+"// rebuild $(date)"  
