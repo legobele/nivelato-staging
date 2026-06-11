@@ -6,6 +6,7 @@
   <title>Nivelato — Dashboard</title>
 <script>console.log('nivelato v1.0.0 — commit ad8af28')</script>
 <script type="module" src="firebase-config.js"></script>
+<script src="./adhd.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -364,7 +365,19 @@ let currentUser;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
     mcVp = { x: 0, y: 0, scale: 1 };
-    drawJobCanvas(job, mcVp);
+    // drawJobCanvas(job, mcVp);
+    window.embedGraph(document.getElementById('modal-canvas'), {
+      pI: job.hueco?.anchoBot - job.hueco?.anchoTop,
+      pD: 0,
+      t: job.hueco?.altoDer - job.hueco?.altoIzq,
+      p: 0,
+      pIL: job.desniveles?.paredIzq || 'Nivel',
+      pDL: job.desniveles?.paredDer || 'Nivel',
+      tL: job.desniveles?.techo || 'Nivel',
+      pL: job.desniveles?.piso || 'Nivel',
+      anchoBot: job.hueco?.anchoBot || 36,
+      altoIzq: job.hueco?.altoIzq || 84
+    });
   };
 
   window.deleteCurrentJob = async () => {

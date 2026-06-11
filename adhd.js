@@ -943,3 +943,5 @@ function resetZoom() {
   }
 }
 
+ 
+window.embedGraph = function(canvas, data) {
