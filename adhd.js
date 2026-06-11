@@ -360,7 +360,7 @@ function _saveCurrentJob(warnings) {
     const el = document.getElementById('save-status');
     if (el) { el.style.display = 'block'; setTimeout(function() { el.style.display = 'none'; }, 4000); }
     const overlay = document.createElement('div');
-    var m=new Date().getMonth();if(m===5){overlay.innerHTML='🏳️‍🌈 Pride Cloud';overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:linear-gradient(90deg,#000 0%,#000 5%,#784f17 5%,#784f17 14%,#fff 14%,#fff 22%,#ff69b4 22%,#ff69b4 30%,#38bdf8 30%,#38bdf8 38%,#fff 38%,#fff 46%,#f00 46%,#f00 54%,#f80 54%,#f80 62%,#ff0 62%,#ff0 70%,#0a0 70%,#0a0 78%,#38f 78%,#38f 86%,#808 86%,#808 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;text-shadow:2px 2px 4px rgba(0,0,0,0.5);animation:fadeInOut 2.2s ease forwards;'}else{overlay.innerHTML='☁️ Guardado en la nube';overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(25,135,84,0.92);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;animation:fadeInOut 2.2s ease forwards;'}
+    overlay.innerHTML='☁️ Guardado en la nube';overlay.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(25,135,84,0.92);color:#fff;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;animation:fadeInOut 2.2s ease forwards;'
     overlay.style.cssText = 'position:fixed; inset:0; z-index:9999; background:rgba(25,135,84,0.92); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:700; letter-spacing:0.02em; animation: fadeInOut 2.2s ease forwards;';
     if (!document.getElementById('nube-anim-style')) {
       const style = document.createElement('style');
