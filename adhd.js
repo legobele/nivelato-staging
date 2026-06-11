@@ -179,7 +179,7 @@ function recalcAll() {
   // Top width = bottom width - left wall lean - right wall lean
   // Right height = left height + ceiling tilt - floor tilt
   results.anchoTop = anchoBot > 0 ? anchoBot - results.paredIzq.raw - results.paredDer.raw : 0;
-  results.altoDer  = altoIzq > 0  ? altoIzq - results.techo.raw - results.piso.raw : 0;
+  results.altoDer  = altoIzq > 0  ? altoIzq - results.techo.raw + results.piso.raw : 0;
 
   updatePill('desn-pared-izq', results.paredIzq);
   updatePill('desn-pared-der', results.paredDer);
