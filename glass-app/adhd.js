@@ -173,12 +173,7 @@ function recalcAll() {
   if (results.paredDer.dir === '⟩') results.paredDer.dir = '⟨';
   else if (results.paredDer.dir === '⟨') results.paredDer.dir = '⟩';
   results.techo    = calcDesnivel_horiz(t_A, t_B);
-  const pisoResult = calcDesnivel_horiz(p_A, p_B);
-  // Floor direction is inverted � flip ABOJO?ARRIBA relative to ceiling logic
-  if (pisoResult.dir === '?') pisoResult.dir = '?';
-  else if (pisoResult.dir === '?') pisoResult.dir = '?';
-  // floor label � already inverted above
-  results.piso     = pisoResult;
+  results.piso     = calcDesnivel_horiz(p_A, p_B);
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
