@@ -173,7 +173,7 @@ function recalcAll() {
   if (results.paredDer.dir === '⟩') results.paredDer.dir = '⟨';
   else if (results.paredDer.dir === '⟨') results.paredDer.dir = '⟩';
   results.techo    = calcDesnivel_horiz(t_A, t_B);
-  results.piso     = calcDesnivel_horiz(p_A, p_B);
+  results.piso     = calcDesnivel_horiz(p_B, p_A);
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
