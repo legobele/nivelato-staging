@@ -960,3 +960,4 @@ window.embedGraph = function(canvas, data) {
   };
   if (window.drawCanvas) window.drawCanvas();
 };
+  
