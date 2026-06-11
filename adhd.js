@@ -943,5 +943,20 @@ function resetZoom() {
   }
 }
 
- 
 window.embedGraph = function(canvas, data) {
+  if (!canvas || !data) return;
+  var existing = document.getElementById("drawing-canvas");
+  if (!existing) { existing = canvas; canvas.id = "drawing-canvas"; }
+  else { existing.parentNode.replaceChild(canvas, existing); canvas.id = "drawing-canvas"; }
+  canvas.width = canvas.offsetWidth || canvas.clientWidth || 340;
+  canvas.height = canvas.offsetHeight || canvas.clientHeight || 420;
+  window.anchoBot = data.anchoBot || 36;
+  window.altoIzq = data.altoIzq || 84;
+  window.results = {
+    paredIzq: { raw: data.pI || 0, dir: "", label: data.pIL || "Nivel" },
+    paredDer: { raw: data.pD || 0, dir: "", label: data.pDL || "Nivel" },
+    techo: { raw: data.t || 0, dir: "", label: data.tL || "Nivel" },
+    piso: { raw: data.p || 0, dir: "", label: data.pL || "Nivel" }
+  };
+  if (window.drawCanvas) window.drawCanvas();
+};
