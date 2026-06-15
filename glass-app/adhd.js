@@ -169,6 +169,7 @@ function recalcAll() {
 
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
+  if(results.paredDer.dir==='\u27e9')results.paredDer.dir='\u27e8';else if(results.paredDer.dir==='\u27e8')results.paredDer.dir='\u27e9';
   results.piso     = calcDesnivel_horiz(p_B, p_A);
 
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
