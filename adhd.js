@@ -939,7 +939,7 @@ function resetZoom() {
   }
 }
 
-window.embedGraph = function(canvas, data) {
+window.embedGraph = function(cvs, data) {
   if (!canvas || !data) return;
   var existing = document.getElementById("drawing-canvas");
   if (!existing) { existing = canvas; canvas.id = "drawing-canvas"; }
