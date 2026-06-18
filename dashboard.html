@@ -365,19 +365,7 @@ let currentUser;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
     mcVp = { x: 0, y: 0, scale: 1 };
-    // drawJobCanvas(job, mcVp);
-    window.embedGraph(document.getElementById('modal-canvas'), {
-      pI: job.hueco?.anchoBot - job.hueco?.anchoTop,
-      pD: 0,
-      t: job.hueco?.altoDer - job.hueco?.altoIzq,
-      p: 0,
-      pIL: job.desniveles?.paredIzq || 'Nivel',
-      pDL: job.desniveles?.paredDer || 'Nivel',
-      tL: job.desniveles?.techo || 'Nivel',
-      pL: job.desniveles?.piso || 'Nivel',
-      anchoBot: job.hueco?.anchoBot || 36,
-      altoIzq: job.hueco?.altoIzq || 84
-    });
+    setTimeout(() => drawJobCanvas(job, mcVp), 50);
   };
 
   window.deleteCurrentJob = async () => {
@@ -658,3 +646,4 @@ let currentUser;
 </script>
 </body>
 </html>
+
