@@ -1,4 +1,4 @@
-const CACHE = 'nivelato-v1';
+const CACHE = 'nivelato-v2';
 const URLS = [
   './index.html',
   './dashboard.html',
