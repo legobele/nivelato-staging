@@ -481,14 +481,14 @@ let currentUser;
     const bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
 
     // four corners of the skewed glass opening
-    // left wall: top-left shifts by pIv, bottom-left shifts by pIv (same wall lean)
-    // right wall: top-right shifts by pDv
-    // ceiling: top shifts by tcv (vertical)
-    // floor: bottom shifts by psv
-    const TL = { x: bx + pIv*SCALE_PX,          y: by  + tcv*SCALE_PX };
-    const TR = { x: bx + bw - pDv*SCALE_PX,      y: by  + tcv*SCALE_PX };
+    // left wall: both corners shift horizontally by pIv (wall lean)
+    // right wall: both corners shift horizontally by -pDv (opposite direction)
+    // ceiling desnivel only affects the RIGHT side (TR.y)
+    // floor desnivel only affects the RIGHT side (BR.y)
+    const TL = { x: bx + pIv*SCALE_PX,          y: by };
+    const TR = { x: bx + bw - pDv*SCALE_PX,      y: by + tcv*SCALE_PX };
     const BR = { x: bx + bw - pDv*SCALE_PX,      y: by + bh - psv*SCALE_PX };
-    const BL = { x: bx + pIv*SCALE_PX,           y: by + bh - psv*SCALE_PX };
+    const BL = { x: bx + pIv*SCALE_PX,           y: by + bh };
 
     // fill glass shape
     ctx.beginPath();
