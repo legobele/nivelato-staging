@@ -169,6 +169,17 @@ function recalcAll() {
 
   results.paredIzq = calcDesnivel_wall(pI_A, pI_B);
   results.paredDer = calcDesnivel_wall(pD_A, pD_B);
+  // Fix right wall arrow direction: lean-in on right wall means ← not →
+  if (results.paredDer.raw > 0) {
+    results.paredDer.dir = '\u27e8';
+    results.paredDer.label = '\u27e8 ' + toFracStr(results.paredDer.val);
+  } else if (results.paredDer.raw < 0) {
+    results.paredDer.dir = '\u27e9';
+    results.paredDer.label = '\u27e9 ' + toFracStr(results.paredDer.val);
+  }
+  results.techo = calcDesnivel_horiz(t_A, t_B);
+  results.piso  = calcDesnivel_horiz(p_A, p_B);
+  const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
 
   // Computed dimensions from desniveles
