@@ -2,9 +2,26 @@
 
 // --- FRACTION HELPERS ------------------------------------------------------
 function readVal(wholeId, fracId) {
+  // Allow override via _embedData for embedded graphs (dashboard)
+  if (window._embedData && window._embedData[wholeId] !== undefined) {
+    return window._embedData[wholeId];
+  }
   const whole = parseFloat(document.getElementById(wholeId)?.value) || 0;
   const frac  = parseFloat(document.getElementById(fracId)?.value)  || 0;
   return whole + frac;
+}
+
+function parseLabelValue(str) {
+  if (!str || str === 'Nivel' || str === '—') return 0;
+  var m = str.match(/([\d\/\. ]+)"/);
+  if (!m) return 0;
+  var parts = m[1].trim().split(' ');
+  var val = 0;
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].includes('/')) { var f = parts[i].split('/'); val += parseFloat(f[0])/parseFloat(f[1]); }
+    else val += parseFloat(parts[i]) || 0;
+  }
+  return val;
 }
 
 function setVal(wholeId, fracId, decimal) {
@@ -179,6 +196,14 @@ function recalcAll() {
   }
   results.techo = calcDesnivel_horiz(t_A, t_B);
   results.piso  = calcDesnivel_horiz(p_A, p_B);
+  // Floor direction is opposite of ceiling: bigger left = floor rises right (↑)
+  if (results.piso.raw > 0) {
+    results.piso.dir = '\u2191';
+    results.piso.label = '\u2191 ' + toFracStr(results.piso.val);
+  } else if (results.piso.raw < 0) {
+    results.piso.dir = '\u2193';
+    results.piso.label = '\u2193 ' + toFracStr(results.piso.val);
+  }
   const anchoBot = readVal('hueco-ancho-bot-whole','hueco-ancho-bot-frac') || 0;
   const altoIzq  = readVal('hueco-alto-izq-whole', 'hueco-alto-izq-frac')  || 0;
 
@@ -410,8 +435,8 @@ function shareViaSMS()      { window.location.href = 'sms:?body=' + encodeURICom
 function shareViaWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank'); }
 
 // --- CANVAS ENGINE ---------------------------------------------------------
-const canvas  = document.getElementById('drawing-canvas');
-const ctx     = canvas.getContext('2d');
+let canvas  = document.getElementById('drawing-canvas');
+let ctx     = canvas?.getContext('2d');
 
 let vp = { x: 0, y: 0, scale: 1 };
 let vpTarget = { x: 0, y: 0, scale: 1 };
@@ -552,7 +577,7 @@ function drawCanvas() {
 
   // Floor desnivel: p_A vs p_B � LEFT is 0,0, offset is on RIGHT
   const bottomOffsetLeft  = 0;
-  const bottomOffsetRight = clamp(((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
+  const bottomOffsetRight = clamp(-((p_A - p_B) / pMax) * EXAG * (gr.h / gr.w), EXAG);
 
   // -- LEVEL REFERENCE rectangle (dashed) = where the straight frame goes --
   const levelTL = { x: gr.x, y: gr.y };
@@ -951,19 +976,43 @@ function resetZoom() {
 }
 
 window.embedGraph = function(cvs, data) {
-  if (!canvas || !data) return;
-  var existing = document.getElementById("drawing-canvas");
-  if (!existing) { existing = canvas; canvas.id = "drawing-canvas"; }
-  else { existing.parentNode.replaceChild(canvas, existing); canvas.id = "drawing-canvas"; }
-  canvas.width = canvas.offsetWidth || canvas.clientWidth || 340;
-  canvas.height = canvas.offsetHeight || canvas.clientHeight || 420;
-  window.anchoBot = data.anchoBot || 36;
-  window.altoIzq = data.altoIzq || 84;
-  window.results = {
-    paredIzq: { raw: data.pI || 0, dir: "", label: data.pIL || "Nivel" },
-    paredDer: { raw: data.pD || 0, dir: "", label: data.pDL || "Nivel" },
-    techo: { raw: data.t || 0, dir: "", label: data.tL || "Nivel" },
-    piso: { raw: data.p || 0, dir: "", label: data.pL || "Nivel" }
+  if (!cvs || !data) return;
+  var dpr = window.devicePixelRatio || 1;
+  var w = cvs.clientWidth || 340;
+  var h = cvs.clientHeight || 420;
+  cvs.width = w * dpr;
+  cvs.height = h * dpr;
+  cvs.style.width = w + 'px';
+  cvs.style.height = h + 'px';
+  // Parse desnivel labels to get raw values for visual offset computation
+  var pIv = parseLabelValue(data.pIL);
+  var pDv = 0 - parseLabelValue(data.pDL);  // right wall, opposite direction
+  var tcv = parseLabelValue(data.tL);
+  var psv = parseLabelValue(data.pL);
+  // Set override data so drawCanvas reads these instead of DOM inputs
+  window._embedData = {
+    'hueco-ancho-bot-whole': data.anchoBot || 36,
+    'hueco-alto-izq-whole': data.altoIzq || 84,
+    'pI-a-whole': pIv,
+    'pI-b-whole': 0,
+    'pD-a-whole': pDv,
+    'pD-b-whole': 0,
+    't-a-whole': tcv,
+    't-b-whole': 0,
+    'p-a-whole': psv,
+    'p-b-whole': 0,
   };
+  window.results = {
+    paredIzq: { raw: pIv, dir: "", label: data.pIL || "Nivel" },
+    paredDer: { raw: pDv, dir: "", label: data.pDL || "Nivel" },
+    techo: { raw: tcv, dir: "", label: data.tL || "Nivel" },
+    piso: { raw: psv, dir: "", label: data.pL || "Nivel" }
+  };
+  // Swap to modal canvas, draw, restore main canvas
+  var _c = canvas, _x = ctx;
+  canvas = cvs;
+  ctx = cvs.getContext('2d');
   if (window.drawCanvas) window.drawCanvas();
+  canvas = _c;
+  ctx = _x;
 };

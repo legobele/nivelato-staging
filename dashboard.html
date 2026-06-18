@@ -210,6 +210,8 @@
   </div>
 </div>
 
+<canvas id="drawing-canvas" style="display:none;width:340px;height:420px"></canvas>
+
 <script type="module">
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
@@ -364,8 +366,14 @@ let currentUser;
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     document.getElementById('modal-body').innerHTML = html;
     document.getElementById('modal-overlay').classList.add('open');
-    mcVp = { x: 0, y: 0, scale: 1 };
-    setTimeout(() => drawJobCanvas(job, mcVp), 50);
+    window.embedGraph(document.getElementById('modal-canvas'), {
+      anchoBot: job.hueco?.anchoBot || 36,
+      altoIzq: job.hueco?.altoIzq || 84,
+      pIL: job.desniveles?.paredIzq || 'Nivel',
+      pDL: job.desniveles?.paredDer || 'Nivel',
+      tL: job.desniveles?.techo || 'Nivel',
+      pL: job.desniveles?.piso || 'Nivel'
+    });
   };
 
   window.deleteCurrentJob = async () => {
@@ -384,245 +392,6 @@ let currentUser;
       alert('Error al eliminar: ' + e.message);
     }
   };
-
-  function parseDesnivel(str) {
-    // returns signed inches: positive = afuera/sube, negative = adentro/baja
-    if (!str || str === '—') return 0;
-    const m = str.match(/([\d\/\. ]+)"/);
-    if (!m) return 0;
-    const parts = m[1].trim().split(' ');
-    let val = 0;
-    parts.forEach(p => {
-      if (p.includes('/')) { const [n,d] = p.split('/'); val += parseFloat(n)/parseFloat(d); }
-      else val += parseFloat(p) || 0;
-    });
-    const low = str.toLowerCase();
-    if (low.includes('adentro') || low.includes('baja')) val = -val;
-    return val;
-  }
-
-  function dimLine(ctx, x1,y1,x2,y2,label,side) {
-    // draws a dimension line with arrows and label (supports \n for two lines)
-    const TICK = 6, OFF = 14, LH = 14;
-    const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
-    if (len < 2) return;
-    const nx = -dy/len, ny = dx/len; // normal
-    const mx = (x1+x2)/2 + nx*OFF, my = (y1+y2)/2 + ny*OFF;
-    ctx.save();
-    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 1; ctx.setLineDash([3,3]);
-    // offset line
-    ctx.beginPath(); ctx.moveTo(x1+nx*OFF,y1+ny*OFF); ctx.lineTo(x2+nx*OFF,y2+ny*OFF); ctx.stroke();
-    ctx.setLineDash([]);
-    // tick marks
-    ctx.beginPath();
-    ctx.moveTo(x1,y1); ctx.lineTo(x1+nx*(OFF+TICK),y1+ny*(OFF+TICK)); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x2,y2); ctx.lineTo(x2+nx*(OFF+TICK),y2+ny*(OFF+TICK)); ctx.stroke();
-    // arrowheads on offset line
-    const ux=dx/len, uy=dy/len;
-    function arrow(ax,ay,dirx,diry) {
-      ctx.beginPath();
-      ctx.moveTo(ax,ay);
-      ctx.lineTo(ax-dirx*7+ny*3,ay-diry*7+nx*3);
-      ctx.lineTo(ax-dirx*7-ny*3,ay-diry*7-nx*3);
-      ctx.closePath(); ctx.fillStyle='#1971c2'; ctx.fill();
-    }
-    arrow(x1+nx*OFF,y1+ny*OFF, -ux,-uy);
-    arrow(x2+nx*OFF,y2+ny*OFF,  ux, uy);
-    // multi-line label
-    const lines = label ? label.split('\n') : [];
-    const isVertical = (side === 'left' || side === 'right');
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    if (!isVertical) {
-      const totalH = lines.length * LH;
-      lines.forEach((ln, i) => {
-        ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
-        ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
-        ctx.fillText(ln, mx, my - totalH/2 + LH*i + LH/2);
-      });
-    } else {
-      ctx.save();
-      ctx.translate(mx, my);
-      ctx.rotate(-Math.PI/2);
-      const totalH = lines.length * LH;
-      lines.forEach((ln, i) => {
-        ctx.font = i === 0 ? 'bold 11px Inter,sans-serif' : 'bold 10px Inter,sans-serif';
-        ctx.fillStyle = i === 0 ? '#1971c2' : '#e67700';
-        ctx.fillText(ln, 0, -totalH/2 + LH*i + LH/2);
-      });
-      ctx.restore();
-    }
-    ctx.restore();
-  }
-
-  function drawJobCanvas(job, vp) {
-    const mc = document.getElementById('modal-canvas');
-    if (!mc || !job) return;
-    const ctx = mc.getContext('2d');
-    const W = mc.width, H = mc.height;
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle = '#f8faff'; ctx.fillRect(0,0,W,H);
-
-    const scale = (vp?.scale || 1);
-    const ox = (vp?.x || 0), oy = (vp?.y || 0);
-    ctx.save();
-    ctx.translate(W/2 + ox, H/2 + oy);
-    ctx.scale(scale, scale);
-    ctx.translate(-W/2, -H/2);
-
-    // parse desniveles into pixel offsets
-    const SCALE_PX = 18; // px per inch of desnivel
-    const pIv = parseDesnivel(job.desniveles?.paredIzq);
-    const pDv = parseDesnivel(job.desniveles?.paredDer);
-    const tcv = parseDesnivel(job.desniveles?.techo);
-    const psv = parseDesnivel(job.desniveles?.piso);
-
-    const pad = 72;
-    const bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
-
-    // four corners of the skewed glass opening
-    // left wall: both corners shift horizontally by pIv (wall lean)
-    // right wall: both corners shift horizontally by -pDv (opposite direction)
-    // ceiling desnivel only affects the RIGHT side (TR.y)
-    // floor desnivel only affects the RIGHT side (BR.y)
-    const TL = { x: bx + pIv*SCALE_PX,          y: by };
-    const TR = { x: bx + bw - pDv*SCALE_PX,      y: by + tcv*SCALE_PX };
-    const BR = { x: bx + bw - pDv*SCALE_PX,      y: by + bh - psv*SCALE_PX };
-    const BL = { x: bx + pIv*SCALE_PX,           y: by + bh };
-
-    // fill glass shape
-    ctx.beginPath();
-    ctx.moveTo(TL.x,TL.y); ctx.lineTo(TR.x,TR.y);
-    ctx.lineTo(BR.x,BR.y); ctx.lineTo(BL.x,BL.y);
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(144,194,255,0.25)'; ctx.fill();
-    ctx.strokeStyle = '#1971c2'; ctx.lineWidth = 2.5;
-    ctx.stroke();
-
-    // draw opening box (square reference)
-    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-    ctx.strokeRect(bx, by, bw, bh);
-    ctx.setLineDash([]);
-
-    // desnivel arrows on each side if nonzero
-    function desArrow(x1,y1,x2,y2,label) {
-      if (!label || label==='—') return;
-      ctx.save();
-      ctx.strokeStyle='#e67700'; ctx.fillStyle='#e67700';
-      ctx.lineWidth=1.5; ctx.font='bold 10px Inter,sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      const mx=(x1+x2)/2, my=(y1+y2)/2;
-      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-      ctx.fillText(label,mx,my-10);
-      ctx.restore();
-    }
-
-    // desnivel labels at sides — pill badges with breathing room
-    const pI = job.desniveles?.paredIzq, pD = job.desniveles?.paredDer;
-    const tc = job.desniveles?.techo,    ps = job.desniveles?.piso;
-
-    function desPill(text, cx, cy, align) {
-      if (!text || text === '—') return;
-      ctx.save();
-      ctx.font = 'bold 10px Inter,sans-serif';
-      const tw = ctx.measureText(text).width;
-      const pw = tw + 12, ph = 18;
-      const px = align === 'right' ? cx - pw : align === 'center' ? cx - pw/2 : cx;
-      const py = cy - ph/2;
-      ctx.fillStyle = 'rgba(255,237,213,0.95)';
-      ctx.beginPath();
-      ctx.roundRect(px, py, pw, ph, 5);
-      ctx.fill();
-      ctx.strokeStyle = '#e67700'; ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = '#c05200';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(text, px + pw/2, cy);
-      ctx.restore();
-    }
-
-    const leftMidY  = (TL.y + BL.y) / 2;
-    const rightMidY = (TR.y + BR.y) / 2;
-    const topMidX   = (TL.x + TR.x) / 2;
-    const botMidX   = (BL.x + BR.x) / 2;
-
-    // Desnivel now shown inline on dimension lines (second line, orange)
-    // desPill calls removed to avoid redundancy
-
-    // dimension lines
-    const anchoT = job.hueco?.anchoTop   || job.hueco?.ancho;
-    const anchoB = job.hueco?.anchoBot   || job.hueco?.anchoBottom;
-    const altoL  = job.hueco?.altoIzq   || job.hueco?.altoIzquierda  || job.hueco?.alto;
-    const altoR  = job.hueco?.altoDer   || job.hueco?.altoDerecha;
-
-    // Always show all 4 dimension lines (measurement + desnivel on second line)
-    const topLabel   = anchoT ? anchoT + '"' + (tc && tc !== '—' ? '\n' + tc : '') : null;
-    const botLabel   = anchoB ? anchoB + '"' + (ps && ps !== '—' ? '\n' + ps : '') : null;
-    const leftLabel  = altoL  ? altoL  + '"' + (pI && pI !== '—' ? '\n' + pI : '') : null;
-    const rightLabel = altoR  ? altoR  + '"' + (pD && pD !== '—' ? '\n' + pD : '') : null;
-    if (topLabel)   dimLine(ctx, TL.x,TL.y, TR.x,TR.y, topLabel,   'top');
-    if (botLabel)   dimLine(ctx, BL.x,BL.y, BR.x,BR.y, botLabel,   'bot');
-    if (leftLabel)  dimLine(ctx, TL.x,TL.y, BL.x,BL.y, leftLabel,  'left');
-    if (rightLabel) dimLine(ctx, TR.x,TR.y, BR.x,BR.y, rightLabel, 'right');
-
-    ctx.restore();
-  }
-
-  // ── modal canvas drag ──────────────────────────────────────────────────
-  let mcVp = { x: 0, y: 0, scale: 1 };
-  let mcDrag = null;
-  let mcPinchDist = null;
-
-  function mcGetCanvas() { return document.getElementById('modal-canvas'); }
-
-  function mcApplyDrag(dx, dy) {
-    mcVp.x += dx; mcVp.y += dy;
-    const mc = mcGetCanvas();
-    if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
-  }
-
-  document.addEventListener('mousedown', e => {
-    if (e.target?.id !== 'modal-canvas') return;
-    mcDrag = { x: e.clientX, y: e.clientY };
-    e.preventDefault();
-  });
-  document.addEventListener('mousemove', e => {
-    if (!mcDrag) return;
-    mcApplyDrag(e.clientX - mcDrag.x, e.clientY - mcDrag.y);
-    mcDrag = { x: e.clientX, y: e.clientY };
-  });
-  document.addEventListener('mouseup', () => { mcDrag = null; });
-
-  document.addEventListener('touchstart', e => {
-    if (e.target?.id !== 'modal-canvas') return;
-    if (e.touches.length === 1) {
-      mcDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    } else if (e.touches.length === 2) {
-      mcPinchDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-  }, { passive: true });
-  document.addEventListener('touchmove', e => {
-    if (e.target?.id !== 'modal-canvas') return;
-    if (e.touches.length === 1 && mcDrag) {
-      mcApplyDrag(e.touches[0].clientX - mcDrag.x, e.touches[0].clientY - mcDrag.y);
-      mcDrag = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    } else if (e.touches.length === 2 && mcPinchDist !== null) {
-      const d = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      mcVp.scale = Math.min(4, Math.max(0.3, mcVp.scale * (d / mcPinchDist)));
-      mcPinchDist = d;
-      const mc = mcGetCanvas();
-      if (mc) drawJobCanvas(window._jobs?.[window._currentJobIdx], mcVp);
-    }
-  }, { passive: true });
-  document.addEventListener('touchend', e => {
-    if (e.touches.length === 0) { mcDrag = null; mcPinchDist = null; }
-  });
 
   window.closeModal = (e) => {
     if (!e || e.target === document.getElementById('modal-overlay')) {
