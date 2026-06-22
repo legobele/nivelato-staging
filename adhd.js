@@ -977,11 +977,11 @@ function resetZoom() {
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  var dpr = window.devicePixelRatio || 1;
-  cvs.width = cvs.clientWidth || 340;
-  cvs.height = cvs.clientHeight || 420;
-  cvs.style.width = cvs.clientWidth + 'px';
-  cvs.style.height = cvs.clientHeight + 'px';
+  // Set canvas bitmap to match CSS size (320x340 from flex layout)
+  cvs.width = 320;
+  cvs.height = 340;
+  cvs.style.width = '320px';
+  cvs.style.height = '340px';
   // Parse desnivel labels to get raw values for visual offset computation
   var pIv = parseLabelValue(data.pIL);
   var pDv = 0 - parseLabelValue(data.pDL);  // right wall, opposite direction
