@@ -978,12 +978,10 @@ function resetZoom() {
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
   var dpr = window.devicePixelRatio || 1;
-  var w = cvs.clientWidth || 340;
-  var h = cvs.clientHeight || 420;
-  cvs.width = w * dpr;
-  cvs.height = h * dpr;
-  cvs.style.width = w + 'px';
-  cvs.style.height = h + 'px';
+  cvs.width = cvs.clientWidth || 340;
+  cvs.height = cvs.clientHeight || 420;
+  cvs.style.width = cvs.clientWidth + 'px';
+  cvs.style.height = cvs.clientHeight + 'px';
   // Parse desnivel labels to get raw values for visual offset computation
   var pIv = parseLabelValue(data.pIL);
   var pDv = 0 - parseLabelValue(data.pDL);  // right wall, opposite direction
@@ -1008,12 +1006,151 @@ window.embedGraph = function(cvs, data) {
     techo: { raw: tcv, dir: "", label: data.tL || "Nivel" },
     piso: { raw: psv, dir: "", label: data.pL || "Nivel" }
   };
-  // Swap to modal canvas, draw, restore main canvas
-  var _c = canvas, _x = ctx;
-  canvas = cvs;
-  ctx = cvs.getContext('2d');
-  if (window.drawCanvas) window.drawCanvas();
-  canvas = _c;
-  ctx = _x;
+  // Draw directly on modal canvas
+  var dctx = cvs.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var W = cvs.width, H = cvs.height;
+  dctx.clearRect(0,0,W,H);
+  dctx.fillStyle = '#f8faff';
+  dctx.fillRect(0,0,W,H);
+  var sc = 1;
+  var ox = 0, oy = 0;
+  dctx.save();
+  dctx.translate(W/2 + ox, H/2 + oy);
+  dctx.scale(sc, sc);
+  dctx.translate(-W/2, -H/2);
+  var pad = 72;
+  var bx = pad, by = pad, bw = W - pad*2, bh = H - pad*2;
+  var EXAG = Math.min(bw, bh) * 0.15;
+  var clamp = function(v, lim) { return Math.max(-lim, Math.min(lim, v)); };
+  var pIMax = Math.max(pIv, 1);
+  var pDMax = Math.max(pDv, 1);
+  var tMax = Math.max(tcv, 1);
+  var pMax = Math.max(psv, 1);
+  var leftOffsetTop = clamp(((pIv) / pIMax) * EXAG, EXAG);
+  var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
+  var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
+  var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
+  var levelTL = { x: bx + leftOffsetTop, y: by };
+  var levelTR = { x: bx + bw + rightOffsetTop, y: by + tcv };
+  var levelBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
+  var levelBL = { x: bx + leftOffsetTop, y: by + bh };
+  var roughTL = { x: bx + leftOffsetTop, y: by + topOffsetRight };
+  var roughTR = { x: bx + bw + rightOffsetTop, y: by + tcv };
+  var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
+  var roughBL = { x: bx + leftOffsetTop, y: by + bh + psv };
+  dctx.beginPath();
+  dctx.moveTo(roughTL.x, roughTL.y);
+  dctx.lineTo(roughTR.x, roughTR.y);
+  dctx.lineTo(roughBR.x, roughBR.y);
+  dctx.lineTo(roughBL.x, roughBL.y);
+  dctx.closePath();
+  dctx.fillStyle = 'rgba(144,194,255,0.25)';
+  dctx.fill();
+  dctx.strokeStyle = '#1971c2';
+  dctx.lineWidth = 2.5;
+  dctx.stroke();
+  dctx.strokeStyle = 'rgba(0,0,0,0.08)';
+  dctx.lineWidth = 1;
+  dctx.setLineDash([4,4]);
+  dctx.strokeRect(bx, by, bw, bh);
+  dctx.setLineDash([]);
+  var anchoBot = data.anchoBot || 36;
+  var altoIzq = data.altoIzq || 84;
+  var anchoTop = anchoBot - pIv - pDv;
+  var altoDer = altoIzq - tcv - psv;
+  if (anchoBot > 0) {
+    dctx.strokeStyle = '#adb5bd';
+    dctx.lineWidth = 1;
+    dctx.setLineDash([3,3]);
+    dctx.beginPath();
+    dctx.moveTo(roughBL.x, roughBL.y + 24);
+    dctx.lineTo(roughBR.x, roughBR.y + 24);
+    dctx.stroke();
+    dctx.setLineDash([]);
+    dctx.beginPath();
+    dctx.moveTo(roughBL.x, roughBL.y + 24 - 6);
+    dctx.lineTo(roughBL.x, roughBL.y + 24 + 6);
+    dctx.stroke();
+    dctx.beginPath();
+    dctx.moveTo(roughBR.x, roughBR.y + 24 - 6);
+    dctx.lineTo(roughBR.x, roughBR.y + 24 + 6);
+    dctx.stroke();
+    dctx.fillStyle = '#495057';
+    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
+    dctx.textAlign = 'center';
+    dctx.textBaseline = 'bottom';
+    dctx.fillText(anchoBot + '"', (roughBL.x + roughBR.x) / 2, roughBR.y + 24 - 2);
+  }
+  if (anchoBot > 0) {
+    dctx.strokeStyle = '#adb5bd';
+    dctx.lineWidth = 1;
+    dctx.setLineDash([3,3]);
+    dctx.beginPath();
+    dctx.moveTo(roughTL.x, roughTL.y - 24);
+    dctx.lineTo(roughTR.x, roughTR.y - 24);
+    dctx.stroke();
+    dctx.setLineDash([]);
+    dctx.beginPath();
+    dctx.moveTo(roughTL.x, roughTL.y - 24 - 6);
+    dctx.lineTo(roughTL.x, roughTL.y - 24 + 6);
+    dctx.stroke();
+    dctx.beginPath();
+    dctx.moveTo(roughTR.x, roughTR.y - 24 - 6);
+    dctx.lineTo(roughTR.x, roughTR.y - 24 + 6);
+    dctx.stroke();
+    dctx.fillStyle = '#495057';
+    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
+    dctx.textAlign = 'center';
+    dctx.textBaseline = 'bottom';
+    dctx.fillText(anchoTop + '"', (roughTL.x + roughTR.x) / 2, roughTR.y - 24 - 2);
+  }
+  if (altoIzq > 0) {
+    dctx.strokeStyle = '#adb5bd';
+    dctx.lineWidth = 1;
+    dctx.setLineDash([3,3]);
+    dctx.beginPath();
+    dctx.moveTo(roughTL.x - 24, roughTL.y);
+    dctx.lineTo(roughBL.x - 24, roughBL.y);
+    dctx.stroke();
+    dctx.setLineDash([]);
+    dctx.beginPath();
+    dctx.moveTo(roughTL.x - 24 - 6, roughTL.y - 6);
+    dctx.lineTo(roughTL.x - 24 + 6, roughTL.y + 6);
+    dctx.stroke();
+    dctx.beginPath();
+    dctx.moveTo(roughBL.x - 24 - 6, roughBL.y - 6);
+    dctx.lineTo(roughBL.x - 24 + 6, roughBL.y + 6);
+    dctx.stroke();
+    dctx.fillStyle = '#495057';
+    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
+    dctx.textAlign = 'center';
+    dctx.textBaseline = 'bottom';
+    dctx.fillText(altoIzq + '"', (roughTL.x + roughBL.x) / 2 - 24, roughBL.y - 2);
+  }
+  if (altoIzq > 0) {
+    dctx.strokeStyle = '#adb5bd';
+    dctx.lineWidth = 1;
+    dctx.setLineDash([3,3]);
+    dctx.beginPath();
+    dctx.moveTo(roughTR.x + 24, roughTR.y);
+    dctx.lineTo(roughBR.x + 24, roughBR.y);
+    dctx.stroke();
+    dctx.setLineDash([]);
+    dctx.beginPath();
+    dctx.moveTo(roughTR.x + 24 - 6, roughTR.y - 6);
+    dctx.lineTo(roughTR.x + 24 + 6, roughTR.y + 6);
+    dctx.stroke();
+    dctx.beginPath();
+    dctx.moveTo(roughBR.x + 24 - 6, roughBR.y - 6);
+    dctx.lineTo(roughBR.x + 24 + 6, roughBR.y + 6);
+    dctx.stroke();
+    dctx.fillStyle = '#495057';
+    dctx.font = 'bold 12px Inter, system-ui, sans-serif';
+    dctx.textAlign = 'center';
+    dctx.textBaseline = 'bottom';
+    dctx.fillText(altoDer + '"', (roughTR.x + roughBR.x) / 2 + 24, roughBR.y - 2);
+  }
+  dctx.restore();
 };
   
