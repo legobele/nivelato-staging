@@ -444,6 +444,7 @@ let animFrame = null;
 
 function resizeCanvas() {
   const wrap = document.getElementById('canvas-wrap');
+  if (!wrap) return;
   canvas.width  = wrap.offsetWidth  * window.devicePixelRatio;
   canvas.height = wrap.offsetHeight * window.devicePixelRatio;
   canvas.style.width  = wrap.offsetWidth  + 'px';
@@ -960,9 +961,11 @@ canvas.addEventListener('wheel', function(e) {
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
-resizeCanvas();
-history.replaceState({ step: 0 }, '', '#step-0');
-goStep(0, true);
+if (canvas) {
+  resizeCanvas();
+  history.replaceState({ step: 0 }, '', '#step-0');
+  goStep(0, true);
+}
 
 function resetZoom() {
   if (window.zoomLevel > 1 || window.panX || window.panY) {
