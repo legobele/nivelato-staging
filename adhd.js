@@ -1041,14 +1041,10 @@ window.embedGraph = function(cvs, data) {
   var rightOffsetTop = -clamp(((pDv) / pDMax) * EXAG, EXAG);
   var topOffsetRight = clamp(((tcv) / tMax) * EXAG * (bh / bw), EXAG);
   var bottomOffsetRight = clamp(((psv) / pMax) * EXAG * (bh / bw), EXAG);
-  var levelTL = { x: bx + leftOffsetTop, y: by };
-  var levelTR = { x: bx + bw + rightOffsetTop, y: by + tcv };
-  var levelBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-  var levelBL = { x: bx + leftOffsetTop, y: by + bh };
-  var roughTL = { x: bx + leftOffsetTop, y: by + topOffsetRight };
-  var roughTR = { x: bx + bw + rightOffsetTop, y: by + tcv };
+  var roughTL = { x: bx + leftOffsetTop, y: by };
+  var roughTR = { x: bx + bw + rightOffsetTop, y: by + topOffsetRight };
   var roughBR = { x: bx + bw + rightOffsetTop, y: by + bh + bottomOffsetRight };
-  var roughBL = { x: bx + leftOffsetTop, y: by + bh + psv };
+  var roughBL = { x: bx + leftOffsetTop, y: by + bh };
   dctx.beginPath();
   dctx.moveTo(roughTL.x, roughTL.y);
   dctx.lineTo(roughTR.x, roughTR.y);
