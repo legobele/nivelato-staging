@@ -61,33 +61,33 @@ function toFracStr(decimal) {
 }
 
 // ─── STEP STATE ────────────────────────────────────────────────────────────
-let currentStep = -1;
+let currentStep = 0;
 const TOTAL_STEPS = 6;
 let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
-  if (leavingStep === 1) {
+  if (leavingStep === 2) {
     const hasA = readVal('pI-a-whole','pI-a-frac') > 0;
     const hasB = readVal('pI-b-whole','pI-b-frac') > 0;
     if (hasA && hasB) return { focusX: 0.0, focusY: 0.5, zoom: 2.2 };
     if (hasA)         return { focusX: 0.0, focusY: 1.0, zoom: 3.0 };
     if (hasB)         return { focusX: 0.0, focusY: 0.0, zoom: 3.0 };
   }
-  if (leavingStep === 2) {
+  if (leavingStep === 3) {
     const hasA = readVal('pD-a-whole','pD-a-frac') > 0;
     const hasB = readVal('pD-b-whole','pD-b-frac') > 0;
     if (hasA && hasB) return { focusX: 1.0, focusY: 0.5, zoom: 2.2 };
     if (hasA)         return { focusX: 1.0, focusY: 1.0, zoom: 3.0 };
     if (hasB)         return { focusX: 1.0, focusY: 0.0, zoom: 3.0 };
   }
-  if (leavingStep === 3) {
+  if (leavingStep === 4) {
     const hasA = readVal('t-a-whole','t-a-frac') > 0;
     const hasB = readVal('t-b-whole','t-b-frac') > 0;
     if (hasA && hasB) return { focusX: 0.5, focusY: 0.0, zoom: 2.2 };
     if (hasA)         return { focusX: 0.0, focusY: 0.0, zoom: 3.0 };
     if (hasB)         return { focusX: 1.0, focusY: 0.0, zoom: 3.0 };
   }
-  if (leavingStep === 4) {
+  if (leavingStep === 5) {
     const hasA = readVal('p-a-whole','p-a-frac') > 0;
     const hasB = readVal('p-b-whole','p-b-frac') > 0;
     if (hasA && hasB) return { focusX: 0.5, focusY: 1.0, zoom: 2.2 };
@@ -101,10 +101,9 @@ function goStep(n, skipHistory) {
   userZoomed = false; // reset auto-focus on each step transition
   const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  var stepId = n < 0 ? 'step--1' : 'step-' + n;
-  document.getElementById(stepId)?.classList.add('active');
+  document.getElementById('step-' + n)?.classList.add('active');
   currentStep = n;
-  document.getElementById('step-num').textContent = n < 0 ? 0 : n;
+  document.getElementById('step-num').textContent = n;
   const pct = Math.max(0, ((n + 1) / TOTAL_STEPS) * 100);
   document.getElementById('progress-bar').style.width = pct + '%';
   recalcAll();
@@ -141,10 +140,9 @@ function prevStep() { if (currentStep > -1)          goStep(currentStep - 1); }
 window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {
     const targetStep = e.state.step;
-    if (targetStep >= -1 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
+    if (targetStep >= 0 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-      var stepId = targetStep < 0 ? 'step--1' : 'step-' + targetStep;
-      document.getElementById(stepId)?.classList.add('active');
+      document.getElementById('step-' + targetStep)?.classList.add('active');
       currentStep = targetStep;
       document.getElementById('step-num').textContent = targetStep;
       const pct = (targetStep / TOTAL_STEPS) * 100;
@@ -461,12 +459,13 @@ function resizeCanvas() {
 }
 
 const STEP_VIEWS = [
-  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
-  { focusX: 0.0, focusY: 0.5, zoom: 3.2  },
-  { focusX: 1.0, focusY: 0.5, zoom: 3.2  },
-  { focusX: 0.5, focusY: 0.0, zoom: 3.2  },
-  { focusX: 0.5, focusY: 1.0, zoom: 3.2  },
-  { focusX: 0.5, focusY: 0.5, zoom: 0.72 },
+  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 0 - cliente
+  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 1 - hueco
+  { focusX: 0.0, focusY: 0.5, zoom: 3.2  }, // step 2 - pared izq
+  { focusX: 1.0, focusY: 0.5, zoom: 3.2  }, // step 3 - pared der
+  { focusX: 0.5, focusY: 0.0, zoom: 3.2  }, // step 4 - arriba
+  { focusX: 0.5, focusY: 1.0, zoom: 3.2  }, // step 5 - abajo
+  { focusX: 0.5, focusY: 0.5, zoom: 0.72 }, // step 6 - resumen
 ];
 
 function getGlassRect() {
@@ -788,10 +787,10 @@ function drawStepHighlight(ctx, TL, TR, BL, BR, step, sc) {
   ctx.shadowColor = '#f59f00';
   ctx.shadowBlur = 8 / sc;
   ctx.beginPath();
-  if (step === 1) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(BL.x, BL.y); }
-  else if (step === 2) { ctx.moveTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); }
-  else if (step === 3) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); }
-  else if (step === 4) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(BR.x, BR.y); }
+  if (step === 2) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(BL.x, BL.y); }
+  else if (step === 3) { ctx.moveTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); }
+  else if (step === 4) { ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); }
+  else if (step === 5) { ctx.moveTo(BL.x, BL.y); ctx.lineTo(BR.x, BR.y); }
   ctx.stroke();
   ctx.restore();
 }

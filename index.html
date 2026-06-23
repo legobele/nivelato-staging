@@ -18,7 +18,7 @@
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">-1</span> de 6</span>
+<span id="step-indicator">Paso <span id="step-num">0</span> de 6</span>
 </header>
 <!-- PROGRESS BAR -->
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
@@ -30,8 +30,8 @@
 <!-- BOTTOM PANEL — fixed height, all steps live here -->
 <div id="bottom-panel">
 
-<!-- ══ STEP -1 — CLIENTE ══ -->
-<section class="step-panel" id="step--1">
+<!-- ══ STEP 0 — CLIENTE ══ -->
+<section class="step-panel active" id="step-0">
 <div class="step-title">Cliente / Proyecto</div>
 <p class="step-hint">Ingresa el nombre del cliente, proyecto y ubicación antes de empezar a medir.</p>
 <div class="input-row">
@@ -51,8 +51,8 @@
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </section>
 
-<!-- ══ STEP 0 — HUECO ══ -->
-<section class="step-panel active" id="step-0">
+<!-- ══ STEP 1 — HUECO ══ -->
+<section class="step-panel" id="step-1">
 <div class="step-title">Medidas del hueco</div>
 <p class="step-hint">Ingresa las 2 medidas base: ancho abajo y alto izquierda. Las otras 2 se calculan automáticamente con los desniveles.</p>
 <div class="input-row">
@@ -76,8 +76,8 @@
 <button class="btn-primary" onclick="nextStep()">Siguiente →</button>
 </section>
 
-<!-- ══ STEP 1 — PARED IZQUIERDA ══ -->
-<section class="step-panel" id="step-1">
+<!-- ══ STEP 2 — PARED IZQUIERDA ══ -->
+<section class="step-panel" id="step-2">
 <div class="step-title">Pared izquierda</div>
 <p class="step-hint">Mide del láser a la pared izquierda: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
@@ -105,8 +105,8 @@
 </div>
 </section>
 
-<!-- ══ STEP 2 — PARED DERECHA ══ -->
-<section class="step-panel" id="step-2">
+<!-- ══ STEP 3 — PARED DERECHA ══ -->
+<section class="step-panel" id="step-3">
 <div class="step-title">Pared derecha</div>
 <p class="step-hint">Mide del láser a la pared derecha: punto A (abajo) y punto B (arriba).</p>
 <div class="input-row">
@@ -134,8 +134,8 @@
 </div>
 </section>
 
-<!-- ══ STEP 3 — ARRIBA (was TECHO) ══ -->
-<section class="step-panel" id="step-3">
+<!-- ══ STEP 4 — ARRIBA (was TECHO) ══ -->
+<section class="step-panel" id="step-4">
 <div class="step-title">Arriba</div>
 <p class="step-hint">Mide del láser arriba: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
@@ -164,8 +164,8 @@
 </section>
 <!-- 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash -->
 
-<!-- ══ STEP 4 — ABAJO (was PISO) ══ -->
-<section class="step-panel" id="step-4">
+<!-- ══ STEP 5 — ABAJO (was PISO) ══ -->
+<section class="step-panel" id="step-5">
 <div class="step-title">Abajo</div>
 <p class="step-hint">Mide del láser abajo: punto A (izquierda) y punto B (derecha).</p>
 <div class="input-row">
@@ -193,8 +193,8 @@
 </div>
 </section>
 
-<!-- ══ STEP 5 — RESUMEN ══ -->
-<section class="step-panel" id="step-5">
+<!-- ══ STEP 6 — RESUMEN ══ -->
+<section class="step-panel" id="step-6">
 <div class="step-title">Resumen</div>
 <div id="validation-block" class="val-ok">✓ Medidas OK</div>
 <div class="verify-note" style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700;font-weight:500;">
