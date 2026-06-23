@@ -187,6 +187,9 @@
     <select id="filter-installer" onchange="applyFilters()">
       <option value="">Todos los técnicos</option>
     </select>
+    <select id="filter-customer" onchange="applyFilters()">
+      <option value="">Todos los clientes</option>
+    </select>
   </div>
 
   <div class="job-list" id="job-list">
@@ -272,6 +275,14 @@ let currentUser;
       opt.value = name; opt.textContent = name;
       sel.appendChild(opt);
     });
+    // populate customer filter
+    const customers = [...new Set(allJobs.map(j => j.customer).filter(Boolean))];
+    const custSel = document.getElementById('filter-customer');
+    customers.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      custSel.appendChild(opt);
+    });
 
     renderJobs(allJobs);
   });
@@ -280,6 +291,7 @@ let currentUser;
   window.applyFilters = () => {
     const date = document.getElementById('filter-date').value;
     const installer = document.getElementById('filter-installer').value;
+    const customer = document.getElementById('filter-customer').value;
     let filtered = allJobs;
     if (date) {
       filtered = filtered.filter(j => {
@@ -289,6 +301,7 @@ let currentUser;
       });
     }
     if (installer) filtered = filtered.filter(j => j.installerName === installer);
+    if (customer) filtered = filtered.filter(j => j.customer === customer);
     renderJobs(filtered);
   };
 
@@ -327,6 +340,7 @@ let currentUser;
           <div class="job-meta">
             <span>📐 ${hueco}</span>
             <span>👤 ${job.installerName || '—'}</span>
+            ${job.customer ? `<span>🏢 ${job.customer}</span>` : ''}
             ${job.notas ? `<span>📝 ${job.notas.slice(0,30)}${job.notas.length>30?'…':''}</span>` : ''}
           </div>
         </div>`;
@@ -347,6 +361,9 @@ let currentUser;
     html += sec('General');
     html += row('Técnico', job.installerName || '—');
     html += row('Fecha', dateStr);
+    html += row('Cliente', job.customer || '—');
+    html += row('Proyecto', job.project || '—');
+    html += row('Ubicación', job.location || '—');
     html += sec('Hueco (Abertura)');
     if (job.hueco) {
       html += row('Ancho superior', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));

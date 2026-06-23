@@ -61,8 +61,8 @@ function toFracStr(decimal) {
 }
 
 // --- STEP STATE ------------------------------------------------------------
-let currentStep = 0;
-const TOTAL_STEPS = 5;
+let currentStep = -1;
+const TOTAL_STEPS = 6;
 let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
@@ -135,7 +135,7 @@ function goStep(n, skipHistory) {
 }
 
 function nextStep() { if (currentStep < TOTAL_STEPS) goStep(currentStep + 1); }
-function prevStep() { if (currentStep > 0)           goStep(currentStep - 1); }
+function prevStep() { if (currentStep > -1)          goStep(currentStep - 1); }
 
 window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {

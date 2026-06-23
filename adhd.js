@@ -61,8 +61,8 @@ function toFracStr(decimal) {
 }
 
 // ─── STEP STATE ────────────────────────────────────────────────────────────
-let currentStep = 0;
-const TOTAL_STEPS = 5;
+let currentStep = -1;
+const TOTAL_STEPS = 6;
 let _historyPushed = 0;
 
 function getLingerView(leavingStep) {
@@ -101,10 +101,11 @@ function goStep(n, skipHistory) {
   userZoomed = false; // reset auto-focus on each step transition
   const leavingStep = currentStep;
   document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('step-' + n)?.classList.add('active');
+  var stepId = n < 0 ? 'step--1' : 'step-' + n;
+  document.getElementById(stepId)?.classList.add('active');
   currentStep = n;
-  document.getElementById('step-num').textContent = n;
-  const pct = (n / TOTAL_STEPS) * 100;
+  document.getElementById('step-num').textContent = n < 0 ? 0 : n;
+  const pct = Math.max(0, ((n + 1) / TOTAL_STEPS) * 100);
   document.getElementById('progress-bar').style.width = pct + '%';
   recalcAll();
   if (n === TOTAL_STEPS) renderSummary();
@@ -135,14 +136,15 @@ function goStep(n, skipHistory) {
 }
 
 function nextStep() { if (currentStep < TOTAL_STEPS) goStep(currentStep + 1); }
-function prevStep() { if (currentStep > 0)           goStep(currentStep - 1); }
+function prevStep() { if (currentStep > -1)          goStep(currentStep - 1); }
 
 window.addEventListener('popstate', function(e) {
   if (e.state && typeof e.state.step === 'number') {
     const targetStep = e.state.step;
-    if (targetStep >= 0 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
+    if (targetStep >= -1 && targetStep <= TOTAL_STEPS && targetStep !== currentStep) {
       document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('step-' + targetStep)?.classList.add('active');
+      var stepId = targetStep < 0 ? 'step--1' : 'step-' + targetStep;
+      document.getElementById(stepId)?.classList.add('active');
       currentStep = targetStep;
       document.getElementById('step-num').textContent = targetStep;
       const pct = (targetStep / TOTAL_STEPS) * 100;
@@ -374,6 +376,9 @@ function _saveCurrentJob(warnings) {
   const anchoTop = results.anchoTop || 0;
   const altoDer  = results.altoDer  || 0;
   const notas = document.getElementById('notas-field')?.value || '';
+  const customer = document.getElementById('customer-name')?.value || '';
+  const project = document.getElementById('project-name')?.value || '';
+  const location = document.getElementById('location-name')?.value || '';
   const jobData = {
     hueco: { anchoBot: anchoBot, altoIzq: altoIzq, anchoTop: anchoTop, altoDer: altoDer },
     desniveles: {
@@ -382,6 +387,9 @@ function _saveCurrentJob(warnings) {
       techo:    results.techo?.label    || null,
       piso:     results.piso?.label     || null,
     },
+    customer: customer,
+    project: project,
+    location: location,
     warnings: warnings || [],
     notas: notas
   };

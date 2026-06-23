@@ -18,7 +18,7 @@
 <!-- HEADER -->
 <header id="app-header">
 <span id="app-logo">Nivelato</span>
-<span id="step-indicator">Paso <span id="step-num">0</span> de 5</span>
+<span id="step-indicator">Paso <span id="step-num">-1</span> de 6</span>
 </header>
 <!-- PROGRESS BAR -->
 <div id="progress-bar-wrap"><div id="progress-bar"></div></div>
@@ -29,6 +29,27 @@
 </div>
 <!-- BOTTOM PANEL — fixed height, all steps live here -->
 <div id="bottom-panel">
+
+<!-- ══ STEP -1 — CLIENTE ══ -->
+<section class="step-panel" id="step--1">
+<div class="step-title">Cliente / Proyecto</div>
+<p class="step-hint">Ingresa el nombre del cliente, proyecto y ubicación antes de empezar a medir.</p>
+<div class="input-row">
+<div class="input-col" style="flex:2">
+<label>Cliente</label>
+<input type="text" id="customer-name" placeholder="Nombre del cliente" />
+</div>
+<div class="input-col" style="flex:2">
+<label>Proyecto</label>
+<input type="text" id="project-name" placeholder="Nombre del proyecto" />
+</div>
+<div class="input-col" style="flex:2">
+<label>Ubicación</label>
+<input type="text" id="location-name" placeholder="Ubicación / dirección" />
+</div>
+</div>
+<button class="btn-primary" onclick="nextStep()">Siguiente →</button>
+</section>
 
 <!-- ══ STEP 0 — HUECO ══ -->
 <section class="step-panel active" id="step-0">
