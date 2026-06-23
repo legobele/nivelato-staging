@@ -980,11 +980,6 @@ function resetZoom() {
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  // Set canvas bitmap to match CSS size (320x340 from flex layout)
-  cvs.width = 320;
-  cvs.height = 340;
-  cvs.style.width = '320px';
-  cvs.style.height = '340px';
   // Parse desnivel labels to get raw values for visual offset computation
   var pIv = parseLabelValue(data.pIL);
   var pDv = 0 - parseLabelValue(data.pDL);  // right wall, opposite direction
@@ -1011,7 +1006,6 @@ window.embedGraph = function(cvs, data) {
   };
   // Draw directly on modal canvas
   var dctx = cvs.getContext('2d');
-  var dpr = window.devicePixelRatio || 1;
   var W = cvs.width, H = cvs.height;
   dctx.clearRect(0,0,W,H);
   dctx.fillStyle = '#f8faff';
