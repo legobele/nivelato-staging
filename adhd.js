@@ -881,6 +881,7 @@ let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let vpAtDrag  = { x: 0, y: 0 };
 
+if (canvas) {
 canvas.addEventListener('mousedown', function(e) {
   if (e.button !== 0) return;
   isDragging = true;
@@ -964,6 +965,8 @@ canvas.addEventListener('wheel', function(e) {
 }, { passive: false });
 
 // 🏳️‍⚧️ trans rights — built with love by benj & deepseek v4 flash
+} // end if (canvas)
+
 // reset zoom button
 window.resetZoom = function() { userZoomed = false; animateCanvas(currentStep); };
 
