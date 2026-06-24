@@ -220,21 +220,23 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import { getDoc, doc, setDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
 // ── embedGraph — standalone copy to avoid loading adhd.js ──
-function parseLabelValue(s) {
+// Extract only the numeric value from a label, ignoring direction arrows.
+// The math convention in the graph already determines the sign:
+//   rightHeight = leftHeight - ceilingOffset - floorOffset
+// where ceilingOffset and floorOffset are always positive magnitudes.
+function extractValue(s) {
   if (!s || s === 'Nivel' || s === '—') return 0;
-  var m = s.match(/([↑↓←→↗↘]?)\s*(\d+)?\s*(?:(\d+)\/(\d+))?/);
+  var m = s.match(/(\d+)\s*(?:(\d+)\/(\d+))?/);
   if (!m) return 0;
-  var v = (parseInt(m[2]) || 0) + ((parseInt(m[3])||0) / (parseInt(m[4])||1));
-  if (m[1] === '↓' || m[1] === '↘' || m[1] === '→') v = -v;
-  return v;
+  return (parseInt(m[1]) || 0) + ((parseInt(m[2])||0) / (parseInt(m[3])||1));
 }
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  var pIv = parseLabelValue(data.pIL);
-  var pDv = 0 - parseLabelValue(data.pDL);
-  var tcv = parseLabelValue(data.tL);
-  var psv = parseLabelValue(data.pL);
+  var pIv = extractValue(data.pIL);
+  var pDv = 0 - extractValue(data.pDL);
+  var tcv = extractValue(data.tL);
+  var psv = extractValue(data.pL);
   window._embedData = {
     'hueco-ancho-bot-whole': data.anchoBot || 36,
     'hueco-alto-izq-whole': data.altoIzq || 84,

@@ -990,11 +990,17 @@ function resetZoom() {
 
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
-  // Parse desnivel labels to get raw values for visual offset computation
-  var pIv = parseLabelValue(data.pIL);
-  var pDv = 0 - parseLabelValue(data.pDL);  // right wall, opposite direction
-  var tcv = parseLabelValue(data.tL);
-  var psv = parseLabelValue(data.pL);
+  // Extract numeric values from labels ignoring direction arrows.
+  // The offset math uses positive magnitudes: rightHeight = leftHeight - tcv - psv
+  function ev(s) {
+    if (!s || s === 'Nivel' || s === '—') return 0;
+    var m = s.match(/(\d+)\s*(?:(\d+)\/(\d+))?/);
+    return m ? (parseInt(m[1])||0) + ((parseInt(m[2])||0)/(parseInt(m[3])||1)) : 0;
+  }
+  var pIv = ev(data.pIL);
+  var pDv = 0 - ev(data.pDL);
+  var tcv = ev(data.tL);
+  var psv = ev(data.pL);
   // Set override data so drawCanvas reads these instead of DOM inputs
   window._embedData = {
     'hueco-ancho-bot-whole': data.anchoBot || 36,
