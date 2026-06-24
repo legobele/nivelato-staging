@@ -234,7 +234,7 @@ function extractValue(s) {
 window.embedGraph = function(cvs, data) {
   if (!cvs || !data) return;
   var pIv = extractValue(data.pIL);
-  var pDv = 0 - extractValue(data.pDL);
+  var pDv = extractValue(data.pDL);
   var tcv = extractValue(data.tL);
   var psv = extractValue(data.pL);
   window._embedData = {

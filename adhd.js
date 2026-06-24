@@ -998,7 +998,7 @@ window.embedGraph = function(cvs, data) {
     return m ? (parseInt(m[1])||0) + ((parseInt(m[2])||0)/(parseInt(m[3])||1)) : 0;
   }
   var pIv = ev(data.pIL);
-  var pDv = 0 - ev(data.pDL);
+  var pDv = ev(data.pDL);
   var tcv = ev(data.tL);
   var psv = ev(data.pL);
   // Set override data so drawCanvas reads these instead of DOM inputs
