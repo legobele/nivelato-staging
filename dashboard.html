@@ -7,6 +7,7 @@
 <script>console.log('nivelato v1.0.0 — commit ad8af28')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
+<script type="module" src="account-selector.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -41,17 +42,36 @@
     .stat-label { font-size: 12px; color: #868e96; margin-top: 2px; }
 
     /* FILTERS */
-    .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-row { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
     .filter-row input, .filter-row select {
-      padding: 8px 12px;
+      padding: 9px 14px;
       border: 1.5px solid #dee2e6;
       border-radius: 8px;
       font-size: 13px;
       font-family: inherit;
       outline: none;
       background: #fff;
+      color: #495057;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      height: 38px;
     }
-    .filter-row input:focus, .filter-row select:focus { border-color: #1971c2; }
+    .filter-row select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 34px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23868e96' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      min-width: 150px;
+    }
+    .filter-row select:hover { border-color: #adb5bd; }
+    .filter-row input:focus, .filter-row select:focus {
+      border-color: #1971c2;
+      box-shadow: 0 0 0 3px #e7f5ff;
+    }
+    .filter-row select:disabled { color: #adb5bd; background-color: #f8f9fa; cursor: default; }
     .filter-row input[type="date"] { flex: 1; min-width: 130px; }
 
     /* JOB LIST */
@@ -162,7 +182,6 @@
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
-    <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
 </header>
 
@@ -347,6 +366,12 @@ let currentUser;
     currentUser = user;
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     const userData = userDoc.data();
+
+    // build shared account selector (replaces old standalone logout button)
+    if (typeof window.initAccountSelector === 'function') {
+      window.initAccountSelector({ user, userData });
+    }
+
     const DASH_ROLES = ['owner', 'cotizador', 'supervisor'];
     if (!userData || !DASH_ROLES.includes(userData.role||userData.installerRole)) {
       window.location.href = 'index.html'; return;
@@ -531,11 +556,6 @@ let currentUser;
       btn.textContent = '✓ Copiado';
       setTimeout(() => btn.textContent = '📋 Copiar', 2000);
     });
-  };
-
-  window.doLogout = async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
   };
 </script>
 </body>

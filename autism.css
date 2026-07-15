@@ -183,12 +183,14 @@ html, body {
 /* ─── INPUTS ─────────────────────────────────────────────────────────────── */
 .input-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 14px;
 }
 
 .input-col {
-  flex: 1;
+  flex: 1 1 160px;
+  min-width: 0;
   background: var(--white);
   border: 1px solid var(--grey-300);
   border-radius: var(--radius-sm);
@@ -447,10 +449,17 @@ html, body {
 .btn-share.sms      { background: var(--grey-700); color: white; }
 
 /* ─── APP SHELL ──────────────────────────────────────────────────────────── */
+html, body {
+  /* allow natural page height on mobile so nothing is clipped by the address bar */
+  overflow-y: auto;
+}
+
 #app-shell {
   display: flex;
   flex-direction: column;
+  height: 100vh;            /* fallback for browsers without dvh */
   height: 100dvh;
+  max-height: 100dvh;
   overflow: hidden;
 }
 
@@ -460,4 +469,26 @@ html, body {
   border-top: 1px solid var(--grey-200);
   overflow-y: auto;
   max-height: 55vh;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* On short / mobile viewports the panel should never eat the canvas or run
+   past the viewport — let it grow with content but stay inside the shell. */
+@media (max-width: 600px) {
+  #app-shell {
+    height: 100vh;
+    height: 100dvh;
+  }
+  #bottom-panel {
+    max-height: 50vh;
+  }
+  .input-row {
+    gap: 8px;
+  }
+  .input-col {
+    flex: 1 1 100%;
+  }
+  .step-panel {
+    padding: 14px 14px 18px;
+  }
 }

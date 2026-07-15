@@ -19,21 +19,6 @@ onAuthStateChanged(auth, async (user) => {
   const logo = document.getElementById('app-logo');
   if (logo) logo.textContent = 'Nivelato';
 
-  // add user pill + logout to header
-  const header = document.getElementById('app-header');
-  if (header) {
-    const pill = document.createElement('div');
-    pill.id = 'user-pill';
-    pill.style.cssText = 'display:flex;align-items:center;gap:8px;';
-    pill.innerHTML = `
-      <span style="font-size:12px;font-weight:600;color:#1971c2;background:#e7f5ff;padding:3px 10px;border-radius:20px;">
-        ${currentUserData?.name?.split(' ')[0] || user.email}
-      </span>
-      <button onclick="window._doLogout()" style="font-size:12px;color:#868e96;background:none;border:none;cursor:pointer;font-family:inherit;">Salir</button>
-    `;
-    header.appendChild(pill);
-  }
-
   // owner/cotizador → show dashboard link
   if (currentUserData?.role === 'owner' || currentUserData?.role === 'cotizador') {
     const header = document.getElementById('app-header');
@@ -44,6 +29,11 @@ onAuthStateChanged(auth, async (user) => {
       dashBtn.textContent = 'Dashboard';
       header.insertBefore(dashBtn, header.lastChild);
     }
+  }
+
+  // account selector (replaces old bare "Salir" pill — single sign-out now)
+  if (typeof window.initAccountSelector === 'function') {
+    window.initAccountSelector({ user, userData: currentUserData });
   }
 });
 
