@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit cf43427')</script>
+<script>console.log('nivelato v1.0.0 — commit e6b7dc0')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -617,7 +617,10 @@ let currentUser;
     }
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     // Photo overlay
-    if (job.photoOverlay?.labels) {
+    if (job.photoOverlay?.renderedImage) {
+      html += `<div class="detail-section-title">📸 Foto</div>`;
+      html += `<img src="${job.photoOverlay.renderedImage}" style="width:100%;border-radius:8px;border:1px solid #e9ecef;margin-top:4px;" />`;
+    } else if (job.photoOverlay?.labels) {
       html += `<div class="detail-section-title">📸 Foto</div>`;
       job.photoOverlay.labels.forEach(l => {
         html += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px"><span style="color:#e64980;font-weight:600">📐</span><span>${l.text}</span></div>`;
@@ -776,15 +779,19 @@ let currentUser;
     const photoTab = document.getElementById('ms-photo-tab');
     const photoBody = document.getElementById('ms-photo-body');
     const addBtn = document.getElementById('ms-add-photo-btn');
-    if (job.photoOverlay?.labels) {
+    if (job.photoOverlay?.renderedImage) {
+      photoTab.style.display = 'inline-block';
+      photoBody.innerHTML = `<img src="${job.photoOverlay.renderedImage}" style="width:100%;border-radius:8px;border:1px solid #e9ecef;" />`;
+      addBtn.style.display = 'inline-block';
+    } else if (job.photoOverlay?.labels) {
       photoTab.style.display = 'inline-block';
       photoBody.innerHTML = job.photoOverlay.labels.map(l =>
         `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f3f5;font-size:13px"><span style="color:#e64980;font-weight:600">📐</span><span>${l.text}</span></div>`
       ).join('');
       addBtn.style.display = 'inline-block';
     } else {
-      photoTab.style.display = job.photoOverlay?.photo ? 'inline-block' : 'none';
-      if (!job.photoOverlay?.photo) photoBody.innerHTML = '<p style="color:#868e96;font-size:13px;">Sin foto. Añade una desde Fotos.</p>';
+      photoTab.style.display = 'none';
+      photoBody.innerHTML = '<p style="color:#868e96;font-size:13px;">Sin foto. Añade una desde Fotos.</p>';
       addBtn.style.display = 'inline-block';
     }
 

@@ -551,13 +551,47 @@ function startResize(e, idx) {
 window.saveOverlay = async function() {
   const jobId = document.getElementById('job-select').value;
   if (!jobId) { alert('Selecciona una medida.'); return; }
+  // Render the photo + labels to a PNG for dashboard display
+  const renderedImage = renderToCanvas();
   try {
     await setDoc(doc(db, 'orgs', orgId, 'jobs', jobId), {
-      photoOverlay: { labels, updatedAt: serverTimestamp() }
+      photoOverlay: { labels, renderedImage, updatedAt: serverTimestamp() }
     }, { merge: true });
     document.getElementById('save-btn').textContent = '✓';
     setTimeout(() => document.getElementById('save-btn').textContent = '💾', 2000);
   } catch(e) { alert('Error: ' + e.message); }
+};
+
+function renderToCanvas() {
+  const img = document.getElementById('image-canvas');
+  if (!img.src || !img.naturalWidth) return null;
+  const cvs = document.createElement('canvas');
+  cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
+  const ctx = cvs.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  const fs = Math.max(14, Math.min(cvs.width, cvs.height) * 0.022);
+  ctx.font = `bold ${fs}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.strokeStyle = '#e64980'; ctx.lineWidth = 2;
+
+  labels.forEach(l => {
+    const x = l.x * cvs.width, y = l.y * cvs.height;
+    const w = (l.w || 0.2) * cvs.width;
+    if (l.type === 'dim' || l.type === 'arrow') {
+      ctx.beginPath(); ctx.moveTo(x - w/2, y); ctx.lineTo(x + w/2, y); ctx.stroke();
+      [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(x + s*w/2, y - 5); ctx.lineTo(x + s*w/2, y + 5); ctx.stroke(); });
+    }
+    const m = ctx.measureText(l.text);
+    const pad = 6;
+    ctx.fillStyle = 'rgba(0,0,0,0.82)';
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4, 5);
+    else ctx.rect(x - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(l.text, x, y);
+  });
+  return cvs.toDataURL('image/png');
 };
 
 window.exportPhoto = function() {
