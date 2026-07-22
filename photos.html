@@ -497,9 +497,21 @@ window.addArrowLine = function() {
 })();
 
 // ── LABEL DRAG ──
+function moveLabelEl(idx) {
+  const container = document.getElementById('photo-transform');
+  const el = container.querySelector(`[data-idx="${idx}"]`);
+  const l = labels[idx];
+  if (el) { el.style.left = (l.x * 100) + '%'; el.style.top = (l.y * 100) + '%'; }
+}
+
 function startLabelDrag(e, idx) {
   e.preventDefault(); e.stopPropagation();
-  selectedIdx = idx; renderLabels();
+  selectedIdx = idx;
+  // Update selection visual without full re-render
+  document.querySelectorAll('.measure-label').forEach(el => el.classList.remove('selected'));
+  const container = document.getElementById('photo-transform');
+  const cur = container.querySelector(`[data-idx="${idx}"]`);
+  if (cur) cur.classList.add('selected');
   const t = e.touches?.[0];
   const label = labels[idx];
   dragState = { idx, sx: t?.clientX || e.clientX, sy: t?.clientY || e.clientY, ox: label.x, oy: label.y, isResize: false };
@@ -514,7 +526,7 @@ function startLabelDrag(e, idx) {
     const dy = (cy - dragState.sy) / rect.height;
     label.x = Math.max(0, Math.min(1, dragState.ox + dx));
     label.y = Math.max(0, Math.min(1, dragState.oy + dy));
-    renderLabels();
+    moveLabelEl(idx); // move element directly — no full re-render
   };
   const up = () => {
     document.removeEventListener('mousemove', move);
@@ -522,6 +534,7 @@ function startLabelDrag(e, idx) {
     document.removeEventListener('touchmove', move);
     document.removeEventListener('touchend', up);
     dragState = null;
+    renderLabels(); // full re-render once at end to sync side panel
   };
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup', up);
@@ -531,7 +544,11 @@ function startLabelDrag(e, idx) {
 
 function startResize(e, idx) {
   e.preventDefault(); e.stopPropagation();
-  selectedIdx = idx; renderLabels();
+  selectedIdx = idx;
+  document.querySelectorAll('.measure-label').forEach(el => el.classList.remove('selected'));
+  const container = document.getElementById('photo-transform');
+  const cur = container.querySelector(`[data-idx="${idx}"]`);
+  if (cur) cur.classList.add('selected');
   const t = e.touches?.[0];
   const label = labels[idx];
   dragState = { idx, sx: t?.clientX || e.clientX, ow: label.w || 0.2, isResize: true };
@@ -543,7 +560,9 @@ function startResize(e, idx) {
     const rect = img.getBoundingClientRect();
     const dx = (cx - dragState.sx) / rect.width;
     label.w = Math.max(0.02, dragState.ow + dx);
-    renderLabels();
+    // update width directly
+    const el = container.querySelector(`[data-idx="${idx}"]`);
+    if (el) el.style.width = (label.w * 100) + '%';
   };
   const up = () => {
     document.removeEventListener('mousemove', move);
@@ -551,6 +570,7 @@ function startResize(e, idx) {
     document.removeEventListener('touchmove', move);
     document.removeEventListener('touchend', up);
     dragState = null;
+    renderLabels();
   };
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup', up);
