@@ -388,6 +388,7 @@ function renderLabels() {
         el.style.height = '24px';
       }
       el.classList.add('line');
+      if (isRot) el.classList.add('line-vert');
 
       // Text label — centered below the line
       txt = document.createElement('div');
@@ -402,7 +403,9 @@ function renderLabels() {
       hnd.style.cssText = `right:-13px;top:50%;margin-top:-13px;`;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
-      hnd.ondblclick = (e) => { e.stopPropagation(); l.rot = (l.rot || 0) === -90 ? 0 : -90; renderLabels(); };
+      // Double-click/tap handle toggles 90° rotation
+      var lastTap = 0;
+      hnd.onclick = (e) => { e.stopPropagation(); var now = Date.now(); if (now - lastTap < 400) { l.rot = (l.rot || 0) === -90 ? 0 : -90; renderLabels(); } lastTap = now; };
       el.appendChild(hnd);
     } else {
       // Simple text label
