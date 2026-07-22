@@ -408,7 +408,8 @@ function renderLabels() {
       el.appendChild(txt);
     }
 
-    // Make the text the draggable area (parent has zero size)
+    // Make the text the draggable area — use all three event types for max compat
+    txt.onpointerdown = (e) => { e.preventDefault(); selectLabel(i); startLabelDrag(e, i); };
     txt.onmousedown = (e) => { e.preventDefault(); selectLabel(i); startLabelDrag(e, i); };
     txt.ontouchstart = (e) => { e.preventDefault(); selectLabel(i); startLabelDrag(e, i); };
     // Click selects
@@ -514,12 +515,12 @@ function startLabelDrag(e, idx) {
   const container = document.getElementById('photo-transform');
   const cur = container.querySelector(`[data-idx="${idx}"]`);
   if (cur) cur.classList.add('selected');
-  const t = e.touches?.[0];
+  const tp = e.touches?.[0] || e;
   const label = labels[idx];
-  dragState = { idx, sx: t?.clientX || e.clientX, sy: t?.clientY || e.clientY, ox: label.x, oy: label.y, isResize: false };
+  dragState = { idx, sx: tp.clientX || e.clientX, sy: tp.clientY || e.clientY, ox: label.x, oy: label.y, isResize: false };
 
   const move = (ev) => {
-    const tt = ev.touches?.[0];
+    const tp2 = ev.touches?.[0] || ev;
     const cx = tt?.clientX || ev.clientX;
     const cy = tt?.clientY || ev.clientY;
     const img = document.getElementById('photo-transform');
@@ -531,6 +532,8 @@ function startLabelDrag(e, idx) {
     moveLabelEl(idx); // move element directly — no full re-render
   };
   const up = () => {
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
     document.removeEventListener('mousemove', move);
     document.removeEventListener('mouseup', up);
     document.removeEventListener('touchmove', move);
@@ -538,6 +541,8 @@ function startLabelDrag(e, idx) {
     dragState = null;
     renderLabels(); // full re-render once at end to sync side panel
   };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup', up);
   document.addEventListener('touchmove', move, { passive: false });
@@ -551,12 +556,12 @@ function startResize(e, idx) {
   const container = document.getElementById('photo-transform');
   const cur = container.querySelector(`[data-idx="${idx}"]`);
   if (cur) cur.classList.add('selected');
-  const t = e.touches?.[0];
+  const t = e.touches?.[0] || e;
   const label = labels[idx];
   dragState = { idx, sx: t?.clientX || e.clientX, ow: label.w || 0.2, isResize: true };
 
   const move = (ev) => {
-    const tt = ev.touches?.[0];
+    const tt = ev.touches?.[0] || ev;
     const cx = tt?.clientX || ev.clientX;
     const img = document.getElementById('photo-transform');
     const rect = img.getBoundingClientRect();
@@ -567,6 +572,8 @@ function startResize(e, idx) {
     if (el) el.style.width = (label.w * 100) + '%';
   };
   const up = () => {
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
     document.removeEventListener('mousemove', move);
     document.removeEventListener('mouseup', up);
     document.removeEventListener('touchmove', move);
@@ -574,6 +581,8 @@ function startResize(e, idx) {
     dragState = null;
     renderLabels();
   };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup', up);
   document.addEventListener('touchmove', move, { passive: false });
