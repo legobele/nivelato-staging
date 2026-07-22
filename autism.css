@@ -527,6 +527,30 @@ html, body {
   }
 }
 
+/* ─── APPLE WATCH / EXTREME TINY SCREENS ─── */
+@media (max-width: 300px) {
+  :root { --radius: 8px; --radius-sm: 6px; }
+  #app-header { padding: 8px 10px 6px; }
+  #app-logo { font-size: 0.9rem; }
+  #step-indicator { font-size: 0.65rem; }
+  .step-title { font-size: 0.85rem; }
+  .step-hint { font-size: 0.7rem; margin-bottom: 10px; }
+  .input-col { padding: 6px 8px; }
+  .input-col label { font-size: 0.6rem; margin-bottom: 4px; }
+  .fraction-row input[type="number"] { width: 52px; font-size: 1.1rem; padding: 6px 4px; }
+  .fraction-row { gap: 4px; }
+  .frac-select { width: 56px; font-size: 0.65rem; flex: 0 0 56px; }
+  .step-panel { padding: 10px 10px 12px; }
+  .btn-primary { padding: 10px 14px; font-size: 0.8rem; }
+  .btn-secondary { padding: 10px 12px; font-size: 0.8rem; }
+  .desnivel-pill { font-size: 0.7rem; padding: 3px 10px; }
+  .input-row { gap: 6px; margin-bottom: 8px; }
+  #bottom-panel { max-height: 65vh; }
+  .summary-row { padding: 8px 12px; }
+  .summary-label { font-size: 0.7rem; }
+  .summary-val { font-size: 0.8rem; }
+}
+
 /* ─── ESTRADIOL MODE ─────────────────────────────────────────────────────── */
 .estradiol-mode {
   --accent: #e64980;

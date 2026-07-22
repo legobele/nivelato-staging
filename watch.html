@@ -7,209 +7,141 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 100%; overflow: hidden; background: #000; color: #fff; font-family: 'Inter', system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
-  body { min-height: 100dvh; }
-  .page { display: flex; flex-direction: column; min-height: 100dvh; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #000; color: #fff; font-family: 'Inter', system-ui, sans-serif; }
+  .page { display: flex; flex-direction: column; height: 100dvh; }
   .page.hide { display: none; }
 
-  /* LOGIN */
-  .login-form { padding: 20px 16px; display: flex; flex-direction: column; gap: 12px; justify-content: center; min-height: 100dvh; }
-  .login-form h1 { font-size: 24px; font-weight: 900; color: #e64980; }
-  .login-form p { font-size: 12px; color: #666; }
-  .login-form input { padding: 16px; border-radius: 12px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 16px; font-family: inherit; width: 100%; }
-  .login-form input:focus { outline: none; border-color: #e64980; }
-  .login-form button { padding: 16px; border-radius: 12px; border: none; background: #e64980; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
-  .login-form .err { font-size: 11px; color: #ff6b6b; text-align: center; }
+  .login { padding: 20px 16px; justify-content: center; gap: 10px; }
+  .login h1 { font-size: 22px; font-weight: 900; color: #e64980; }
+  .login p { font-size: 11px; color: #666; }
+  .login input { padding: 14px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 14px; font-family: inherit; width: 100%; }
+  .login input:focus { outline: none; border-color: #e64980; }
+  .login button { padding: 14px; border-radius: 10px; border: none; background: #e64980; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .login .err { font-size: 10px; color: #ff6b6b; text-align: center; min-height: 14px; }
 
-  /* DASHBOARD */
-  .dash-header { padding: 12px 16px; background: #1a1a1a; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-  .dash-header h1 { font-size: 16px; font-weight: 700; color: #e64980; }
-  .dash-header button { padding: 8px 12px; border-radius: 8px; border: none; background: #333; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .dash-stats { display: flex; gap: 4px; padding: 8px 12px; }
-  .dash-stats .s { flex: 1; background: #1a1a1a; border-radius: 8px; padding: 8px; text-align: center; }
-  .dash-stats .s .n { font-size: 20px; font-weight: 900; color: #e64980; }
-  .dash-stats .s .l { font-size: 8px; color: #666; text-transform: uppercase; margin-top: 2px; }
+  header { padding: 10px 14px; background: #1a1a1a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  header h1 { font-size: 14px; font-weight: 700; color: #e64980; }
+  header button { padding: 6px 10px; border-radius: 6px; border: none; background: #333; color: #fff; font-size: 10px; font-weight: 600; cursor: pointer; font-family: inherit; }
 
-  .job-list { flex: 1; overflow-y: auto; padding: 8px 12px; }
-  .job-item { background: #1a1a1a; border-radius: 10px; padding: 12px; margin-bottom: 6px; cursor: pointer; border: 1px solid #222; }
-  .job-item:active { border-color: #e64980; }
-  .job-item .j-name { font-size: 13px; font-weight: 700; }
-  .job-item .j-meta { font-size: 10px; color: #666; margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .job-item .j-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; }
-  .job-item .j-tag.ok { background: #1a3a1a; color: #4caf50; }
-  .job-item .j-tag.warn { background: #3a2a1a; color: #ff9800; }
+  .stats { display: flex; gap: 4px; padding: 6px 10px; flex-shrink: 0; }
+  .stats .s { flex: 1; background: #1a1a1a; border-radius: 6px; padding: 6px; text-align: center; }
+  .stats .s .n { font-size: 18px; font-weight: 900; color: #e64980; }
+  .stats .s .l { font-size: 7px; color: #555; text-transform: uppercase; }
 
-  /* DETAIL */
-  .detail { padding: 12px 16px; }
-  .detail .back { font-size: 24px; margin-bottom: 8px; cursor: pointer; }
-  .detail h2 { font-size: 16px; font-weight: 700; color: #e64980; margin-bottom: 4px; }
-  .detail .sub { font-size: 10px; color: #666; margin-bottom: 12px; }
-  .detail .r { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; font-size: 13px; }
-  .detail .r .l { color: #666; }
+  .list { flex: 1; overflow-y: auto; padding: 6px 10px; -webkit-overflow-scrolling: touch; }
+  .job { background: #1a1a1a; border-radius: 8px; padding: 10px; margin-bottom: 4px; cursor: pointer; }
+  .job:active { background: #222; }
+  .job .n { font-size: 12px; font-weight: 700; }
+  .job .m { font-size: 9px; color: #555; margin-top: 3px; display: flex; gap: 6px; }
+
+  .detail { padding: 10px 14px; overflow-y: auto; }
+  .detail .back { font-size: 20px; margin-bottom: 6px; cursor: pointer; }
+  .detail h2 { font-size: 14px; font-weight: 700; color: #e64980; }
+  .detail .sub { font-size: 9px; color: #555; margin-bottom: 10px; }
+  .detail .r { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a1a; font-size: 12px; }
+  .detail .r .l { color: #555; }
   .detail .r .v { font-weight: 600; text-align: right; }
-  .detail .sec { font-size: 9px; font-weight: 700; color: #555; letter-spacing: 0.1em; text-transform: uppercase; margin: 12px 0 4px; }
+  .detail .sec { font-size: 8px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.1em; margin: 10px 0 2px; }
 </style>
 </head>
 <body>
-<div id="page-login" class="page">
-  <div class="login-form">
-    <h1>⌚️ Nivelato</h1>
-    <p>Inicia sesión para ver las medidas del taller.</p>
-    <input type="email" id="wl-email" placeholder="Correo" autocomplete="email" />
-    <input type="password" id="wl-pass" placeholder="Contraseña" autocomplete="current-password" />
-    <button onclick="watchLogin()">Iniciar sesión</button>
-    <div class="err" id="wl-err"></div>
-  </div>
+<div id="pg-login" class="page login">
+  <h1>⌚️ Nivelato</h1>
+  <input type="email" id="wl-email" placeholder="Correo" />
+  <input type="password" id="wl-pass" placeholder="Contraseña" />
+  <button onclick="watchLogin()">Iniciar sesión</button>
+  <div class="err" id="wl-err"></div>
 </div>
 
-<div id="page-dash" class="page hide">
-  <div class="dash-header">
-    <h1>⌚️ Nivelato</h1>
-    <button onclick="watchLogout()">Salir</button>
-  </div>
-  <div class="dash-stats">
-    <div class="s"><div class="n" id="ws-total">—</div><div class="l">Total</div></div>
-    <div class="s"><div class="n" id="ws-today">—</div><div class="l">Hoy</div></div>
-    <div class="s"><div class="n" id="ws-warn">—</div><div class="l">⚠</div></div>
-  </div>
-  <div class="job-list" id="w-job-list">
-    <div style="text-align:center;padding:20px;color:#555;font-size:12px;">Cargando…</div>
-  </div>
+<div id="pg-dash" class="page hide">
+  <header><h1>⌚️ Nivelato</h1><button onclick="watchLogout()">Salir</button></header>
+  <div class="stats"><div class="s"><div class="n" id="ws-t">0</div><div class="l">Total</div></div><div class="s"><div class="n" id="ws-d">0</div><div class="l">Hoy</div></div></div>
+  <div class="list" id="w-list"><div style="text-align:center;padding:16px;color:#444;font-size:11px;">Cargando…</div></div>
 </div>
 
-<div id="page-detail" class="page hide">
+<div id="pg-detail" class="page hide">
   <div class="detail">
-    <div class="back" onclick="showDash()">‹</div>
+    <div class="back" onclick="showDash()">‹ Volver</div>
     <div id="wd-body"></div>
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-<script>
-var app = firebase.initializeApp({
-  apiKey: "AIzaSyDLOcT2LkztypbqUNmAX6dEdNW9INMxkVw",
-  authDomain: "nivelato-app.firebaseapp.com",
-  projectId: "nivelato-app",
-  storageBucket: "nivelato-app.firebasestorage.app",
-  appId: "1:759893408531:web:696e2da5f004a3bac5f8e6"
-});
-var auth = firebase.auth();
-var db = firebase.firestore();
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, doc, getDocs, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 
-var allJobs = [];
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(function(p) { p.classList.add('hide'); });
+let allJobs = [];
+function show(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
   document.getElementById(id).classList.remove('hide');
 }
 
-// ── AUTH ──
-firebase.auth().onAuthStateChanged(function(user) {
-  if (user) {
-    loadDashboard(user);
-  } else {
-    showPage('page-login');
+onAuthStateChanged(auth, user => { if (user) loadDash(user); else show('pg-login'); });
+
+window.watchLogin = async () => {
+  const email = document.getElementById('wl-email').value.trim();
+  const pass = document.getElementById('wl-pass').value;
+  const err = document.getElementById('wl-err');
+  if (!email || !pass) { err.textContent = 'Completa los campos.'; return; }
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) { err.textContent = e.message; }
+};
+
+window.watchLogout = () => signOut(auth);
+
+async function loadDash(user) {
+  show('pg-dash');
+  try {
+    const ud = (await getDoc(doc(db, 'users', user.uid))).data();
+    const orgId = ud.orgId;
+    const snap = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), orderBy('createdAt', 'desc')));
+    allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+  } catch(e) {
+    document.getElementById('w-list').innerHTML = `<div style="text-align:center;padding:16px;color:#ff6b6b;font-size:11px;">${e.message}</div>`;
   }
-});
-
-window.watchLogin = function() {
-  var email = document.getElementById('wl-email').value.trim();
-  var pass = document.getElementById('wl-pass').value;
-  var err = document.getElementById('wl-err');
-  if (!email || !pass) { err.textContent = 'Ingresa correo y contraseña.'; return; }
-  err.textContent = '';
-  firebase.auth().signInWithEmailAndPassword(email, pass).catch(function(e) {
-    err.textContent = e.message || 'Error al iniciar sesión.';
-  });
-};
-
-window.watchLogout = function() {
-  firebase.auth().signOut();
-};
-
-// ── DASHBOARD ──
-function loadDashboard(user) {
-  showPage('page-dash');
-  firebase.firestore().collection('users').doc(user.uid).get().then(function(snap) {
-    var ud = snap.data();
-    if (!ud) return;
-    var orgId = ud.orgId;
-    // stats + jobs
-    return firebase.firestore().collection('orgs').doc(orgId).get().then(function(orgSnap) {
-      return { orgId: orgId, orgName: (orgSnap.data() && orgSnap.data().name) || orgId };
-    });
-  }).then(function(ctx) {
-    return firebase.firestore().collection('orgs').doc(ctx.orgId).collection('jobs').orderBy('createdAt', 'desc').get().then(function(snap) {
-      ctx.jobs = snap.docs.map(function(d) { var j = d.data(); j.id = d.id; return j; });
-      return ctx;
-    });
-  }).then(function(ctx) {
-    allJobs = ctx.jobs;
-    renderWatchJobs();
-  }).catch(function(e) {
-    document.getElementById('w-job-list').innerHTML = '<div style="text-align:center;padding:20px;color:#ff6b6b;font-size:12px;">Error: ' + e.message + '</div>';
-  });
 }
 
-function renderWatchJobs() {
-  var today = new Date().toISOString().slice(0,10);
-  var todayCount = 0, warnCount = 0;
-  allJobs.forEach(function(j) {
-    if (j.warnings && j.warnings.length > 0) warnCount++;
-    if (j.createdAt) {
-      var d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt);
-      if (d.toISOString().slice(0,10) === today) todayCount++;
-    }
+function render() {
+  const today = new Date().toISOString().slice(0,10);
+  let td = 0;
+  allJobs.forEach(j => {
+    if (j.createdAt) { const d = j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt); if (d.toISOString().slice(0,10) === today) td++; }
   });
-  document.getElementById('ws-total').textContent = allJobs.length;
-  document.getElementById('ws-today').textContent = todayCount;
-  document.getElementById('ws-warn').textContent = warnCount;
-
-  if (allJobs.length === 0) {
-    document.getElementById('w-job-list').innerHTML = '<div style="text-align:center;padding:20px;color:#555;font-size:12px;">Sin medidas.</div>';
-    return;
-  }
-  document.getElementById('w-job-list').innerHTML = allJobs.map(function(j, i) {
-    var d = j.createdAt ? (j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt)) : new Date();
-    var ds = d.toLocaleDateString('es-PR', { day:'2-digit', month:'short' });
-    var hasWarn = j.warnings && j.warnings.length > 0;
-    return '<div class="job-item" onclick="openWatchJob(' + i + ')">' +
-      '<div class="j-name">' + (j.customer || '—') + '</div>' +
-      '<div class="j-meta"><span>' + (j.project || '') + '</span><span>' + ds + '</span>' +
-      '<span class="j-tag ' + (hasWarn ? 'warn' : 'ok') + '">' + (hasWarn ? '⚠' : '✓') + '</span></div></div>';
-  }).join('');
+  document.getElementById('ws-t').textContent = allJobs.length;
+  document.getElementById('ws-d').textContent = td;
+  document.getElementById('w-list').innerHTML = allJobs.length === 0
+    ? '<div style="text-align:center;padding:16px;color:#444;font-size:11px;">Sin medidas.</div>'
+    : allJobs.map((j, i) => {
+      const d = j.createdAt ? (j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt)) : new Date();
+      return `<div class="job" onclick="openDetail(${i})">
+        <div class="n">${j.customer || '—'}</div>
+        <div class="m"><span>${j.project || ''}</span><span>${d.toLocaleDateString('es-PR',{day:'2-digit',month:'short'})}</span></div>
+      </div>`;
+    }).join('');
 }
 
-// ── DETAIL ──
-window._wIdx = null;
-window.openWatchJob = function(i) {
-  window._wIdx = i;
-  var job = allJobs[i];
-  var d = job.createdAt ? (job.createdAt.toDate ? job.createdAt.toDate() : new Date(job.createdAt)) : new Date();
-  var ds = d.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  var html = '<h2>' + (job.customer || 'Medida') + '</h2>';
-  html += '<div class="sub">' + (job.installerName || 'Técnico') + ' · ' + ds + '</div>';
-  html += '<div class="sec">Medidas</div>';
-  if (job.hueco) {
-    html += '<div class="r"><span class="l">Ancho</span><span class="v">' + (job.hueco.anchoBot || '?') + '" × ';
-    html += (job.hueco.altoIzq || '?') + '"</span></div>';
+window.openDetail = (i) => {
+  const j = allJobs[i];
+  const d = j.createdAt ? (j.createdAt.toDate ? j.createdAt.toDate() : new Date(j.createdAt)) : new Date();
+  let h = `<h2>${j.customer || 'Medida'}</h2><div class="sub">${j.installerName || ''} · ${d.toLocaleDateString('es-PR',{day:'2-digit',month:'short',year:'numeric'})}</div>`;
+  if (j.hueco) {
+    h += '<div class="sec">Medidas</div><div class="r"><span class="l">Ancho</span><span class="v">' + (j.hueco.anchoBot||'?') + '"</span></div><div class="r"><span class="l">Alto</span><span class="v">' + (j.hueco.altoIzq||'?') + '"</span></div>';
   }
-  if (job.desniveles) {
-    html += '<div class="sec">Desniveles</div>';
-    if (job.desniveles.paredIzq && job.desniveles.paredIzq !== '—') html += '<div class="r"><span class="l">Pared Izq</span><span class="v">' + job.desniveles.paredIzq + '</span></div>';
-    if (job.desniveles.paredDer && job.desniveles.paredDer !== '—') html += '<div class="r"><span class="l">Pared Der</span><span class="v">' + job.desniveles.paredDer + '</span></div>';
-    if (job.desniveles.techo && job.desniveles.techo !== '—') html += '<div class="r"><span class="l">Arriba</span><span class="v">' + job.desniveles.techo + '</span></div>';
-    if (job.desniveles.piso && job.desniveles.piso !== '—') html += '<div class="r"><span class="l">Abajo</span><span class="v">' + job.desniveles.piso + '</span></div>';
+  if (j.desniveles) {
+    h += '<div class="sec">Desniveles</div>';
+    ['paredIzq','paredDer','techo','piso'].forEach(k => {
+      if (j.desniveles[k] && j.desniveles[k] !== '—') h += `<div class="r"><span class="l">${k}</span><span class="v">${j.desniveles[k]}</span></div>`;
+    });
   }
-  if (job.location) html += '<div class="sec">Ubicación</div><div class="r"><span class="v">' + job.location + '</span></div>';
-  if (job.notas) html += '<div class="sec">Notas</div><div class="r"><span class="v">' + job.notas + '</span></div>';
-  document.getElementById('wd-body').innerHTML = html;
-  showPage('page-detail');
+  if (j.notas) h += '<div class="sec">Notas</div><div class="r"><span class="v">' + j.notas + '</span></div>';
+  document.getElementById('wd-body').innerHTML = h;
+  show('pg-detail');
 };
 
-window.showDash = function() { showPage('page-dash'); };
+window.showDash = () => show('pg-dash');
 </script>
 </body>
 </html>
