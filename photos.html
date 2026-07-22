@@ -591,18 +591,27 @@ function startResize(e, idx) {
   if (cur) cur.classList.add('selected');
   const t = e.touches?.[0] || e;
   const label = labels[idx];
-  dragState = { idx, sx: t?.clientX || e.clientX, ow: label.w || 0.2, isResize: true };
+  dragState = { idx, sx: t?.clientX || e.clientX, sy: t?.clientY || e.clientY, ow: label.w || 0.2, isResize: true };
 
   const move = (ev) => {
     const tt = ev.touches?.[0] || ev;
     const cx = tt?.clientX || ev.clientX;
+    const cy = tt?.clientY || ev.clientY;
     const img = document.getElementById('photo-transform');
     const rect = img.getBoundingClientRect();
-    const dx = (cx - dragState.sx) / rect.width;
-    label.w = Math.max(0.02, dragState.ow + dx);
-    // update width directly
-    const el = container.querySelector(`[data-idx="${idx}"]`);
-    if (el) el.style.width = (label.w * 100) + '%';
+    const isRot = Math.abs(label.rot || 0) > 0;
+    if (isRot) {
+      // Vertical handle at bottom: drag up/down to change height (line length)
+      const dy = (cy - dragState.sy || cy - dragState.sx) / rect.height;
+      label.w = Math.max(0.02, dragState.ow + dy);
+      const el = container.querySelector(`[data-idx="${idx}"]`);
+      if (el) el.style.height = (label.w * 100) + '%';
+    } else {
+      const dx = (cx - dragState.sx) / rect.width;
+      label.w = Math.max(0.02, dragState.ow + dx);
+      const el = container.querySelector(`[data-idx="${idx}"]`);
+      if (el) el.style.width = (label.w * 100) + '%';
+    }
   };
   const up = () => {
     document.removeEventListener('pointermove', move);
