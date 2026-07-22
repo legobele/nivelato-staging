@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit c0c5481')</script>
+<script>console.log('nivelato v1.0.0 — commit 788609c')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -192,6 +192,7 @@
   <div class="header-right">
     <div class="org-badge" id="org-name-badge">…</div>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
+    <button id="btn-photos" onclick="window.location.href='photos.html'" style="display:none;background:#e64980;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📸 Fotos</button>
   </div>
 </header>
 
@@ -403,6 +404,9 @@ let currentUser;
     // Nueva medida button — only if user can create measurements
     const btnNew = document.getElementById('btn-new-measure');
     if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';
+    // Photos button — only if user has addPhotosToOrders
+    const btnPhotos = document.getElementById('btn-photos');
+    if (btnPhotos && _can('addPhotosToOrders')) btnPhotos.style.display = 'inline-block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Nivelato — Fotos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="testing.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #1a1a1a; color: #fff; min-height: 100dvh; overflow: hidden; }
+  #app-shell { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; background: #2a2a2a; border-bottom: 1px solid #3a3a3a;
+    flex-shrink: 0; gap: 10px;
+  }
+  header h1 { font-size: 16px; font-weight: 700; color: #e64980; }
+  header .header-right { display: flex; align-items: center; gap: 8px; }
+  header select, header button {
+    padding: 6px 12px; border-radius: 6px; border: 1px solid #3a3a3a;
+    font-size: 12px; font-family: inherit; background: #333; color: #fff; cursor: pointer;
+  }
+  header button { background: #e64980; color: #fff; border-color: #e64980; font-weight: 600; }
+  header button:active { opacity: 0.8; }
+  header button.danger { background: #c92a2a; border-color: #c92a2a; }
+
+  #main-area {
+    flex: 1; display: flex; position: relative; overflow: hidden;
+    background: #111;
+  }
+
+  #image-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain;
+  }
+
+  /* Overlay labels */
+  .measure-label {
+    position: absolute;
+    background: rgba(0,0,0,0.75);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+    border: 2px solid #e64980;
+    touch-action: none;
+    z-index: 10;
+    min-width: 40px;
+    text-align: center;
+  }
+  .measure-label::after {
+    content: '⋮';
+    position: absolute;
+    top: -10px; right: -10px;
+    width: 20px; height: 20px;
+    background: #e64980;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: #fff;
+    cursor: nwse-resize;
+  }
+  .measure-label.selected {
+    border-color: #ff6b9d;
+    box-shadow: 0 0 12px rgba(230,73,128,0.5);
+  }
+
+  /* Empty state */
+  #empty-state {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; color: #666; text-align: center; padding: 24px;
+  }
+  #empty-state .big { font-size: 48px; }
+  #empty-state h2 { font-size: 18px; color: #888; }
+  #empty-state p { font-size: 13px; max-width: 320px; line-height: 1.6; }
+  #empty-state label {
+    display: inline-block; padding: 12px 24px;
+    background: #e64980; color: #fff; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  #empty-state input[type="file"] { display: none; }
+
+  /* Side panel */
+  #side-panel {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    width: 300px; background: #2a2a2a; border-left: 1px solid #3a3a3a;
+    z-index: 20; overflow-y: auto; display: none;
+    padding: 16px;
+  }
+  #side-panel.open { display: block; }
+  #side-panel h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; color: #e64980; }
+  .field-group { margin-bottom: 12px; }
+  .field-group label { display: block; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+  .field-group input, .field-group select, .field-group textarea {
+    width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #3a3a3a;
+    font-size: 13px; font-family: inherit; background: #333; color: #fff;
+  }
+  .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+    outline: none; border-color: #e64980;
+  }
+  .label-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .label-list .ll-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 10px; background: #333; border-radius: 6px;
+    font-size: 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .label-list .ll-item:hover { border-color: #555; }
+  .label-list .ll-item.active { border-color: #e64980; }
+  .label-list .ll-item .ll-del { color: #c92a2a; cursor: pointer; font-size: 14px; padding: 0 4px; }
+
+  #toolbar {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 30;
+  }
+  #toolbar button {
+    padding: 10px 16px; border-radius: 8px; border: none;
+    font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: #333; color: #fff; backdrop-filter: blur(8px);
+  }
+  #toolbar button.primary { background: #e64980; }
+  #toolbar button:active { opacity: 0.8; }
+
+  @media (max-width: 768px) {
+    #side-panel { width: 100%; }
+    #toolbar button { font-size: 11px; padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+<div id="app-shell">
+  <header>
+    <h1>📸 Nivelato Fotos</h1>
+    <div class="header-right">
+      <select id="org-select" onchange="loadOrgJobs()"><option value="">Cargando…</option></select>
+      <select id="job-select" onchange="loadJobMeasurements()"><option value="">Seleccionar medida</option></select>
+      <button onclick="saveOverlay()" id="save-btn" style="display:none">💾 Guardar</button>
+      <button class="danger" onclick="doSignOut()">Salir</button>
+    </div>
+  </header>
+
+  <div id="main-area">
+    <img id="image-canvas" style="display:none" />
+    <div id="photo-container" style="position:absolute;inset:0">
+      <!-- Overlay labels injected here -->
+    </div>
+
+    <div id="empty-state">
+      <div class="big">📸</div>
+      <h2>Sube una foto para empezar</h2>
+      <p>Carga una imagen y coloca las medidas de Nivelato como etiquetas superpuestas.</p>
+      <label>📁 Seleccionar imagen<input type="file" id="photo-upload" accept="image/*" onchange="loadPhoto(event)" /></label>
+    </div>
+
+    <div id="side-panel">
+      <h3>📐 Medidas disponibles</h3>
+      <div id="measurements-list" class="label-list"></div>
+      <div style="margin-top:16px">
+        <button onclick="addCustomLabel()" style="width:100%;padding:8px;background:#333;color:#fff;border:1px solid #555;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">+ Añadir etiqueta personalizada</button>
+      </div>
+      <div style="margin-top:12px">
+        <button onclick="exportPhoto()" style="width:100%;padding:8px;background:#1971c2;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;">⬇ Exportar imagen</button>
+      </div>
+    </div>
+
+    <div id="toolbar">
+      <button onclick="document.getElementById('photo-upload').click()">📁 Foto</button>
+      <button onclick="toggleSidePanel()">📐 Medidas</button>
+      <button onclick="resetLabels()">🔄 Reset</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, doc, getDocs, collection, query, orderBy, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { makePermChecker } from './permissions.js';
+
+let currentUser = null, userData = null, _can = () => false;
+let orgId = null;
+let allJobs = [];
+let labels = [];
+let selectedLabelIdx = null;
+let activePhoto = null;
+let dragState = null;
+
+// ── AUTH ──
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    // Try SSO via fragment
+    const hash = window.location.hash.match(/nivelato_token=([^&]+)/);
+    if (hash) {
+      const payload = JSON.parse(decodeURIComponent(hash[1]));
+      // We'd need to sign in with the token here — for now redirect to sso
+      window.location.href = 'sso.html?redirect_uri=' + encodeURIComponent(window.location.href.split('#')[0]);
+      return;
+    }
+    window.location.href = 'sso.html?redirect_uri=' + encodeURIComponent(window.location.href);
+    return;
+  }
+  currentUser = user;
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  userData = snap.data();
+  _can = makePermChecker(userData);
+  orgId = userData.orgId;
+  await loadOrgs();
+});
+
+// ── ORG / JOB LOADING ──
+async function loadOrgs() {
+  const sel = document.getElementById('org-select');
+  sel.innerHTML = `<option value="${orgId}">${orgId}</option>`;
+  await loadOrgJobs();
+}
+window.loadOrgJobs = async () => {
+  try {
+    const jobsRef = collection(db, 'orgs', orgId, 'jobs');
+    const q = query(jobsRef, orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const sel = document.getElementById('job-select');
+    sel.innerHTML = '<option value="">Seleccionar medida</option>' +
+      allJobs.map(j => `<option value="${j.id}">${j.customer || '—'} / ${j.project || '—'} — ${j.installerName || ''}</option>`).join('');
+  } catch(e) { console.error(e); }
+};
+window.loadJobMeasurements = loadJobMeasurements;
+function loadJobMeasurements() {
+  const jobId = document.getElementById('job-select').value;
+  if (!jobId) return;
+  const job = allJobs.find(j => j.id === jobId);
+  if (!job) return;
+  buildLabelsFromJob(job);
+  loadExistingOverlay(jobId);
+}
+
+function buildLabelsFromJob(job) {
+  labels = [];
+  // Hueco
+  if (job.hueco) {
+    labels.push({ text: `Ancho: ${job.hueco.anchoBot || '?'}"`, x: 0.3, y: 0.75 });
+    labels.push({ text: `Alto Izq: ${job.hueco.altoIzq || '?'}"`, x: 0.15, y: 0.4 });
+    if (job.hueco.anchoTop) labels.push({ text: `Ancho Sup: ${job.hueco.anchoTop}"`, x: 0.3, y: 0.2 });
+    if (job.hueco.altoDer) labels.push({ text: `Alto Der: ${job.hueco.altoDer}"`, x: 0.75, y: 0.4 });
+  }
+  // Desniveles
+  if (job.desniveles) {
+    if (job.desniveles.paredIzq && job.desniveles.paredIzq !== '—')
+      labels.push({ text: `Pared Izq: ${job.desniveles.paredIzq}`, x: 0.08, y: 0.5 });
+    if (job.desniveles.paredDer && job.desniveles.paredDer !== '—')
+      labels.push({ text: `Pared Der: ${job.desniveles.paredDer}`, x: 0.82, y: 0.5 });
+    if (job.desniveles.techo && job.desniveles.techo !== '—')
+      labels.push({ text: `Arriba: ${job.desniveles.techo}`, x: 0.45, y: 0.08 });
+    if (job.desniveles.piso && job.desniveles.piso !== '—')
+      labels.push({ text: `Abajo: ${job.desniveles.piso}`, x: 0.45, y: 0.85 });
+  }
+  // Customer info
+  if (job.customer) labels.push({ text: `Cliente: ${job.customer}`, x: 0.5, y: 0.03 });
+  if (job.project) labels.push({ text: `Proyecto: ${job.project}`, x: 0.5, y: 0.97 });
+  renderLabels();
+}
+
+async function loadExistingOverlay(jobId) {
+  try {
+    const snap = await getDoc(doc(db, 'orgs', orgId, 'jobs', jobId));
+    const job = snap.data();
+    if (job?.photoOverlay) {
+      labels = job.photoOverlay.labels || labels;
+      renderLabels();
+    }
+  } catch(e) {}
+}
+
+// ── PHOTO LOADING ──
+window.loadPhoto = function(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = document.getElementById('image-canvas');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('save-btn').style.display = 'inline-block';
+    document.getElementById('side-panel').classList.add('open');
+    activePhoto = ev.target.result;
+    renderLabels();
+  };
+  reader.readAsDataURL(file);
+};
+
+// ── LABEL RENDERING ──
+function renderLabels() {
+  const container = document.getElementById('photo-container');
+  // Clear old labels
+  container.querySelectorAll('.measure-label').forEach(el => el.remove());
+
+  labels.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'measure-label' + (i === selectedLabelIdx ? ' selected' : '');
+    div.textContent = l.text;
+    div.style.left = (l.x * 100) + '%';
+    div.style.top = (l.y * 100) + '%';
+    if (l.scale) div.style.transform = `scale(${l.scale})`;
+    div.dataset.idx = i;
+    div.onmousedown = (e) => startDrag(e, i);
+    div.ontouchstart = (e) => startDrag(e, i);
+    div.onclick = () => selectLabel(i);
+    container.appendChild(div);
+  });
+
+  // Update side panel
+  const list = document.getElementById('measurements-list');
+  list.innerHTML = labels.map((l, i) => `
+    <div class="ll-item ${i === selectedLabelIdx ? 'active' : ''}" onclick="selectLabel(${i})">
+      <span>${l.text}</span>
+      <span class="ll-del" onclick="event.stopPropagation();deleteLabel(${i})">✕</span>
+    </div>
+  `).join('');
+}
+
+// ── DRAG ──
+function startDrag(e, idx) {
+  e.preventDefault();
+  selectedLabelIdx = idx;
+  const touch = e.touches?.[0];
+  const startX = touch?.clientX || e.clientX;
+  const startY = touch?.clientY || e.clientY;
+  const label = labels[idx];
+  dragState = { idx, startX, startY, origX: label.x, origY: label.y };
+
+  const move = (ev) => {
+    const t = ev.touches?.[0];
+    const cx = t?.clientX || ev.clientX;
+    const cy = t?.clientY || ev.clientY;
+    const container = document.getElementById('photo-container');
+    const rect = container.getBoundingClientRect();
+    const dx = (cx - dragState.startX) / rect.width;
+    const dy = (cy - dragState.startY) / rect.height;
+    label.x = Math.max(0, Math.min(1, dragState.origX + dx));
+    label.y = Math.max(0, Math.min(1, dragState.origY + dy));
+    renderLabels();
+  };
+  const up = () => {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', up);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', up);
+    dragState = null;
+  };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('touchend', up);
+}
+
+window.selectLabel = function(i) {
+  selectedLabelIdx = i;
+  renderLabels();
+};
+window.deleteLabel = function(i) {
+  labels.splice(i, 1);
+  if (selectedLabelIdx === i) selectedLabelIdx = null;
+  else if (selectedLabelIdx > i) selectedLabelIdx--;
+  renderLabels();
+};
+
+// ── CUSTOM LABEL ──
+window.addCustomLabel = function() {
+  const text = prompt('Texto de la etiqueta:');
+  if (!text) return;
+  labels.push({ text, x: 0.5, y: 0.5, scale: 1 });
+  selectedLabelIdx = labels.length - 1;
+  renderLabels();
+};
+
+// ── SAVE / EXPORT ──
+window.saveOverlay = async function() {
+  const jobId = document.getElementById('job-select').value;
+  if (!jobId) { alert('Selecciona una medida primero.'); return; }
+  try {
+    await setDoc(doc(db, 'orgs', orgId, 'jobs', jobId), {
+      photoOverlay: { labels, photo: activePhoto, updatedAt: serverTimestamp() }
+    }, { merge: true });
+    document.getElementById('save-btn').textContent = '✓ Guardado';
+    setTimeout(() => document.getElementById('save-btn').textContent = '💾 Guardar', 2000);
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+};
+
+window.exportPhoto = function() {
+  const img = document.getElementById('image-canvas');
+  if (!img.src) return;
+  const cvs = document.createElement('canvas');
+  cvs.width = img.naturalWidth;
+  cvs.height = img.naturalHeight;
+  const ctx = cvs.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  // Draw labels
+  ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  labels.forEach(l => {
+    const x = l.x * cvs.width;
+    const y = l.y * cvs.height;
+    const s = l.scale || 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    const metrics = ctx.measureText(l.text);
+    const pad = 8;
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.beginPath();
+    ctx.roundRect(-metrics.width/2 - pad, -12 - pad, metrics.width + pad*2, 24 + pad*2, 6);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+    ctx.fillText(l.text, 0, 4);
+    ctx.restore();
+  });
+  const link = document.createElement('a');
+  link.download = 'nivelato-foto.png';
+  link.href = cvs.toDataURL('image/png');
+  link.click();
+};
+
+// ── UTILITIES ──
+window.toggleSidePanel = function() {
+  document.getElementById('side-panel').classList.toggle('open');
+};
+window.resetLabels = function() {
+  labels = [];
+  renderLabels();
+};
+window.doSignOut = async function() {
+  await signOut(auth);
+  window.location.href = 'login.html';
+};
+</script>
+</body>
+</html>

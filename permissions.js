@@ -9,6 +9,7 @@ export const PERM_DEFS = [
   { key: 'viewOthersMeasurements', label: 'Ver medidas de otros' },
   { key: 'editOthersMeasurements', label: 'Editar medidas de otros' },
   { key: 'userManagement',         label: 'Gestión de usuarios' },
+  { key: 'addPhotosToOrders',      label: 'Añadir fotos a medidas' },
 ];
 
 const ROLE_FALLBACK = {
@@ -19,6 +20,7 @@ const ROLE_FALLBACK = {
   viewOthersMeasurements: ['owner', 'supervisor', 'measurer', 'cotizador'],
   editOthersMeasurements: ['owner', 'supervisor'],
   userManagement:         ['owner'],
+  addPhotosToOrders:      ['owner', 'supervisor'],
 };
 
 // Check if a role is in a ROLE_FALLBACK list (or is truthy for `true`)
