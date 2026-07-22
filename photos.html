@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Nivelato — Fotos</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script type="module" src="estradiol.js"></script>
+<script type="module" src="account-selector.js"></script>
 <script src="testing.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -145,6 +147,7 @@
       <select id="job-select" onchange="loadJobMeasurements()" style="display:none"><option value="">Medida</option></select>
       <button onclick="reloadFromJob()" id="reload-btn" style="display:none" title="Recargar medidas">🔄</button>
       <button onclick="saveOverlay()" id="save-btn" style="display:none">💾</button>
+      <button onclick="window.location.href='dashboard.html'" style="background:#1971c2;border-color:#1971c2;">📊</button>
       <button class="danger" onclick="doSignOut()">Salir</button>
     </div>
   </header>

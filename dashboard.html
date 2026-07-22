@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit b7e3df2')</script>
+<script>console.log('nivelato v1.0.0 — commit 5502be6')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -311,6 +311,7 @@
   </div>
   <div class="mobile-sheet-footer">
     <button class="ms-photo" id="ms-add-photo-btn" onclick="addPhotoToJob()" style="display:none">📸 Añadir foto</button>
+    <button id="ms-share-btn" onclick="msToggleShare()" style="display:none;background:#e7f5ff;color:#1971c2;border:1px solid #1971c2;flex:unset;padding:11px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">🔗</button>
     <button class="ms-del" id="ms-del-btn" onclick="msDeleteJob()" style="display:none">🗑 Eliminar</button>
     <button class="ms-close" onclick="closeMobileSheet()">Cerrar</button>
   </div>
@@ -672,6 +673,40 @@ let currentUser;
     }
   };
 
+  // ── MOBILE SHARE ──
+  window.msToggleShare = () => {
+    const job = msCurrentJobIdx != null ? window._jobs[msCurrentJobIdx] : null;
+    if (!job) return;
+    const shared = (job && job.sharedWith) || [];
+    const members = window._orgMembers || [];
+    const list = document.getElementById('ms-body');
+    const existing = list.querySelector('.ms-share-section');
+    if (existing) { existing.remove(); return; }
+    const sec = document.createElement('div');
+    sec.className = 'ms-share-section';
+    sec.style.cssText = 'margin-top:16px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;';
+    sec.innerHTML = '<div style="font-size:12px;font-weight:600;color:#495057;margin-bottom:8px;">Compartir con:</div>' +
+      members.filter(m => m.uid !== currentUser.uid).map(m =>
+        `<label style="display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px;cursor:pointer;">
+          <input type="checkbox" class="ms-share-check" data-uid="${m.uid}" ${shared.includes(m.uid) ? 'checked' : ''} />
+          <span>${m.name || m.email || 'Usuario'}</span>
+        </label>`
+      ).join('') +
+      '<button onclick="msSaveShare()" style="margin-top:8px;padding:6px 12px;background:#1971c2;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;">Guardar</button>';
+    list.appendChild(sec);
+  };
+
+  window.msSaveShare = async () => {
+    const job = msCurrentJobIdx != null ? window._jobs[msCurrentJobIdx] : null;
+    if (!job) return;
+    const checks = document.querySelectorAll('.ms-share-check:checked');
+    const uids = Array.from(checks).map(cb => cb.dataset.uid);
+    try {
+      await updateDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id), { sharedWith: uids });
+      alert('Compartido ✓');
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
   window.toggleSharePanel = () => {
     const sp = document.getElementById('share-panel');
     const shown = sp.style.display !== 'none';
@@ -782,6 +817,10 @@ let currentUser;
     // Photo tab
     const photoTab = document.getElementById('ms-photo-tab');
     const photoBody = document.getElementById('ms-photo-body');
+    // Gate share button
+    const msShare = document.getElementById('ms-share-btn');
+    if (msShare) msShare.style.display = _can('editOthersMeasurements') ? 'inline-block' : 'none';
+
     const addBtn = document.getElementById('ms-add-photo-btn');
     if (job.photoOverlay?.renderedImage) {
       photoTab.style.display = 'inline-block';
