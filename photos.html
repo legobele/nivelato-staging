@@ -62,7 +62,7 @@
     background: rgba(0,0,0,0.82); color: #fff; padding: 3px 8px;
     border-radius: 5px; font-size: 12px; font-weight: 700;
     white-space: nowrap; border: 1.5px solid #e64980;
-    text-align: center; pointer-events: none;
+    text-align: center; pointer-events: auto;
   }
   .measure-label.selected .ml-text {
     border-color: #ff6b9d; box-shadow: 0 0 10px rgba(230,73,128,0.4);
@@ -138,9 +138,8 @@
   <header>
     <h1>📸 Nivelato Fotos</h1>
     <div class="header-right">
-      <select id="org-select"><option value="">Org</option></select>
-      <select id="job-select" onchange="loadJobMeasurements()"><option value="">Medida</option></select>
-      <button onclick="reloadFromJob()" id="reload-btn" style="display:none" title="Recargar medidas del trabajo">🔄</button>
+      <select id="job-select" onchange="loadJobMeasurements()" style="display:none"><option value="">Medida</option></select>
+      <button onclick="reloadFromJob()" id="reload-btn" style="display:none" title="Recargar medidas">🔄</button>
       <button onclick="saveOverlay()" id="save-btn" style="display:none">💾</button>
       <button class="danger" onclick="doSignOut()">Salir</button>
     </div>
@@ -210,8 +209,13 @@ onAuthStateChanged(auth, async (user) => {
   userData = snap.data();
   _can = makePermChecker(userData);
   orgId = userData.orgId;
-  document.getElementById('org-select').innerHTML = `<option value="${orgId}">${orgId}</option>`;
   await loadOrgJobs();
+
+  // If ?job=xxx is in URL, auto-select after load
+  const jobParam = new URLSearchParams(window.location.search).get('job');
+  if (jobParam) {
+    setTimeout(() => { document.getElementById('job-select').value = jobParam; loadJobMeasurements(); }, 500);
+  }
 });
 
 async function loadOrgJobs() {
@@ -295,6 +299,7 @@ window.loadPhoto = function(e) {
     img.style.display = 'block';
     document.getElementById('empty-state').style.display = 'none';
     document.getElementById('save-btn').style.display = 'inline-block';
+    document.getElementById('job-select').style.display = 'inline-block';
     document.getElementById('side-panel').classList.add('open');
   };
   reader.readAsDataURL(file);
@@ -379,10 +384,11 @@ function renderLabels() {
       el.appendChild(txt);
     }
 
-    // Click to select, drag to move
-    el.onclick = (e) => { if (!e.target.closest('.ml-handle')) selectLabel(i); };
-    el.onmousedown = (e) => { if (!e.target.closest('.ml-handle')) { e.preventDefault(); startLabelDrag(e, i); } };
-    el.ontouchstart = (e) => { if (!e.target.closest('.ml-handle')) { e.preventDefault(); startLabelDrag(e, i); } };
+    // Make the text the draggable area (parent has zero size)
+    txt.onmousedown = (e) => { e.preventDefault(); selectLabel(i); startLabelDrag(e, i); };
+    txt.ontouchstart = (e) => { e.preventDefault(); selectLabel(i); startLabelDrag(e, i); };
+    // Click selects
+    el.onclick = () => selectLabel(i);
 
     container.appendChild(el);
   });
