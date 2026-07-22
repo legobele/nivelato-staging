@@ -43,13 +43,18 @@
   <div class="tagline">Inicio de sesión único</div>
   <div class="app-name" id="sso-app-name">Solicitado por: —</div>
   <img src="signin_nivelato_en.png" class="sso-btn-img" id="sso-btn" onclick="signIn()" alt="Sign in with Nivelato" />
+  <div id="sso-form" style="display:none;margin-top:16px;">
+    <input type="email" id="sso-email" placeholder="Correo electrónico" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:8px;" />
+    <input type="password" id="sso-pass" placeholder="Contraseña" style="width:100%;padding:10px 12px;border:1px solid #dee2e6;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:8px;" />
+    <button onclick="signInWithEmail()" style="width:100%;padding:12px;background:#1971c2;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Iniciar sesión</button>
+  </div>
   <div class="error" id="sso-error"></div>
   <div class="info">Al iniciar sesión, compartirás tu nombre, correo y afiliación con la aplicación solicitante.</div>
 </div>
 
 <script type="module">
 import { auth } from './firebase-config.js';
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
 import { getDoc, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
@@ -127,29 +132,24 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-window.signIn = async () => {
-  const btn = document.getElementById('sso-btn');
-  const err = document.getElementById('sso-error');
-  btn.classList.add('disabled');
-  btn.style.opacity = '0.5';
-  err.style.display = 'none';
+window.signIn = () => {
+  // Show email/password form instead (Google not enabled in Firebase console)
+  document.getElementById('sso-btn').style.display = 'none';
+  document.getElementById('sso-form').style.display = 'block';
+};
 
+window.signInWithEmail = async () => {
+  const email = document.getElementById('sso-email').value.trim();
+  const pass = document.getElementById('sso-pass').value;
+  const err = document.getElementById('sso-error');
+  if (!email || !pass) { err.textContent = 'Ingresa correo y contraseña.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
   try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
+    const result = await signInWithEmailAndPassword(auth, email, pass);
     await handleAuth(result.user);
   } catch (e) {
-    if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
-      err.textContent = 'La ventana emergente fue bloqueada o cerrada. Intenta de nuevo.';
-      err.style.display = 'block';
-      btn.classList.remove('disabled');
-      btn.style.opacity = '1';
-      return;
-    }
-    err.textContent = 'Error al iniciar sesión: ' + (e.message || 'Intenta de nuevo.');
+    err.textContent = 'Error: ' + (e.message || 'Intenta de nuevo.');
     err.style.display = 'block';
-    btn.classList.remove('disabled');
-    btn.style.opacity = '1';
   }
 };
 </script>
