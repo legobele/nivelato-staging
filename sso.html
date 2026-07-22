@@ -48,21 +48,16 @@
     margin-bottom: 24px;
     word-break: break-all;
   }
-  .btn {
+  .sso-btn-img {
     width: 100%;
-    padding: 14px;
-    background: #1971c2;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 600;
+    max-width: 300px;
     cursor: pointer;
-    font-family: inherit;
-    transition: background 0.15s;
+    display: block;
+    margin: 0 auto;
+    transition: opacity 0.15s;
   }
-  .btn:active { background: #1864ab; }
-  .btn:disabled { opacity: 0.6; cursor: default; }
+  .sso-btn-img:active { opacity: 0.8; }
+  .sso-btn-img.disabled { opacity: 0.5; cursor: default; }
   .error {
     font-size: 13px;
     color: #e03131;
@@ -83,7 +78,7 @@
   <div class="logo">Nivelato</div>
   <div class="tagline">Inicio de sesión único</div>
   <div class="app-name" id="sso-app-name">Solicitado por: —</div>
-  <button class="btn" id="sso-btn" onclick="signIn()">Iniciar sesión con Nivelato</button>
+  <img src="signin_nivelato_en.png" class="sso-btn-img" id="sso-btn" onclick="signIn()" alt="Sign in with Nivelato" />
   <div class="error" id="sso-error"></div>
   <div class="info">Al iniciar sesión, compartirás tu nombre, correo y afiliación con la aplicación solicitante.</div>
 </div>
@@ -97,13 +92,17 @@ import { db } from './firebase-config.js';
 const params = new URLSearchParams(window.location.search);
 const redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
+const lang = params.get('lang') || 'en';
+
+// Use the localized button image
+document.getElementById('sso-btn').src = 'signin_nivelato_' + lang + '.png';
 
 document.getElementById('sso-app-name').textContent = 'Solicitado por: ' + clientId;
 
 if (!redirectUri) {
   document.getElementById('sso-error').textContent = 'Error: falta redirect_uri';
   document.getElementById('sso-error').style.display = 'block';
-  document.getElementById('sso-btn').disabled = true;
+  document.getElementById('sso-btn').classList.add('disabled');
 }
 
 async function doRedirect(user) {
@@ -126,7 +125,7 @@ async function doRedirect(user) {
 // Already signed in? Skip straight to redirect
 onAuthStateChanged(auth, (user) => {
   if (user && redirectUri) {
-    document.getElementById('sso-btn').textContent = 'Redirigiendo…';
+    document.getElementById('sso-btn').style.opacity = '0.5';
     doRedirect(user);
   }
 });
@@ -134,8 +133,8 @@ onAuthStateChanged(auth, (user) => {
 window.signIn = async () => {
   const btn = document.getElementById('sso-btn');
   const err = document.getElementById('sso-error');
-  btn.disabled = true;
-  btn.textContent = 'Iniciando sesión…';
+  btn.classList.add('disabled');
+  btn.style.opacity = '0.5';
   err.style.display = 'none';
 
   try {
@@ -147,15 +146,15 @@ window.signIn = async () => {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
       err.textContent = 'La ventana emergente fue bloqueada o cerrada. Intenta de nuevo.';
       err.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Iniciar sesión con Nivelato';
+      btn.classList.remove('disabled');
+      btn.style.opacity = '1';
       return;
     }
     // Fallback: show error
     err.textContent = 'Error al iniciar sesión: ' + (e.message || 'Intenta de nuevo.');
     err.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Iniciar sesión con Nivelato';
+    btn.classList.remove('disabled');
+    btn.style.opacity = '1';
   }
 };
 </script>
