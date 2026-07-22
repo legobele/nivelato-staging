@@ -101,6 +101,15 @@
     font-size: 12px; color: #868e96; font-weight: 600;
   }
   .measure-label .ml-handle:active { cursor: grabbing; }
+  .measure-label .ml-rotate-handle {
+    position: absolute; width: 26px; height: 26px;
+    background: #fff; border: 1.5px solid #495057;
+    border-radius: 50%; cursor: grab; touch-action: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #495057; font-weight: 600;
+    z-index: 1;
+  }
+  .measure-label .ml-rotate-handle:active { cursor: grabbing; }
 
   /* Empty state */
   #empty-state {
@@ -380,9 +389,10 @@ function renderLabels() {
     let txt;
     if (l.type === 'dim' || l.type === 'arrow') {
       const wPct = (l.w || 0.2) * 100;
-      const isRot = Math.abs(l.rot || 0) > 0;
+      const normRot = ((l.rot || 0) % 360 + 360) % 360;
+      const isVertical = normRot === 90 || normRot === 270;
       // For rotated (vertical) lines, swap width → height
-      if (isRot) {
+      if (isVertical) {
         el.style.height = wPct + '%';
         el.style.width = '28px';
         el.style.marginLeft = '-14px';
@@ -390,7 +400,7 @@ function renderLabels() {
         el.style.width = wPct + '%';
         el.style.height = '24px';
       }
-      if (isRot) {
+      if (isVertical) {
         el.classList.add('line-vert');
         // Build vertical line children
         var vline = document.createElement('div');
@@ -412,27 +422,43 @@ function renderLabels() {
       txt.textContent = l.text;
       el.appendChild(txt);
 
-      // Resize / rotate handle at right end
+      // Handle positions based on rotation (4 states: 0, 90, 180, 270)
+      let resizeCss, rotateCss;
+      if (isVertical) {
+        if (normRot === 90) {
+          resizeCss = `left:50%;top:-13px;margin-left:-13px;`;
+          rotateCss = `left:50%;bottom:-13px;margin-left:-13px;`;
+        } else {
+          resizeCss = `left:50%;bottom:-13px;margin-left:-13px;`;
+          rotateCss = `left:50%;top:-13px;margin-left:-13px;`;
+        }
+      } else {
+        if (normRot === 0) {
+          resizeCss = `right:-13px;top:50%;margin-top:-13px;`;
+          rotateCss = `left:-13px;top:50%;margin-top:-13px;`;
+        } else {
+          resizeCss = `left:-13px;top:50%;margin-top:-13px;`;
+          rotateCss = `right:-13px;top:50%;margin-top:-13px;`;
+        }
+      }
+
+      // Resize handle (drag to change length)
       const hnd = document.createElement('div');
       hnd.className = 'ml-handle';
       hnd.textContent = '⊜';
-      hnd.style.cssText = isRot ? `left:50%;bottom:-13px;margin-left:-13px;` : `right:-13px;top:50%;margin-top:-13px;`;
+      hnd.style.cssText = resizeCss;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
-      // Double-tap handle toggles 90° rotation
-      (function(label, h) {
-        var last = 0;
-        h.onclick = function(e) {
-          e.stopPropagation();
-          var n = Date.now();
-          if (n - last < 400) {
-            label.rot = (label.rot || 0) === -90 ? 0 : -90;
-            renderLabels();
-          }
-          last = n;
-        };
-      })(l, hnd);
       el.appendChild(hnd);
+
+      // Rotate handle (drag to rotate, opposite end from resize)
+      const rotHnd = document.createElement('div');
+      rotHnd.className = 'ml-rotate-handle';
+      rotHnd.textContent = '↻';
+      rotHnd.style.cssText = rotateCss;
+      rotHnd.onmousedown = (e) => startRotate(e, i);
+      rotHnd.ontouchstart = (e) => startRotate(e, i);
+      el.appendChild(rotHnd);
     } else {
       // Simple text label
       txt = document.createElement('div');
@@ -599,16 +625,18 @@ function startResize(e, idx) {
     const cy = tt?.clientY || ev.clientY;
     const img = document.getElementById('photo-transform');
     const rect = img.getBoundingClientRect();
-    const isRot = Math.abs(label.rot || 0) > 0;
-    if (isRot) {
-      // Vertical handle at bottom: drag up/down to change height (line length)
-      const dy = (cy - dragState.sy || cy - dragState.sx) / rect.height;
-      label.w = Math.max(0.02, dragState.ow + dy);
+    const normRot = ((label.rot || 0) % 360 + 360) % 360;
+    const isVertical = normRot === 90 || normRot === 270;
+    if (isVertical) {
+      let delta = (cy - dragState.sy) / rect.height;
+      if (normRot === 90) delta = -delta; // resize at top: drag up to grow
+      label.w = Math.max(0.02, dragState.ow + delta);
       const el = container.querySelector(`[data-idx="${idx}"]`);
       if (el) el.style.height = (label.w * 100) + '%';
     } else {
-      const dx = (cx - dragState.sx) / rect.width;
-      label.w = Math.max(0.02, dragState.ow + dx);
+      let delta = (cx - dragState.sx) / rect.width;
+      if (normRot === 180) delta = -delta; // resize at left: drag left to grow
+      label.w = Math.max(0.02, dragState.ow + delta);
       const el = container.querySelector(`[data-idx="${idx}"]`);
       if (el) el.style.width = (label.w * 100) + '%';
     }
@@ -621,6 +649,62 @@ function startResize(e, idx) {
     document.removeEventListener('touchmove', move);
     document.removeEventListener('touchend', up);
     dragState = null;
+    renderLabels();
+  };
+  document.addEventListener('pointermove', move);
+  document.addEventListener('pointerup', up);
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('touchend', up);
+}
+
+function startRotate(e, idx) {
+  e.preventDefault(); e.stopPropagation();
+  selectedIdx = idx;
+  document.querySelectorAll('.measure-label').forEach(el => el.classList.remove('selected'));
+  const container = document.getElementById('photo-transform');
+  const cur = container.querySelector(`[data-idx="${idx}"]`);
+  if (cur) cur.classList.add('selected');
+  const t = e.touches?.[0] || e;
+  const label = labels[idx];
+  const img = document.getElementById('image-canvas');
+  const rect = container.getBoundingClientRect();
+  const zoom = rect.width / img.naturalWidth;
+  const w = label.w || 0.2;
+
+  function getCenter() {
+    const normRot = ((label.rot || 0) % 360 + 360) % 360;
+    const isVertical = normRot === 90 || normRot === 270;
+    if (isVertical) {
+      return {
+        cx: rect.left + label.x * rect.width + 14 * zoom,
+        cy: rect.top + (label.y + w / 2) * rect.height
+      };
+    } else {
+      return {
+        cx: rect.left + (label.x + w / 2) * rect.width,
+        cy: rect.top + label.y * rect.height + 12 * zoom
+      };
+    }
+  }
+
+  const move = (ev) => {
+    const tt = ev.touches?.[0] || ev;
+    const center = getCenter();
+    const angle = Math.atan2(tt.clientY - center.cy, tt.clientX - center.cx) * 180 / Math.PI;
+    label.rot = Math.round(angle / 90) * 90;
+    while (label.rot > 180) label.rot -= 360;
+    while (label.rot < -180) label.rot += 360;
+    renderLabels();
+  };
+  const up = () => {
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', up);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('touchend', up);
     renderLabels();
   };
   document.addEventListener('pointermove', move);
@@ -675,6 +759,7 @@ function renderToCanvas() {
       [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(s * hw, -4); ctx.lineTo(s * hw, 4); ctx.stroke(); });
       ctx.restore();
     }
+    const m = ctx.measureText(l.text);
     const pad = 6;
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.beginPath();
