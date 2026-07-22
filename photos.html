@@ -527,8 +527,8 @@ function startLabelDrag(e, idx) {
 
   const move = (ev) => {
     const tp2 = ev.touches?.[0] || ev;
-    const cx = tt?.clientX || ev.clientX;
-    const cy = tt?.clientY || ev.clientY;
+    const cx = tp2.clientX || ev.clientX;
+    const cy = tp2.clientY || ev.clientY;
     const img = document.getElementById('photo-transform');
     const rect = img.getBoundingClientRect();
     const dx = (cx - dragState.sx) / rect.width;
