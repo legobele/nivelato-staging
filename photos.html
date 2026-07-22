@@ -379,8 +379,10 @@ function renderLabels() {
       el.appendChild(txt);
     }
 
-    // Click to select
+    // Click to select, drag to move
     el.onclick = (e) => { if (!e.target.closest('.ml-handle')) selectLabel(i); };
+    el.onmousedown = (e) => { if (!e.target.closest('.ml-handle')) { e.preventDefault(); startLabelDrag(e, i); } };
+    el.ontouchstart = (e) => { if (!e.target.closest('.ml-handle')) { e.preventDefault(); startLabelDrag(e, i); } };
 
     container.appendChild(el);
   });
@@ -528,19 +530,7 @@ function startResize(e, idx) {
   document.addEventListener('touchend', up);
 }
 
-// Override label drag — attach to the text part only
-document.addEventListener('mousedown', (e) => {
-  const hnd = e.target.closest('.ml-handle');
-  if (hnd) return;
-  const lbl = e.target.closest('.measure-label');
-  if (lbl) startLabelDrag(e, parseInt(lbl.dataset.idx));
-});
-document.addEventListener('touchstart', (e) => {
-  const hnd = e.target.closest('.ml-handle');
-  if (hnd) return;
-  const lbl = e.target.closest('.measure-label');
-  if (lbl) startLabelDrag(e, parseInt(lbl.dataset.idx));
-}, { passive: false });
+// Remove stray document listeners — per-element handlers handle drag now
 
 // ── SAVE / EXPORT ──
 window.saveOverlay = async function() {
