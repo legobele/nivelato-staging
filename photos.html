@@ -387,75 +387,36 @@ function renderLabels() {
     el.dataset.idx = i;
 
     let txt;
-    if (l.type === 'dim' || l.type === 'arrow') {
-      const wPct = (l.w || 0.2) * 100;
-      const normRot = ((l.rot || 0) % 360 + 360) % 360;
-      const isVertical = normRot === 90 || normRot === 270;
-      // For rotated (vertical) lines, swap width → height
-      if (isVertical) {
-        el.style.height = wPct + '%';
-        el.style.width = '28px';
-        el.style.marginLeft = '-14px';
-      } else {
-        el.style.width = wPct + '%';
-        el.style.height = '24px';
-      }
-      if (isVertical) {
-        el.classList.add('line-vert');
-        // Build vertical line children
-        var vline = document.createElement('div');
-        vline.className = 'vl-line';
-        el.appendChild(vline);
-        var vtickT = document.createElement('div');
-        vtickT.className = 'vl-tick vl-tick-t';
-        el.appendChild(vtickT);
-        var vtickB = document.createElement('div');
-        vtickB.className = 'vl-tick vl-tick-b';
-        el.appendChild(vtickB);
-      } else {
-        el.classList.add('line');
-      }
+    if (isDim) {
+const wPct = (l.w || 0.2) * 100;
+      const rotDeg = l.rot || 0;
+      // Always render as horizontal line; rotation applied via CSS transform
+      el.style.width = wPct + '%';
+      el.style.height = '24px';
+      el.classList.add('line');
+      el.style.transformOrigin = 'center top';
+      el.style.transform = 'rotate(' + rotDeg + 'deg)';
 
-      // Text label — horizontally centered, vertically offset
+      // Text label — horizontally centered, vertically offset, counter-rotated
       txt = document.createElement('div');
       txt.className = 'ml-text';
       txt.textContent = l.text;
+      txt.style.transform = 'translate(-50%, 0) rotate(' + (-rotDeg) + 'deg)';
       el.appendChild(txt);
 
-      // Handle positions based on rotation (4 states: 0, 90, 180, 270)
-      let resizeCss, rotateCss;
-      if (isVertical) {
-        if (normRot === 90) {
-          resizeCss = `left:50%;top:-13px;margin-left:-13px;`;
-          rotateCss = `left:50%;bottom:-13px;margin-left:-13px;`;
-        } else {
-          resizeCss = `left:50%;bottom:-13px;margin-left:-13px;`;
-          rotateCss = `left:50%;top:-13px;margin-left:-13px;`;
-        }
-      } else {
-        if (normRot === 0) {
-          resizeCss = `right:-13px;top:50%;margin-top:-13px;`;
-          rotateCss = `left:-13px;top:50%;margin-top:-13px;`;
-        } else {
-          resizeCss = `left:-13px;top:50%;margin-top:-13px;`;
-          rotateCss = `right:-13px;top:50%;margin-top:-13px;`;
-        }
-      }
-
-      // Resize handle (drag to change length)
+      // Resize handle (right end) and rotate handle (left end) — fixed positions, rotate with element
       const hnd = document.createElement('div');
       hnd.className = 'ml-handle';
       hnd.textContent = '⊜';
-      hnd.style.cssText = resizeCss;
+      hnd.style.cssText = `right:-13px;top:50%;margin-top:-13px;`;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
       el.appendChild(hnd);
 
-      // Rotate handle (drag to rotate, opposite end from resize)
       const rotHnd = document.createElement('div');
       rotHnd.className = 'ml-rotate-handle';
       rotHnd.textContent = '↻';
-      rotHnd.style.cssText = rotateCss;
+      rotHnd.style.cssText = `left:-13px;top:50%;margin-top:-13px;`;
       rotHnd.onmousedown = (e) => startRotate(e, i);
       rotHnd.ontouchstart = (e) => startRotate(e, i);
       el.appendChild(rotHnd);
@@ -625,21 +586,14 @@ function startResize(e, idx) {
     const cy = tt?.clientY || ev.clientY;
     const img = document.getElementById('photo-transform');
     const rect = img.getBoundingClientRect();
-    const normRot = ((label.rot || 0) % 360 + 360) % 360;
-    const isVertical = normRot === 90 || normRot === 270;
-    if (isVertical) {
-      let delta = (cy - dragState.sy) / rect.height;
-      if (normRot === 90) delta = -delta; // resize at top: drag up to grow
-      label.w = Math.max(0.02, dragState.ow + delta);
-      const el = container.querySelector(`[data-idx="${idx}"]`);
-      if (el) el.style.height = (label.w * 100) + '%';
-    } else {
-      let delta = (cx - dragState.sx) / rect.width;
-      if (normRot === 180) delta = -delta; // resize at left: drag left to grow
-      label.w = Math.max(0.02, dragState.ow + delta);
-      const el = container.querySelector(`[data-idx="${idx}"]`);
-      if (el) el.style.width = (label.w * 100) + '%';
-    }
+    const rotRad = (label.rot || 0) * Math.PI / 180;
+    // Project mouse movement onto the line's direction
+    const dx = (cx - dragState.sx) / rect.width;
+    const dy = (cy - dragState.sy) / rect.height;
+    const delta = dx * Math.cos(rotRad) + dy * Math.sin(rotRad);
+    label.w = Math.max(0.02, dragState.ow + delta);
+    const el = container.querySelector(`[data-idx="${idx}"]`);
+    if (el) el.style.width = (label.w * 100) + '%';
   };
   const up = () => {
     document.removeEventListener('pointermove', move);
@@ -668,32 +622,22 @@ function startRotate(e, idx) {
   if (cur) cur.classList.add('selected');
   const t = e.touches?.[0] || e;
   const label = labels[idx];
-  const img = document.getElementById('image-canvas');
   const rect = container.getBoundingClientRect();
-  const zoom = rect.width / img.naturalWidth;
   const w = label.w || 0.2;
 
   function getCenter() {
-    const normRot = ((label.rot || 0) % 360 + 360) % 360;
-    const isVertical = normRot === 90 || normRot === 270;
-    if (isVertical) {
-      return {
-        cx: rect.left + label.x * rect.width + 14 * zoom,
-        cy: rect.top + (label.y + w / 2) * rect.height
-      };
-    } else {
-      return {
-        cx: rect.left + (label.x + w / 2) * rect.width,
-        cy: rect.top + label.y * rect.height + 12 * zoom
-      };
-    }
+    // Center of the line = center of the top edge of the element (transform-origin)
+    return {
+      cx: rect.left + (label.x + w / 2) * rect.width,
+      cy: rect.top + label.y * rect.height
+    };
   }
 
   const move = (ev) => {
     const tt = ev.touches?.[0] || ev;
     const center = getCenter();
     const angle = Math.atan2(tt.clientY - center.cy, tt.clientX - center.cx) * 180 / Math.PI;
-    label.rot = Math.round(angle / 90) * 90;
+    label.rot = angle;
     while (label.rot > 180) label.rot -= 360;
     while (label.rot < -180) label.rot += 360;
     renderLabels();
@@ -748,10 +692,12 @@ function renderToCanvas() {
   labels.forEach(l => {
     const x = l.x * cvs.width, y = l.y * cvs.height;
     const w = (l.w || 0.2) * cvs.width;
-    if (l.type === 'dim' || l.type === 'arrow') {
+    const isDim = l.type === 'dim' || l.type === 'arrow';
+    const cx = isDim ? x + w / 2 : x;
+    if (isDim) {
       const rot = l.rot || 0;
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(cx, y);
       if (rot) ctx.rotate(rot * Math.PI / 180);
       const hw = w / 2;
       ctx.strokeStyle = '#e64980'; ctx.lineWidth = 2;
@@ -763,11 +709,11 @@ function renderToCanvas() {
     const pad = 6;
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4, 5);
-    else ctx.rect(x - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4);
+    if (ctx.roundRect) ctx.roundRect(cx - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4, 5);
+    else ctx.rect(cx - m.width/2 - pad, y - fs/2 - pad - 2, m.width + pad*2, fs + pad*2 + 4);
     ctx.fill();
     ctx.fillStyle = '#fff';
-    ctx.fillText(l.text, x, y);
+    ctx.fillText(l.text, cx, y);
   });
   return cvs.toDataURL('image/png');
 };
@@ -784,8 +730,10 @@ window.exportPhoto = function() {
     const x = l.x * cvs.width, y = l.y * cvs.height;
     const w = (l.w || 0.2) * cvs.width;
     const rot = (l.rot || 0) * Math.PI / 180;
+    const isDim = l.type === 'dim' || l.type === 'arrow';
+    const cx = isDim ? x + w / 2 : x;
     ctx.save();
-    ctx.translate(x, y);
+    ctx.translate(cx, y);
     if (rot) ctx.rotate(rot);
 
     if (l.type === 'dim' || l.type === 'arrow') {
