@@ -526,3 +526,76 @@ html, body {
     padding: 14px 14px 18px;
   }
 }
+
+/* ─── ESTRADIOL MODE ─────────────────────────────────────────────────────── */
+.estradiol-mode {
+  --accent: #e64980;
+  --accent-light: #fce4ec;
+  --green: #e64980;
+  --green-bg: #fce4ec;
+}
+
+.estradiol-mode #app-logo {
+  color: #e64980;
+}
+
+.estradiol-mode .btn-primary {
+  background: #e64980;
+}
+
+.estradiol-mode .btn-primary:active {
+  background: #d6336c;
+}
+
+.estradiol-mode #progress-bar {
+  background: #e64980;
+}
+
+.estradiol-mode .desnivel-pill.has-value {
+  background: #fce4ec;
+  border-color: #e64980;
+  color: #e64980;
+}
+
+.estradiol-mode .fraction-row input[type="number"]:focus {
+  border-color: #e64980;
+  box-shadow: 0 0 0 3px #fce4ec;
+}
+
+.estradiol-mode .input-col input[type="text"]:focus {
+  border-color: #e64980;
+  box-shadow: 0 0 0 3px #fce4ec;
+}
+
+.estradiol-mode .frac-select:focus {
+  border-color: #e64980;
+  box-shadow: 0 0 0 3px #fce4ec;
+}
+
+.estradiol-mode .notas-block textarea:focus {
+  border-color: #e64980;
+  box-shadow: 0 0 0 3px #fce4ec;
+}
+
+.estradiol-mode #validation-block.val-ok {
+  background: #fce4ec;
+  color: #e64980;
+  border-color: #f8ceda;
+}
+
+/* ─── ESTRADIOL INDICATOR IN HEADER ─── */
+#estradiol-indicator {
+  display: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e64980;
+  background: #fce4ec;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.estradiol-mode #estradiol-indicator {
+  display: inline-block;
+}
