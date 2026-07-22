@@ -64,16 +64,19 @@
   .measure-label.line::before { left: 0; }
   .measure-label.line::after { right: 0; }
   .measure-label.line-vert {
-    border-left: 2px solid #ced4da;
     width: 24px !important;
-    margin-left: 0 !important;
+    height: auto !important;
   }
-  .measure-label.line-vert::before, .measure-label.line-vert::after {
-    content: ''; position: absolute; left: -4px;
-    width: 8px; height: 2px; background: #ced4da; border-radius: 1px;
+  .measure-label.line-vert .vl-line {
+    position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
+    margin-left: -1px; background: #ced4da;
   }
-  .measure-label.line-vert::before { top: 0; }
-  .measure-label.line-vert::after { bottom: 0; }
+  .measure-label.line-vert .vl-tick {
+    position: absolute; left: 50%; width: 8px; height: 2px;
+    margin-left: -4px; background: #ced4da;
+  }
+  .measure-label.line-vert .vl-tick-t { top: 0; }
+  .measure-label.line-vert .vl-tick-b { bottom: 0; }
   .measure-label .ml-text {
     position: absolute;
     background: transparent; color: #495057; padding: 2px 8px;
@@ -85,7 +88,7 @@
     left: 50%; top: 8px; transform: translate(-50%, 0);
   }
   .measure-label.line-vert .ml-text {
-    top: 50%; left: 10px; transform: translate(0, -50%);
+    top: 50%; left: 28px; transform: translate(0, -50%);
   }
   .measure-label.selected .ml-text {
     border-color: #495057; border-width: 2px; box-shadow: 0 0 0 1px rgba(73,80,87,0.15);
@@ -388,9 +391,21 @@ function renderLabels() {
         el.style.height = '24px';
       }
       el.classList.add('line');
-      if (isRot) el.classList.add('line-vert');
+      if (isRot) {
+        el.classList.add('line-vert');
+        // Build vertical line children instead of border
+        var vline = document.createElement('div');
+        vline.className = 'vl-line';
+        el.appendChild(vline);
+        var vtickT = document.createElement('div');
+        vtickT.className = 'vl-tick vl-tick-t';
+        el.appendChild(vtickT);
+        var vtickB = document.createElement('div');
+        vtickB.className = 'vl-tick vl-tick-b';
+        el.appendChild(vtickB);
+      }
 
-      // Text label — centered below the line
+      // Text label — horizontally centered, vertically offset
       txt = document.createElement('div');
       txt.className = 'ml-text';
       txt.textContent = l.text;
@@ -400,7 +415,7 @@ function renderLabels() {
       const hnd = document.createElement('div');
       hnd.className = 'ml-handle';
       hnd.textContent = '⊜';
-      hnd.style.cssText = `right:-13px;top:50%;margin-top:-13px;`;
+      hnd.style.cssText = isRot ? `left:50%;bottom:-13px;margin-left:-13px;` : `right:-13px;top:50%;margin-top:-13px;`;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
       // Double-tap handle toggles 90° rotation
