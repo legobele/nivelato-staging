@@ -31,7 +31,7 @@ function injectStyles() {
   .acct-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .acct-caret { font-size: 9px; opacity: 0.7; }
   .acct-dropdown {
-    position: absolute; top: calc(100% + 8px); right: 0;
+    position: absolute; top: calc(100% + 8px); left: 0;
     min-width: 220px; max-width: calc(100vw - 16px);
     background: #fff;
     border: 1px solid var(--grey-200, #e9ecef);
