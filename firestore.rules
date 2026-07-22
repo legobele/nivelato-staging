@@ -2,6 +2,14 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // SSO codes: anyone who knows the code ID can read/delete (unguessable random)
+    // Create requires auth. Codes expire via client-side TTL.
+    match /sso_codes/{code} {
+      allow read, delete: if true;
+      allow create: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
     // Users: own read/write, or same-org read (for permission manager)
     match /users/{userId} {
       allow read: if request.auth != null && (

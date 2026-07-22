@@ -26,50 +26,14 @@
     width: 100%;
     text-align: center;
   }
-  .logo {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1971c2;
-    margin-bottom: 4px;
-    letter-spacing: -0.02em;
-  }
-  .tagline {
-    font-size: 13px;
-    color: #868e96;
-    margin-bottom: 28px;
-  }
-  .app-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #495057;
-    background: #f1f3f5;
-    border-radius: 8px;
-    padding: 10px 16px;
-    margin-bottom: 24px;
-    word-break: break-all;
-  }
-  .sso-btn-img {
-    width: 100%;
-    max-width: 300px;
-    cursor: pointer;
-    display: block;
-    margin: 0 auto;
-    transition: opacity 0.15s;
-  }
+  .logo { font-size: 28px; font-weight: 700; color: #1971c2; margin-bottom: 4px; letter-spacing: -0.02em; }
+  .tagline { font-size: 13px; color: #868e96; margin-bottom: 28px; }
+  .app-name { font-size: 14px; font-weight: 600; color: #495057; background: #f1f3f5; border-radius: 8px; padding: 10px 16px; margin-bottom: 24px; word-break: break-all; }
+  .sso-btn-img { width: 100%; max-width: 300px; cursor: pointer; display: block; margin: 0 auto; transition: opacity 0.15s; }
   .sso-btn-img:active { opacity: 0.8; }
   .sso-btn-img.disabled { opacity: 0.5; cursor: default; }
-  .error {
-    font-size: 13px;
-    color: #e03131;
-    margin-top: 12px;
-    display: none;
-  }
-  .info {
-    font-size: 12px;
-    color: #868e96;
-    margin-top: 20px;
-    line-height: 1.5;
-  }
+  .error { font-size: 13px; color: #e03131; margin-top: 12px; display: none; }
+  .info { font-size: 12px; color: #868e96; margin-top: 20px; line-height: 1.5; }
 </style>
 <script src="testing.js"></script>
 </head>
@@ -85,23 +49,21 @@
 
 <script type="module">
 import { auth } from './firebase-config.js';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
-import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
 const params = new URLSearchParams(window.location.search);
 let redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
 const lang = params.get('lang') || 'en';
+const responseType = params.get('response_type') || 'token';
 
-// Ensure redirect URI is absolute
 if (redirectUri && !redirectUri.startsWith('http://') && !redirectUri.startsWith('https://')) {
   redirectUri = 'https://' + redirectUri;
 }
 
-// Use the localized button image
 document.getElementById('sso-btn').src = 'signin_nivelato_' + lang + '.png';
-
 document.getElementById('sso-app-name').textContent = 'Solicitado por: ' + clientId;
 
 if (!redirectUri) {
@@ -110,35 +72,58 @@ if (!redirectUri) {
   document.getElementById('sso-btn').classList.add('disabled');
 }
 
-async function doRedirect(user) {
-  if (!redirectUri) return;
-  const token = await user.getIdToken();
-  const userSnap = await getDoc(doc(db, 'users', user.uid));
-  const userData = userSnap.exists() ? userSnap.data() : {};
-  const payload = {
-    token,
+function generateCode() {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(36).padStart(2, '0')).join('');
+}
+
+async function doAuthCodeFlow(user, userData) {
+  // Store token data in Firestore under a random code — no URL exposure
+  const code = generateCode();
+  await setDoc(doc(db, 'sso_codes', code), {
     uid: user.uid,
+    token: await user.getIdToken(),
+    name: userData.name || user.displayName || '',
+    email: user.email || '',
+    role: userData.role || '',
+    orgId: userData.orgId || '',
+    createdAt: serverTimestamp(),
+  });
+  // Redirect with just the code — token data is fetched from Firestore by the consumer
+  window.location.href = redirectUri + '?code=' + code;
+}
+
+async function doPopupFlow(user, userData) {
+  const payload = {
+    uid: user.uid,
+    token: await user.getIdToken(),
     name: userData.name || user.displayName || '',
     email: user.email || '',
     role: userData.role || '',
     orgId: userData.orgId || '',
   };
-  const encoded = encodeURIComponent(JSON.stringify(payload));
-  // Popup flow: send via postMessage and close
-  if (window.opener && window.opener !== window) {
-    window.opener.postMessage({ type: 'nivelato_sso', payload }, redirectUri);
-    window.close();
-    return;
-  }
-  // Redirect flow: use URL fragment (#) so the token never hits a server
-  window.location.href = redirectUri + '#nivelato_token=' + encoded;
+  window.opener.postMessage({ type: 'nivelato_sso', payload }, redirectUri);
+  window.close();
 }
 
-// Already signed in? Skip straight to redirect
+async function handleAuth(user) {
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  const userData = snap.exists() ? snap.data() : {};
+
+  if (window.opener && window.opener !== window && responseType !== 'code') {
+    // Popup flow — postMessage, no URL exposure at all
+    await doPopupFlow(user, userData);
+  } else {
+    // Redirect flow — short-lived code in Firestore, only ?code= in URL
+    await doAuthCodeFlow(user, userData);
+  }
+}
+
 onAuthStateChanged(auth, (user) => {
   if (user && redirectUri) {
     document.getElementById('sso-btn').style.opacity = '0.5';
-    doRedirect(user);
+    handleAuth(user);
   }
 });
 
@@ -150,10 +135,9 @@ window.signIn = async () => {
   err.style.display = 'none';
 
   try {
-    // Try Google popup first (most SSO-friendly)
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
-    await doRedirect(result.user);
+    await handleAuth(result.user);
   } catch (e) {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
       err.textContent = 'La ventana emergente fue bloqueada o cerrada. Intenta de nuevo.';
@@ -162,7 +146,6 @@ window.signIn = async () => {
       btn.style.opacity = '1';
       return;
     }
-    // Fallback: show error
     err.textContent = 'Error al iniciar sesión: ' + (e.message || 'Intenta de nuevo.');
     err.style.display = 'block';
     btn.classList.remove('disabled');
