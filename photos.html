@@ -56,30 +56,30 @@
     /* width + height set by JS per label */
   }
   /* Dimension/arrow lines */
-  .measure-label.line { border-top: 3px solid #e64980; }
+  .measure-label.line { border-top: 2px solid #ced4da; }
   .measure-label.line::before, .measure-label.line::after {
-    content: ''; position: absolute; top: -4.5px;
-    width: 2px; height: 8px; background: #e64980; border-radius: 1px;
+    content: ''; position: absolute; top: -4px;
+    width: 2px; height: 8px; background: #ced4da; border-radius: 1px;
   }
   .measure-label.line::before { left: 0; }
   .measure-label.line::after { right: 0; }
   .measure-label.line-vert {
-    border-left: 3px solid #e64980;
+    border-left: 2px solid #ced4da;
     width: 24px !important;
     margin-left: 0 !important;
   }
   .measure-label.line-vert::before, .measure-label.line-vert::after {
-    content: ''; position: absolute; left: -4.5px;
-    width: 8px; height: 2px; background: #e64980; border-radius: 1px;
+    content: ''; position: absolute; left: -4px;
+    width: 8px; height: 2px; background: #ced4da; border-radius: 1px;
   }
   .measure-label.line-vert::before { top: 0; }
   .measure-label.line-vert::after { bottom: 0; }
   .measure-label .ml-text {
     position: absolute;
-    background: rgba(0,0,0,0.82); color: #fff; padding: 1px 7px;
-    border-radius: 5px; font-size: 11px; font-weight: 700;
-    white-space: nowrap; border: 1.5px solid #e64980;
-    text-align: center; pointer-events: auto; z-index: 2;
+    background: transparent; color: #495057; padding: 2px 8px;
+    border-radius: 6px; font-size: 14px; font-weight: 600;
+    white-space: nowrap; border: 1.5px solid #dee2e6;
+    text-align: center; pointer-events: auto; z-index: 2; font-family: inherit;
   }
   .measure-label.line .ml-text {
     left: 50%; top: 8px; transform: translate(-50%, 0);
@@ -88,15 +88,15 @@
     top: 50%; left: 10px; transform: translate(0, -50%);
   }
   .measure-label.selected .ml-text {
-    border-color: #ff6b9d; box-shadow: 0 0 10px rgba(230,73,128,0.4);
+    border-color: #495057; border-width: 2px; box-shadow: 0 0 0 1px rgba(73,80,87,0.15);
   }
-  /* Resize handle */
+  /* Resize / rotate handle */
   .measure-label .ml-handle {
-    position: absolute; width: 28px; height: 28px;
-    background: rgba(230,73,128,0.5); border: 2px solid #e64980;
+    position: absolute; width: 26px; height: 26px;
+    background: #fff; border: 1.5px solid #ced4da;
     border-radius: 50%; cursor: grab; touch-action: none;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #fff; font-weight: 700;
+    font-size: 12px; color: #868e96; font-weight: 600;
   }
   .measure-label .ml-handle:active { cursor: grabbing; }
 
@@ -276,7 +276,8 @@ window.loadJobMeasurements = function() {
   const job = allJobs.find(j => j.id === jobId);
   if (!job) return;
   buildLabels(job);
-  loadExistingOverlay(jobId);
+  // Only restore saved overlay if explicitly requested (reload button)
+  // loadJobMeasurements always starts fresh from job data
   document.getElementById('reload-btn').style.display = 'inline-block';
 };
 
@@ -294,24 +295,19 @@ function hasOffset(v) {
 
 function buildLabels(job) {
   labels = [];
+  var d = job.desniveles || {};
   if (job.hueco) {
-    labels.push({ type: 'dim', text: `${job.hueco.anchoBot || '?'}"`, x: 0.35, y: 0.78, w: 0.3 });
-    labels.push({ type: 'dim', text: `${job.hueco.altoIzq || '?'}"`, x: 0.18, y: 0.35, w: 0.12, rot: -90 });
-    if (hasOffset(job.hueco.anchoTop)) labels.push({ type: 'dim', text: `${job.hueco.anchoTop}"`, x: 0.35, y: 0.18, w: 0.3 });
-    if (hasOffset(job.hueco.altoDer)) labels.push({ type: 'dim', text: `${job.hueco.altoDer}"`, x: 0.72, y: 0.35, w: 0.12, rot: -90 });
+    var bot = job.hueco.anchoBot || '?';
+    var left = job.hueco.altoIzq || '?';
+    var topT = hasOffset(job.hueco.anchoTop) ? '  ⬆' + job.hueco.anchoTop + '"' : '';
+    var rightT = hasOffset(job.hueco.altoDer) ? '  ⬆' + job.hueco.altoDer + '"' : '';
+    labels.push({ type: 'dim', text: bot + '"' + (hasOffset(d.paredIzq) ? '  ←' + d.paredIzq : '') + (hasOffset(d.paredDer) ? '  →' + d.paredDer : ''), x: 0.35, y: 0.74, w: 0.3 });
+    labels.push({ type: 'dim', text: left + '"' + (hasOffset(d.techo) ? '  ⬆' + d.techo : '') + (hasOffset(d.piso) ? '  ⬇' + d.piso : ''), x: 0.18, y: 0.35, w: 0.12, rot: -90 });
+    if (topT) labels.push({ type: 'dim', text: job.hueco.anchoTop + '"', x: 0.35, y: 0.14, w: 0.3 });
+    if (rightT) labels.push({ type: 'dim', text: job.hueco.altoDer + '"', x: 0.72, y: 0.35, w: 0.12, rot: -90 });
   }
-  if (job.desniveles) {
-    if (hasOffset(job.desniveles.paredIzq))
-      labels.push({ type: 'arrow', text: `← ${job.desniveles.paredIzq} →`, x: 0.06, y: 0.48, w: 0.08 });
-    if (hasOffset(job.desniveles.paredDer))
-      labels.push({ type: 'arrow', text: `← ${job.desniveles.paredDer} →`, x: 0.82, y: 0.48, w: 0.14 });
-    if (hasOffset(job.desniveles.techo))
-      labels.push({ type: 'arrow', text: `${job.desniveles.techo}`, x: 0.45, y: 0.06, w: 0.12 });
-    if (hasOffset(job.desniveles.piso))
-      labels.push({ type: 'arrow', text: `${job.desniveles.piso}`, x: 0.45, y: 0.9, w: 0.12 });
-  }
-  if (job.customer) labels.push({ type: 'text', text: `Cliente: ${job.customer}`, x: 0.5, y: 0.03 });
-  if (job.project) labels.push({ type: 'text', text: `Proyecto: ${job.project}`, x: 0.5, y: 0.97 });
+  if (job.customer) labels.push({ type: 'text', text: 'Cliente: ' + job.customer, x: 0.5, y: 0.03 });
+  if (job.project) labels.push({ type: 'text', text: 'Proyecto: ' + job.project, x: 0.5, y: 0.97 });
   renderLabels();
 }
 
@@ -319,8 +315,8 @@ async function loadExistingOverlay(jobId) {
   try {
     const snap = await getDoc(doc(db, 'orgs', orgId, 'jobs', jobId));
     const job = snap.data();
-    if (job?.photoOverlay?.labels) {
-      labels = job.photoOverlay.labels;
+    if (job?.photoOverlay?.labels && job.photoOverlay.labels.length > 0) {
+      labels = JSON.parse(JSON.stringify(job.photoOverlay.labels));
       renderLabels();
     }
   } catch(e) {}
@@ -399,13 +395,14 @@ function renderLabels() {
       txt.textContent = l.text;
       el.appendChild(txt);
 
-      // Resize handle at right end
+      // Resize / rotate handle at right end
       const hnd = document.createElement('div');
       hnd.className = 'ml-handle';
-      hnd.textContent = '↔';
-      hnd.style.cssText = `right:-14px;top:50%;margin-top:-14px;`;
+      hnd.textContent = '⊜';
+      hnd.style.cssText = `right:-13px;top:50%;margin-top:-13px;`;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
+      hnd.ondblclick = (e) => { e.stopPropagation(); l.rot = (l.rot || 0) === -90 ? 0 : -90; renderLabels(); };
       el.appendChild(hnd);
     } else {
       // Simple text label
