@@ -114,6 +114,9 @@ function goStep(n, skipHistory) {
     _historyPushed++;
   }
 
+  /* resize canvas after step transition so flex layout can redistribute space */
+  setTimeout(resizeCanvas, 0);
+
   const linger = getLingerView(leavingStep);
   if (linger && n !== TOTAL_STEPS && !userZoomed) {
     const W  = canvas.width  / window.devicePixelRatio;

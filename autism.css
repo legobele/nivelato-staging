@@ -99,6 +99,12 @@ html, body {
   overflow: hidden;
   touch-action: none; /* prevent browser zoom/scroll on canvas */
 }
+
+@media (max-width: 600px) {
+  #canvas-wrap {
+    min-height: 80px;
+  }
+}
 #drawing-canvas {
   display: block;
   width: 100%;
@@ -495,6 +501,9 @@ html, body {
   overflow-y: auto;
   max-height: 55vh;
   -webkit-overflow-scrolling: touch;
+  /* iOS safe area — keep buttons above home indicator / tab bar */
+  padding-bottom: constant(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* On short / mobile viewports the panel should never eat the canvas or run
@@ -505,7 +514,7 @@ html, body {
     height: 100dvh;
   }
   #bottom-panel {
-    max-height: 50vh;
+    max-height: 60vh;
   }
   .input-row {
     gap: 8px;
