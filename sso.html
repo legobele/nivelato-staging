@@ -123,8 +123,15 @@ async function doRedirect(user) {
     role: userData.role || '',
     orgId: userData.orgId || '',
   };
-  const sep = redirectUri.includes('?') ? '&' : '?';
-  window.location.href = redirectUri + sep + 'nivelato_token=' + encodeURIComponent(JSON.stringify(payload));
+  const encoded = encodeURIComponent(JSON.stringify(payload));
+  // Popup flow: send via postMessage and close
+  if (window.opener && window.opener !== window) {
+    window.opener.postMessage({ type: 'nivelato_sso', payload }, redirectUri);
+    window.close();
+    return;
+  }
+  // Redirect flow: use URL fragment (#) so the token never hits a server
+  window.location.href = redirectUri + '#nivelato_token=' + encoded;
 }
 
 // Already signed in? Skip straight to redirect
