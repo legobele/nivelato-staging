@@ -453,7 +453,7 @@ let animFrame = null;
 
 function resizeCanvas() {
   const wrap = document.getElementById('canvas-wrap');
-  if (!wrap) return;
+  if (!wrap || !canvas) return;
   canvas.width  = wrap.offsetWidth  * window.devicePixelRatio;
   canvas.height = wrap.offsetHeight * window.devicePixelRatio;
   canvas.style.width  = wrap.offsetWidth  + 'px';
@@ -532,6 +532,7 @@ function smoothAnimate() {
 }
 
 function drawCanvas() {
+  if (!canvas || !canvas.width) return;
   const dpr = window.devicePixelRatio;
   const W   = canvas.width  / dpr;
   const H   = canvas.height / dpr;
