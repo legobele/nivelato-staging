@@ -359,6 +359,8 @@ function renderLabels() {
     let txt;
     if (l.type === 'dim' || l.type === 'arrow') {
       const wPct = (l.w || 0.2) * 100;
+      el.style.width = wPct + '%';
+      el.style.height = '30px'; el.style.marginTop = '-15px';
       const h = l.type === 'dim' ? 3 : 2;
       const rot = l.rot || 0;
       const isRotated = Math.abs(rot) > 0;
