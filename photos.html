@@ -208,11 +208,23 @@ let dragState = null;
 let imgNaturalW = 0, imgNaturalH = 0;
 
 // ── AUTH ──
+let authChecked = false;
 onAuthStateChanged(auth, async (user) => {
+  // Wait for Firebase to restore session before deciding to redirect
   if (!user) {
-    window.location.href = 'sso.html?redirect_uri=' + encodeURIComponent(window.location.href);
+    if (!authChecked) {
+      authChecked = true;
+      // Give Firebase 2s to restore persisted auth state
+      setTimeout(() => {
+        if (!auth.currentUser) {
+          const here = window.location.href.split('?')[0];
+          window.location.href = 'sso.html?client_id=Nivelato+Fotos&redirect_uri=' + encodeURIComponent(here);
+        }
+      }, 2000);
+    }
     return;
   }
+  authChecked = true;
   currentUser = user;
   const snap = await getDoc(doc(db, 'users', user.uid));
   userData = snap.data();
