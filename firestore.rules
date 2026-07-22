@@ -28,6 +28,15 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
 
+      // Deletion requests: any org member can create, owner can read/delete
+      match /deletion_requests/{reqId} {
+        allow create: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
+        allow read, delete: if request.auth != null &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId == orgId;
+      }
+
       // Jobs: org members can create + read; shared users can read; owner can update/delete
       match /jobs/{jobId} {
         allow create: if request.auth != null &&

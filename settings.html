@@ -65,6 +65,12 @@
       <div class="info-row"><span class="info-label">Taller</span><span class="info-value" id="info-org">—</span></div>
       <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
     </div>
+    <div class="card" style="border-color:#ffc9c9;">
+      <div class="card-title" style="color:#c92a2a;">Solicitar eliminación de cuenta</div>
+      <div class="card-desc">Esto enviará una solicitud al administrador del taller. Tus datos se conservarán hasta que el dueño procese la solicitud.</div>
+      <button onclick="requestDeletion()" id="del-req-btn" style="padding:10px 20px;background:#c92a2a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📨 Solicitar eliminación</button>
+      <div id="del-req-status" style="font-size:12px;margin-top:8px;display:none;"></div>
+    </div>
   </div>
 
   <!-- TALLER -->
@@ -81,13 +87,19 @@
       <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
       <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
     </div>
+
+    <div class="card" style="border-color:#ffc9c9;">
+      <div class="card-title" style="color:#c92a2a;">Solicitudes de eliminación</div>
+      <div class="card-desc">Miembros que han solicitado eliminar su cuenta.</div>
+      <div id="del-requests-list"><p style="color:#868e96;font-size:13px;">Cargando…</p></div>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, addDoc, deleteDoc, collection, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker } from './permissions.js';
 import { PERM_DEFS } from './permissions.js';
 
@@ -110,7 +122,10 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById('info-role').textContent = {
     owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', measurer: 'Técnico medidor'
   }[currentUserData.role] || currentUserData.role || '—';
-  document.getElementById('info-org').textContent = orgId;
+  // load org name
+  const orgSnap = await getDoc(doc(db, 'orgs', orgId));
+  const orgName = orgSnap.data()?.name || orgId;
+  document.getElementById('info-org').textContent = orgName;
   document.getElementById('info-joincode').textContent = orgId;
 
   // show taller tab only for userManagement
@@ -119,6 +134,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadOrgMembers(orgId);
     renderPermissions();
     await loadRequests(orgId);
+    await loadDeletionRequests(orgId);
   }
 });
 
@@ -212,6 +228,62 @@ window.rejectRequest = async (uid) => {
     if (card) card.remove();
   } catch(e) {
     alert('Error al rechazar: ' + e.message);
+  }
+};
+
+// ── DELETE ACCOUNT REQUEST ──
+window.requestDeletion = async () => {
+  if (!confirm('¿Solicitar eliminación de tu cuenta? El dueño del taller debe aprobarlo.')) return;
+  const btn = document.getElementById('del-req-btn');
+  const status = document.getElementById('del-req-status');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {
+    await addDoc(collection(db, 'orgs', orgId, 'deletion_requests'), {
+      uid: currentUser.uid,
+      name: currentUserData?.name || currentUser?.email || 'Usuario',
+      email: currentUser?.email || '',
+      createdAt: serverTimestamp()
+    });
+    status.textContent = '✓ Solicitud enviada al administrador.';
+    status.style.display = 'block'; status.style.color = '#2f9e44';
+    btn.textContent = '✓ Solicitud enviada';
+  } catch(e) {
+    status.textContent = 'Error: ' + e.message;
+    status.style.display = 'block'; status.style.color = '#e03131';
+    btn.disabled = false; btn.textContent = '📨 Solicitar eliminación';
+  }
+};
+
+async function loadDeletionRequests(orgId) {
+  const container = document.getElementById('del-requests-list');
+  try {
+    const q = query(collection(db, 'orgs', orgId, 'deletion_requests'), where('uid', '!=', ''));
+    const snap = await getDocs(q);
+    if (snap.empty) {
+      container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes de eliminación.</p>';
+      return;
+    }
+    container.innerHTML = snap.docs.map(d => {
+      const data = d.data();
+      return `<div class="request-card" data-delreq="${d.id}">
+        <div><div class="request-name">${data.name || 'Sin nombre'}</div><div class="request-email">${data.email || ''}</div></div>
+        <button class="btn-sm approve" onclick="resolveDeletion('${d.id}', '${data.uid}')">Aprobar y eliminar</button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<p style="color:#868e96;font-size:13px;">Error al cargar.</p>';
+  }
+}
+
+window.resolveDeletion = async (reqId, uid) => {
+  if (!confirm('¿Eliminar permanentemente esta cuenta? Esta acción no se puede deshacer.')) return;
+  try {
+    await deleteDoc(doc(db, 'users', uid));
+    await deleteDoc(doc(db, 'orgs', orgId, 'deletion_requests', reqId));
+    const card = document.querySelector(`[data-delreq="${reqId}"]`);
+    if (card) card.remove();
+  } catch(e) {
+    alert('Error: ' + e.message);
   }
 };
 
