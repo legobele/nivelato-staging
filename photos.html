@@ -356,6 +356,7 @@ function renderLabels() {
     el.style.left = (l.x * 100) + '%'; el.style.top = (l.y * 100) + '%';
     el.dataset.idx = i;
 
+    let txt;
     if (l.type === 'dim' || l.type === 'arrow') {
       const wPct = (l.w || 0.2) * 100;
       const h = l.type === 'dim' ? 3 : 2;
@@ -381,7 +382,7 @@ function renderLabels() {
       });
 
       // Text label
-      const txt = document.createElement('div');
+      txt = document.createElement('div');
       txt.className = 'ml-text';
       txt.textContent = l.text;
       const tOff = l.type === 'dim' ? (l.position === 'below' ? 20 : -20) : 16;
@@ -399,7 +400,7 @@ function renderLabels() {
       el.appendChild(hnd);
     } else {
       // Simple text label
-      const txt = document.createElement('div');
+      txt = document.createElement('div');
       txt.className = 'ml-text';
       txt.textContent = l.text;
       el.appendChild(txt);
