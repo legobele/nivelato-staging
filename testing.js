@@ -3,9 +3,12 @@
 // Include this script on any page to auto-activate.
 
 (function(){
-  // Only show on non-production domains
+  // Show watermark on staging/dev, hide on production
   var host = window.location.hostname;
-  if (host === 'legobele.github.io' || host === 'nivelato.app' || host === 'www.nivelato.app') return;
+  var path = window.location.pathname || '';
+  if (host === 'nivelato.app' || host === 'www.nivelato.app') return;
+  // legobele.github.io hosts both: prod at /nivelato/, staging at /nivelato-staging/
+  if (host === 'legobele.github.io' && !path.startsWith('/nivelato-staging')) return;
 
   if (document.getElementById('testing-watermark')) return;
 
