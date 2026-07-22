@@ -238,6 +238,7 @@ onAuthStateChanged(auth, async (user) => {
           const here = window.location.href.split('?')[0];
           window.location.href = 'sso.html?client_id=Nivelato+Fotos&redirect_uri=' + encodeURIComponent(here);
         }
+    const m = ctx.measureText(l.text);
       }, 2000);
     }
     return;
