@@ -421,7 +421,18 @@ function renderLabels() {
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
       // Double-tap handle toggles 90° rotation
-      (function(label) { var last = 0; hnd.onclick = function(e) { e.stopPropagation(); var n = Date.now(); if (n - last < 400) { label.rot = (label.rot || 0) === -90 ? 0 : -90; renderLabels(); } last = n; }; })(l);
+      (function(label, h) {
+        var last = 0;
+        h.onclick = function(e) {
+          e.stopPropagation();
+          var n = Date.now();
+          if (n - last < 400) {
+            label.rot = (label.rot || 0) === -90 ? 0 : -90;
+            renderLabels();
+          }
+          last = n;
+        };
+      })(l, hnd);
       el.appendChild(hnd);
     } else {
       // Simple text label
