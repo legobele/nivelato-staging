@@ -239,6 +239,31 @@ html, body {
 .fraction-row input::-webkit-outer-spin-button,
 .fraction-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
+/* ─── STEP 0 TEXT INPUTS (Cliente / Proyecto / Ubicación) ─── */
+.input-col input[type="text"] {
+  width: 100%;
+  padding: 10px 10px;
+  border: 1px solid var(--grey-300);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--grey-900);
+  background: var(--grey-50);
+}
+
+.input-col input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--white);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.input-col input[type="text"]::placeholder {
+  color: var(--grey-400);
+  font-weight: 400;
+}
+
 .frac-select {
   width: 70px;
   flex: 0 0 70px;
