@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 1b883f5')</script>
+<script>console.log('nivelato v1.0.0 — commit 0830bdf')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -616,6 +616,13 @@ let currentUser;
       html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>`⚠ ${w}`).join('<br>')}</div>`;
     }
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
+    // Photo overlay
+    if (job.photoOverlay?.labels) {
+      html += `<div class="detail-section-title">📸 Foto</div>`;
+      job.photoOverlay.labels.forEach(l => {
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px"><span style="color:#e64980;font-weight:600">📐</span><span>${l.text}</span></div>`;
+      });
+    }
     document.getElementById('modal-body').innerHTML = html;
     // gate delete button by edit permission
     const delBtn = document.getElementById('modal-delete-btn');
