@@ -228,6 +228,9 @@ onAuthStateChanged(auth, async (user) => {
   userData = snap.data();
   _can = makePermChecker(userData);
   orgId = userData.orgId;
+  if (typeof window.initAccountSelector === 'function') {
+    window.initAccountSelector({ user, userData });
+  }
   await loadOrgJobs();
 
   // If ?job=xxx is in URL, auto-select after load
