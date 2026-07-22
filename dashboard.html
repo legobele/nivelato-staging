@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 626e702')</script>
+<script>console.log('nivelato v1.0.0 — commit 1e7e21e')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -182,6 +182,41 @@
     @media (max-width: 380px) {
       .stats-row { grid-template-columns: 1fr; }
     }
+
+    /* ─── MOBILE NUEVA DROPDOWN ─── */
+    .nueva-btn-wrap { position: relative; display: none; }
+    .nueva-btn { padding: 6px 12px; border-radius: 8px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: #1971c2; color: #fff; white-space: nowrap; }
+    .nueva-dropdown { position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px; background: #fff; border: 1px solid #e9ecef; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 4px; display: none; z-index: 20; }
+    .nueva-dropdown.open { display: block; }
+    .nueva-dropdown button { display: block; width: 100%; padding: 10px 14px; border: none; background: none; text-align: left; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; border-radius: 6px; color: #212529; }
+    .nueva-dropdown button:hover { background: #f1f3f5; }
+    .nueva-dropdown button:active { background: #e9ecef; }
+    @media (max-width: 500px) {
+      .header-right .nueva-btn-wrap { display: inline-block; }
+      .header-right > button { display: none !important; }
+    }
+
+    /* ─── MOBILE SLIDE-UP MODAL ─── */
+    .mobile-sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; }
+    .mobile-sheet-overlay.open { display: block; }
+    .mobile-sheet { position: fixed; bottom: 0; left: 0; right: 0; max-height: 90vh; background: #fff; border-radius: 16px 16px 0 0; z-index: 101; transform: translateY(100%); transition: transform 0.3s ease; overflow: hidden; display: flex; flex-direction: column; }
+    .mobile-sheet.open { transform: translateY(0); }
+    .mobile-sheet-handle { width: 36px; height: 4px; background: #dee2e6; border-radius: 2px; margin: 10px auto 6px; flex-shrink: 0; }
+    .mobile-sheet-title { font-size: 16px; font-weight: 700; padding: 0 16px 8px; color: #212529; flex-shrink: 0; }
+    .mobile-sheet-tabs { display: flex; gap: 0; padding: 0 16px; border-bottom: 1px solid #e9ecef; flex-shrink: 0; }
+    .mobile-sheet-tab { padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; background: none; color: #868e96; font-family: inherit; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .mobile-sheet-tab.active { color: #1971c2; border-bottom-color: #1971c2; }
+    .mobile-sheet-body { flex: 1; overflow-y: auto; padding: 16px; -webkit-overflow-scrolling: touch; }
+    .mobile-sheet-content { display: none; }
+    .mobile-sheet-content.active { display: block; }
+    .mobile-sheet-footer { padding: 12px 16px; border-top: 1px solid #e9ecef; display: flex; gap: 8px; flex-shrink: 0; }
+    .mobile-sheet-footer button { flex: 1; padding: 11px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .mobile-sheet-footer .ms-del { background: #fff5f5; color: #c92a2a; border: 1px solid #ffc9c9; }
+    .mobile-sheet-footer .ms-photo { background: #e64980; color: #fff; }
+    .mobile-sheet-footer .ms-close { background: #f1f3f5; color: #495057; }
+    .mobile-sheet .modal-canvas-wrap { display: flex; justify-content: center; }
+    .mobile-sheet #modal-canvas { max-width: 100%; height: auto; border: 1px solid #e9ecef; border-radius: 8px; }
+    .mobile-photo-preview { max-width: 100%; border-radius: 8px; border: 1px solid #e9ecef; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -193,6 +228,13 @@
     <div class="org-badge" id="org-name-badge">…</div>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
     <button id="btn-photos" onclick="window.location.href='photos.html'" style="display:none;background:#e64980;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📸 Fotos</button>
+    <div class="nueva-btn-wrap" id="nueva-btn-wrap">
+      <button class="nueva-btn" onclick="toggleNueva()" style="display:none">+ Nueva</button>
+      <div class="nueva-dropdown" id="nueva-dropdown">
+        <button onclick="window.location.href='index.html'">📏 Nueva medida</button>
+        <button onclick="window.location.href='photos.html'">📸 Nueva foto</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -248,6 +290,28 @@
         <canvas id="modal-canvas" width="340" height="420"></canvas>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MOBILE SLIDE-UP SHEET -->
+<div class="mobile-sheet-overlay" id="ms-overlay" onclick="closeMobileSheet(event)"></div>
+<div class="mobile-sheet" id="ms-sheet">
+  <div class="mobile-sheet-handle"></div>
+  <div class="mobile-sheet-title" id="ms-title">Detalle</div>
+  <div class="mobile-sheet-tabs">
+    <button class="mobile-sheet-tab active" onclick="switchMsTab('details')">Detalles</button>
+    <button class="mobile-sheet-tab" onclick="switchMsTab('graph')">Gráfica</button>
+    <button class="mobile-sheet-tab" id="ms-photo-tab" onclick="switchMsTab('photo')" style="display:none">Foto</button>
+  </div>
+  <div class="mobile-sheet-body">
+    <div class="mobile-sheet-content active" id="ms-content-details"><div id="ms-body"></div></div>
+    <div class="mobile-sheet-content" id="ms-content-graph"><div class="modal-canvas-wrap"><canvas id="ms-canvas" width="340" height="420"></canvas></div></div>
+    <div class="mobile-sheet-content" id="ms-content-photo"><div id="ms-photo-body"><p style="color:#868e96;font-size:13px;">Sin foto.</p></div></div>
+  </div>
+  <div class="mobile-sheet-footer">
+    <button class="ms-photo" id="ms-add-photo-btn" onclick="addPhotoToJob()" style="display:none">📸 Añadir foto</button>
+    <button class="ms-del" id="ms-del-btn" onclick="msDeleteJob()" style="display:none">🗑 Eliminar</button>
+    <button class="ms-close" onclick="closeMobileSheet()">Cerrar</button>
   </div>
 </div>
 
@@ -645,6 +709,140 @@ let currentUser;
       setTimeout(() => btn.textContent = '📋 Copiar', 2000);
     });
   };
+
+  // ── MOBILE NUEVA DROPDOWN ──
+  window.toggleNueva = () => {
+    const dd = document.getElementById('nueva-dropdown');
+    dd.classList.toggle('open');
+  };
+  document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('nueva-btn-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('nueva-dropdown')?.classList.remove('open');
+    }
+  });
+
+  // ── MOBILE SHEET ──
+  let msCurrentJobIdx = null;
+  window.openMobileSheet = (i) => {
+    msCurrentJobIdx = i;
+    const job = window._jobs[i];
+    const date = job.createdAt?.toDate ? job.createdAt.toDate() : new Date(job.createdAt || Date.now());
+    const dateStr = date.toLocaleDateString('es-PR', { day:'2-digit', month:'short', year:'numeric' }) + ' ' + date.toLocaleTimeString('es-PR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('ms-title').textContent = `Medida — ${job.installerName || 'Técnico'}`;
+
+    // Build details
+    const row = (l,v) => `<div class="detail-row"><span class="detail-label">${l}</span><span class="detail-val">${v}</span></div>`;
+    const sec = (t) => `<div class="detail-section-title">${t}</div>`;
+    let html = '';
+    html += sec('General');
+    html += row('Técnico', job.installerName || '—');
+    html += row('Fecha', dateStr);
+    html += row('Cliente', job.customer || '—');
+    html += row('Proyecto', job.project || '—');
+    html += row('Ubicación', job.location || '—');
+    html += sec('Hueco');
+    if (job.hueco) {
+      html += row('Ancho sup.', (job.hueco.anchoTop||job.hueco.anchoSuperior) ? (job.hueco.anchoTop||job.hueco.anchoSuperior) + '"' : (job.hueco.ancho ? job.hueco.ancho + '"' : '—'));
+      html += row('Ancho inf.', (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) ? (job.hueco.anchoBot||job.hueco.anchoAbajo||job.hueco.anchoBottom) + '"' : '—');
+      html += row('Alto izq.', (job.hueco.altoIzq||job.hueco.altoIzquierda) ? (job.hueco.altoIzq||job.hueco.altoIzquierda) + '"' : (job.hueco.alto ? job.hueco.alto + '"' : '—'));
+      html += row('Alto der.',   (job.hueco.altoDer||job.hueco.altoDerecha) ? (job.hueco.altoDer||job.hueco.altoDerecha) + '"' : '—');
+    }
+    html += sec('Desniveles');
+    html += row('Pared Izq.', job.desniveles?.paredIzq || '—');
+    html += row('Pared Der.', job.desniveles?.paredDer || '—');
+    html += row('Arriba',     job.desniveles?.techo    || '—');
+    html += row('Abajo',      job.desniveles?.piso     || '—');
+    if (job.warnings?.length) html += `<div style="margin-top:12px;padding:10px 14px;background:#fff3bf;border-radius:8px;font-size:13px;color:#e67700">${job.warnings.map(w=>'⚠ '+w).join('<br>')}</div>`;
+    if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
+    document.getElementById('ms-body').innerHTML = html;
+
+    // Embed graph
+    const cvs = document.getElementById('ms-canvas');
+    window.embedGraph(cvs, {
+      anchoBot: job.hueco?.anchoBot || 36, altoIzq: job.hueco?.altoIzq || 84,
+      pIL: job.desniveles?.paredIzq || 'Nivel', pDL: job.desniveles?.paredDer || 'Nivel',
+      tL: job.desniveles?.techo || 'Nivel', pL: job.desniveles?.piso || 'Nivel'
+    });
+
+    // Photo tab
+    const photoTab = document.getElementById('ms-photo-tab');
+    const photoBody = document.getElementById('ms-photo-body');
+    const addBtn = document.getElementById('ms-add-photo-btn');
+    if (job.photoOverlay?.labels) {
+      photoTab.style.display = 'inline-block';
+      photoBody.innerHTML = job.photoOverlay.labels.map(l =>
+        `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f3f5;font-size:13px"><span style="color:#e64980;font-weight:600">📐</span><span>${l.text}</span></div>`
+      ).join('');
+      addBtn.style.display = 'inline-block';
+    } else {
+      photoTab.style.display = job.photoOverlay?.photo ? 'inline-block' : 'none';
+      if (!job.photoOverlay?.photo) photoBody.innerHTML = '<p style="color:#868e96;font-size:13px;">Sin foto. Añade una desde Fotos.</p>';
+      addBtn.style.display = 'inline-block';
+    }
+
+    // Gate delete
+    const delBtn = document.getElementById('ms-del-btn');
+    delBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'inline-block' : 'none';
+
+    // Reset to details tab
+    switchMsTab('details');
+    document.getElementById('ms-sheet').classList.add('open');
+    document.getElementById('ms-overlay').classList.add('open');
+  };
+
+  window.switchMsTab = (name) => {
+    document.querySelectorAll('.mobile-sheet-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mobile-sheet-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.mobile-sheet-tab[onclick*="'${name}'"]`)?.classList.add('active');
+    document.getElementById('ms-content-' + name)?.classList.add('active');
+  };
+
+  window.closeMobileSheet = (e) => {
+    if (e && e.target !== document.getElementById('ms-overlay')) return;
+    document.getElementById('ms-sheet').classList.remove('open');
+    document.getElementById('ms-overlay').classList.remove('open');
+  };
+
+  window.msDeleteJob = async () => {
+    const i = msCurrentJobIdx;
+    if (i === null || i === undefined) return;
+    const job = window._jobs[i];
+    if (!confirm(`¿Eliminar la medida de ${job.installerName || 'este técnico'}?`)) return;
+    try {
+      await deleteDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id));
+      closeMobileSheet();
+      allJobs = allJobs.filter(j => j.id !== job.id);
+      applyFilters();
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
+  window.addPhotoToJob = () => {
+    const job = msCurrentJobIdx != null ? window._jobs[msCurrentJobIdx] : null;
+    if (!job) return;
+    window.location.href = 'photos.html?job=' + encodeURIComponent(job.id);
+  };
+
+  // Override job card click for mobile
+  const origOpenJob = window.openJob;
+  window.openJob = (i) => {
+    if (window.innerWidth <= 600) {
+      window.openMobileSheet(i);
+    } else {
+      origOpenJob(i);
+    }
+  };
+
+  // Show nueva dropdown on mobile if either button is visible
+  setInterval(() => {
+    const hasMeasure = document.getElementById('btn-new-measure').style.display !== 'none';
+    const hasPhoto = document.getElementById('btn-photos').style.display !== 'none';
+    const wrap = document.getElementById('nueva-btn-wrap');
+    const btn = wrap.querySelector('.nueva-btn');
+    if (hasMeasure || hasPhoto) {
+      btn.style.display = 'inline-block';
+    }
+  }, 500);
 </script>
 </body>
 </html>
