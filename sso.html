@@ -90,9 +90,14 @@ import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase
 import { db } from './firebase-config.js';
 
 const params = new URLSearchParams(window.location.search);
-const redirectUri = params.get('redirect_uri');
+let redirectUri = params.get('redirect_uri');
 const clientId = params.get('client_id') || 'Aplicación externa';
 const lang = params.get('lang') || 'en';
+
+// Ensure redirect URI is absolute
+if (redirectUri && !redirectUri.startsWith('http://') && !redirectUri.startsWith('https://')) {
+  redirectUri = 'https://' + redirectUri;
+}
 
 // Use the localized button image
 document.getElementById('sso-btn').src = 'signin_nivelato_' + lang + '.png';
