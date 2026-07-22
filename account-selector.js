@@ -32,7 +32,8 @@ function injectStyles() {
   .acct-caret { font-size: 9px; opacity: 0.7; }
   .acct-dropdown {
     position: absolute; top: calc(100% + 8px); right: 0;
-    min-width: 220px; background: #fff;
+    min-width: 220px; max-width: calc(100vw - 16px);
+    background: #fff;
     border: 1px solid var(--grey-200, #e9ecef);
     border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,0.14);
     padding: 6px; z-index: 50; display: none;
@@ -55,7 +56,7 @@ function injectStyles() {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 10px 12px; border: none; background: none; cursor: pointer;
     font-family: inherit; font-size: 13px; font-weight: 500; color: var(--grey-700, #495057);
-    border-radius: 8px; text-align: left;
+    border-radius: 8px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .acct-item:hover { background: var(--grey-50, #f8f9fa); }
   .acct-item.danger { color: var(--red, #c92a2a); }
@@ -116,7 +117,7 @@ function buildMenu({ user, userData }) {
       </div>
       <button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='dashboard.html'" style="display:none">📊 Dashboard</button>
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'">⚙️ Ajustes</button>
-      <button class="acct-item danger" id="acct-signout" role="menuitem">Salir / Cerrar sesión</button>
+      <button class="acct-item danger" id="acct-signout" role="menuitem">Cerrar sesión</button>
     </div>
   `;
 
