@@ -35,7 +35,11 @@
   text.textContent = 'TESTING';
 
   svg.appendChild(text);
-  document.body.appendChild(svg);
+  if (document.body) {
+    document.body.appendChild(svg);
+  } else {
+    document.addEventListener('DOMContentLoaded', function() { document.body.appendChild(svg); });
+  }
 
   window.addEventListener('resize', function() {
     var nw = window.innerWidth, nh = window.innerHeight;
