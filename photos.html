@@ -618,7 +618,8 @@ window.saveOverlay = async function() {
   const jobId = document.getElementById('job-select').value;
   if (!jobId) { alert('Selecciona una medida.'); return; }
   // Render the photo + labels to a PNG for dashboard display
-  const renderedImage = renderToCanvas();
+  var renderedImage = null;
+  try { renderedImage = renderToCanvas(); } catch(e) { console.warn('Render failed:', e); }
   try {
     await setDoc(doc(db, 'orgs', orgId, 'jobs', jobId), {
       photoOverlay: { labels, renderedImage, updatedAt: serverTimestamp() }
