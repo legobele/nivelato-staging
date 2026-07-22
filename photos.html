@@ -64,12 +64,11 @@
   .measure-label.line::before { left: 0; }
   .measure-label.line::after { right: 0; }
   .measure-label.line-vert {
-    width: 24px !important;
-    height: auto !important;
+    /* width and height set by JS */
   }
   .measure-label.line-vert .vl-line {
     position: absolute; left: 50%; top: 0; bottom: 0; width: 2px;
-    margin-left: -1px; background: #ced4da;
+    margin-left: -1px; background: #ced4da; height: 100%;
   }
   .measure-label.line-vert .vl-tick {
     position: absolute; left: 50%; width: 8px; height: 2px;
@@ -391,10 +390,9 @@ function renderLabels() {
         el.style.width = wPct + '%';
         el.style.height = '24px';
       }
-      el.classList.add('line');
       if (isRot) {
         el.classList.add('line-vert');
-        // Build vertical line children instead of border
+        // Build vertical line children
         var vline = document.createElement('div');
         vline.className = 'vl-line';
         el.appendChild(vline);
@@ -404,6 +402,9 @@ function renderLabels() {
         var vtickB = document.createElement('div');
         vtickB.className = 'vl-tick vl-tick-b';
         el.appendChild(vtickB);
+      } else {
+        el.classList.add('line');
+      }
       }
 
       // Text label — horizontally centered, vertically offset
