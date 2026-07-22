@@ -403,9 +403,8 @@ function renderLabels() {
       hnd.style.cssText = `right:-13px;top:50%;margin-top:-13px;`;
       hnd.onmousedown = (e) => startResize(e, i);
       hnd.ontouchstart = (e) => startResize(e, i);
-      // Double-click/tap handle toggles 90° rotation
-      var lastTap = 0;
-      hnd.onclick = (e) => { e.stopPropagation(); var now = Date.now(); if (now - lastTap < 400) { l.rot = (l.rot || 0) === -90 ? 0 : -90; renderLabels(); } lastTap = now; };
+      // Double-tap handle toggles 90° rotation
+      (function(label) { var last = 0; hnd.onclick = function(e) { e.stopPropagation(); var n = Date.now(); if (n - last < 400) { label.rot = (label.rot || 0) === -90 ? 0 : -90; renderLabels(); } last = n; }; })(l);
       el.appendChild(hnd);
     } else {
       // Simple text label
