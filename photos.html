@@ -27,9 +27,9 @@
     white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis;
   }
   header select { max-width: 140px; }
-  header button { background: #e64980; border-color: #e64980; font-weight: 600; }
-  header button:active { opacity: 0.8; }
-  header button.danger { background: #c92a2a; border-color: #c92a2a; }
+  header > button, header button.acct-trigger { background: #e64980; border-color: #e64980; font-weight: 600; }
+  header > button:active { opacity: 0.8; }
+  header > button.danger { background: #c92a2a; border-color: #c92a2a; }
 
   #main-area {
     flex: 1; position: relative; overflow: hidden; background: #111;
@@ -52,23 +52,40 @@
   .measure-label {
     position: absolute; z-index: 10; cursor: pointer;
     touch-action: none; user-select: none;
-    overflow: visible; height: 30px;
-    /* width set by JS per label */
+    overflow: visible;
+    /* width + height set by JS per label */
   }
-  .measure-label .ml-line {
-    position: absolute; top: 50%; left: 0; right: 0; height: 3px;
-    margin-top: -1.5px; background: #e64980; border-radius: 1px;
+  /* Dimension/arrow lines */
+  .measure-label.line { border-top: 3px solid #e64980; }
+  .measure-label.line::before, .measure-label.line::after {
+    content: ''; position: absolute; top: -4.5px;
+    width: 2px; height: 8px; background: #e64980; border-radius: 1px;
   }
-  .measure-label .ml-tick {
-    position: absolute; top: 50%; width: 2px; height: 8px;
-    margin-top: -4px; background: #e64980; border-radius: 1px;
+  .measure-label.line::before { left: 0; }
+  .measure-label.line::after { right: 0; }
+  .measure-label.line-vert {
+    border-left: 3px solid #e64980;
+    width: 24px !important;
+    margin-left: 0 !important;
   }
+  .measure-label.line-vert::before, .measure-label.line-vert::after {
+    content: ''; position: absolute; left: -4.5px;
+    width: 8px; height: 2px; background: #e64980; border-radius: 1px;
+  }
+  .measure-label.line-vert::before { top: 0; }
+  .measure-label.line-vert::after { bottom: 0; }
   .measure-label .ml-text {
-    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.82); color: #fff; padding: 2px 8px;
+    position: absolute;
+    background: rgba(0,0,0,0.82); color: #fff; padding: 1px 7px;
     border-radius: 5px; font-size: 11px; font-weight: 700;
     white-space: nowrap; border: 1.5px solid #e64980;
     text-align: center; pointer-events: auto; z-index: 2;
+  }
+  .measure-label.line .ml-text {
+    left: 50%; top: 8px; transform: translate(-50%, 0);
+  }
+  .measure-label.line-vert .ml-text {
+    top: 50%; left: 10px; transform: translate(0, -50%);
   }
   .measure-label.selected .ml-text {
     border-color: #ff6b9d; box-shadow: 0 0 10px rgba(230,73,128,0.4);
@@ -147,7 +164,6 @@
       <select id="job-select" onchange="loadJobMeasurements()" style="display:none;flex-shrink:1;min-width:0;max-width:100px;"><option value="">Medida</option></select>
       <button onclick="reloadFromJob()" id="reload-btn" style="display:none;flex-shrink:0;">🔄</button>
       <button onclick="saveOverlay()" id="save-btn" style="display:none;flex-shrink:0;">💾</button>
-      <button onclick="window.location.href='dashboard.html'" style="flex-shrink:0;background:#1971c2;border-color:#1971c2;padding:5px 6px;font-size:11px;">📊</button>
       <button class="danger" onclick="doSignOut()" style="flex-shrink:0;padding:5px 6px;font-size:11px;">Salir</button>
     </div>
   </header>
@@ -271,22 +287,26 @@ window.reloadFromJob = function() {
   renderLabels();
 };
 
+function hasOffset(v) {
+  return v && v !== '—' && v !== 'Nivel' && v !== '0' && v !== 0 && v !== '';
+}
+
 function buildLabels(job) {
   labels = [];
   if (job.hueco) {
     labels.push({ type: 'dim', text: `${job.hueco.anchoBot || '?'}"`, x: 0.35, y: 0.78, w: 0.3 });
     labels.push({ type: 'dim', text: `${job.hueco.altoIzq || '?'}"`, x: 0.18, y: 0.35, w: 0.12, rot: -90 });
-    if (job.hueco.anchoTop) labels.push({ type: 'dim', text: `${job.hueco.anchoTop}"`, x: 0.35, y: 0.18, w: 0.3 });
-    if (job.hueco.altoDer) labels.push({ type: 'dim', text: `${job.hueco.altoDer}"`, x: 0.72, y: 0.35, w: 0.12, rot: -90 });
+    if (hasOffset(job.hueco.anchoTop)) labels.push({ type: 'dim', text: `${job.hueco.anchoTop}"`, x: 0.35, y: 0.18, w: 0.3 });
+    if (hasOffset(job.hueco.altoDer)) labels.push({ type: 'dim', text: `${job.hueco.altoDer}"`, x: 0.72, y: 0.35, w: 0.12, rot: -90 });
   }
   if (job.desniveles) {
-    if (job.desniveles.paredIzq && job.desniveles.paredIzq !== '—')
+    if (hasOffset(job.desniveles.paredIzq))
       labels.push({ type: 'arrow', text: `← ${job.desniveles.paredIzq} →`, x: 0.06, y: 0.48, w: 0.08 });
-    if (job.desniveles.paredDer && job.desniveles.paredDer !== '—')
+    if (hasOffset(job.desniveles.paredDer))
       labels.push({ type: 'arrow', text: `← ${job.desniveles.paredDer} →`, x: 0.82, y: 0.48, w: 0.14 });
-    if (job.desniveles.techo && job.desniveles.techo !== '—')
+    if (hasOffset(job.desniveles.techo))
       labels.push({ type: 'arrow', text: `${job.desniveles.techo}`, x: 0.45, y: 0.06, w: 0.12 });
-    if (job.desniveles.piso && job.desniveles.piso !== '—')
+    if (hasOffset(job.desniveles.piso))
       labels.push({ type: 'arrow', text: `${job.desniveles.piso}`, x: 0.45, y: 0.9, w: 0.12 });
   }
   if (job.customer) labels.push({ type: 'text', text: `Cliente: ${job.customer}`, x: 0.5, y: 0.03 });
@@ -360,27 +380,19 @@ function renderLabels() {
     let txt;
     if (l.type === 'dim' || l.type === 'arrow') {
       const wPct = (l.w || 0.2) * 100;
-      el.style.width = wPct + '%';
-      el.style.height = '30px';
+      const isRot = Math.abs(l.rot || 0) > 0;
+      // For rotated (vertical) lines, swap width → height
+      if (isRot) {
+        el.style.height = wPct + '%';
+        el.style.width = '28px';
+        el.style.marginLeft = '-14px';
+      } else {
+        el.style.width = wPct + '%';
+        el.style.height = '24px';
+      }
+      el.classList.add('line');
 
-      // Main line — full width of parent
-      const line = document.createElement('div');
-      line.className = 'ml-line';
-      el.appendChild(line);
-
-      // Left tick
-      const tickL = document.createElement('div');
-      tickL.className = 'ml-tick';
-      tickL.style.left = '0';
-      el.appendChild(tickL);
-
-      // Right tick
-      const tickR = document.createElement('div');
-      tickR.className = 'ml-tick';
-      tickR.style.right = '0';
-      el.appendChild(tickR);
-
-      // Text label — centered in middle
+      // Text label — centered below the line
       txt = document.createElement('div');
       txt.className = 'ml-text';
       txt.textContent = l.text;
@@ -616,10 +628,16 @@ function renderToCanvas() {
     const x = l.x * cvs.width, y = l.y * cvs.height;
     const w = (l.w || 0.2) * cvs.width;
     if (l.type === 'dim' || l.type === 'arrow') {
-      ctx.beginPath(); ctx.moveTo(x - w/2, y); ctx.lineTo(x + w/2, y); ctx.stroke();
-      [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(x + s*w/2, y - 5); ctx.lineTo(x + s*w/2, y + 5); ctx.stroke(); });
+      const rot = l.rot || 0;
+      ctx.save();
+      ctx.translate(x, y);
+      if (rot) ctx.rotate(rot * Math.PI / 180);
+      const hw = w / 2;
+      ctx.strokeStyle = '#e64980'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(hw, 0); ctx.stroke();
+      [-1, 1].forEach(s => { ctx.beginPath(); ctx.moveTo(s * hw, -4); ctx.lineTo(s * hw, 4); ctx.stroke(); });
+      ctx.restore();
     }
-    const m = ctx.measureText(l.text);
     const pad = 6;
     ctx.fillStyle = 'rgba(0,0,0,0.82)';
     ctx.beginPath();
