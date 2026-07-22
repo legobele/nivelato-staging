@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 2b2f705')</script>
+<script>console.log('nivelato v1.0.0 — commit 210c8c2')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -233,6 +233,13 @@
       <div class="modal-details">
         <div id="modal-body"></div>
         <button class="btn-delete" id="modal-delete-btn" onclick="deleteCurrentJob()">🗑 Eliminar medida</button>
+        <button class="btn-share-modal" id="modal-share-btn" onclick="toggleSharePanel()" style="display:none;margin-top:8px;background:#e7f5ff;color:#1971c2;border:1px solid #1971c2;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;">🔗 Compartir medida</button>
+        <div id="share-panel" style="display:none;margin-top:8px;padding:12px;background:#f8f9fa;border-radius:8px;border:1px solid #dee2e6;">
+          <div style="font-size:12px;font-weight:600;color:#495057;margin-bottom:8px;">Compartir con:</div>
+          <div id="share-member-list"></div>
+          <button onclick="saveShare()" style="margin-top:8px;padding:6px 14px;background:#1971c2;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Guardar</button>
+          <span id="share-status" style="font-size:12px;color:#2f9e44;margin-left:8px;display:none;">✓</span>
+        </div>
         <button class="btn-close" onclick="closeModal()">Cerrar</button>
       </div>
       <div class="modal-canvas-wrap">
@@ -245,7 +252,8 @@
 <script type="module">
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { makePermChecker, canEditJob } from './permissions.js';
 
 // ── embedGraph — standalone copy to avoid loading adhd.js ──
 // Extract only the numeric value from a label, ignoring direction arrows.
@@ -381,27 +389,34 @@ let currentUser;
       window.initAccountSelector({ user, userData });
     }
 
-    const DASH_ROLES = ['owner', 'cotizador', 'supervisor'];
-    if (!userData || !DASH_ROLES.includes(userData.role||userData.installerRole)) {
-      window.location.href = 'index.html'; return;
+    // permission checker
+    const _can = makePermChecker(userData);
+    window._can = _can;
+    window._currentUser = currentUser;
+    window._currentUserData = userData;
+
+    if (!_can('viewDashboard')) {
+      window.location.href = 'blocked.html'; return;
     }
-    // supervisor and measurer can also create new measurements
-    const canMeasure = ['owner', 'supervisor', 'measurer'].includes(userData.role);
-    window._canMeasure = canMeasure;
     const orgId = userData.orgId;
-    // load org name
+    // Nueva medida button — only if user can create measurements
     const btnNew = document.getElementById('btn-new-measure');
-    if (btnNew && window._canMeasure) btnNew.style.display = 'block';
+    if (btnNew && _can('createMeasurements')) btnNew.style.display = 'block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
-    document.getElementById('dash-subtitle').textContent = `${orgName} · ${userData.role === 'owner' ? 'Administrador' : 'Cotizaciones'}`;
-    // show join code for owners
-    if (userData.role === 'owner') {
+    document.getElementById('dash-subtitle').textContent = `${orgName} · ${_can('userManagement') ? 'Administrador' : 'Cotizaciones'}`;
+    // show join code only for user management
+    if (_can('userManagement')) {
       const jcs = document.getElementById('join-code-section');
       jcs.style.display = 'flex';
       document.getElementById('join-code-display').textContent = orgId;
     }
+
+    // load all org members for share panel
+    window._orgMembers = [];
+    const membersSnap = await getDocs(query(collection(db, 'users'), where('orgId', '==', orgId)));
+    window._orgMembers = membersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
 
     // load jobs
     window._db = db; window._orgId = orgId;
@@ -409,6 +424,15 @@ let currentUser;
     const q = query(jobsRef, orderBy('createdAt', 'desc'));
     const snap = await getDocs(q);
     allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // filter jobs by permissions
+    const canViewOwn = _can('viewOwnMeasurements');
+    const canViewOthers = _can('viewOthersMeasurements');
+    allJobs = allJobs.filter(j => {
+      const isOwn = j.installerUid === user.uid;
+      if (isOwn) return canViewOwn;
+      return canViewOthers;
+    });
 
     // populate installer filter
     const installers = [...new Set(allJobs.map(j => j.installerName).filter(Boolean))];
@@ -524,6 +548,19 @@ let currentUser;
     }
     if (job.notas) html += `<div class="modal-notes">📝 ${job.notas}</div>`;
     document.getElementById('modal-body').innerHTML = html;
+    // gate delete button by edit permission
+    const delBtn = document.getElementById('modal-delete-btn');
+    if (delBtn) {
+      delBtn.style.display = window._can && canEditJob(job, currentUser, window._can) ? 'block' : 'none';
+    }
+    // gate share button by editOthers permission
+    const shareBtn = document.getElementById('modal-share-btn');
+    if (shareBtn) {
+      shareBtn.style.display = window._can && window._can('editOthersMeasurements') ? 'block' : 'none';
+    }
+    // hide share panel when opening a new job
+    const sp = document.getElementById('share-panel');
+    if (sp) sp.style.display = 'none';
     document.getElementById('modal-overlay').classList.add('open');
     window.embedGraph(document.getElementById('modal-canvas'), {
       anchoBot: job.hueco?.anchoBot || 36,
@@ -549,6 +586,43 @@ let currentUser;
       applyFilters();
     } catch(e) {
       alert('Error al eliminar: ' + e.message);
+    }
+  };
+
+  window.toggleSharePanel = () => {
+    const sp = document.getElementById('share-panel');
+    const shown = sp.style.display !== 'none';
+    sp.style.display = shown ? 'none' : 'block';
+    if (!shown) {
+      // populate member list
+      const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
+      const shared = (job && job.sharedWith) || [];
+      const list = document.getElementById('share-member-list');
+      list.innerHTML = window._orgMembers
+        .filter(m => m.uid !== currentUser.uid)
+        .map(m => {
+          const checked = shared.includes(m.uid);
+          return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+            <input type="checkbox" class="share-check" data-uid="${m.uid}" ${checked ? 'checked' : ''} />
+            ${m.name || m.email || 'Usuario'}
+          </label>`;
+        }).join('');
+    }
+  };
+
+  window.saveShare = async () => {
+    const job = window._currentJobIdx != null ? window._jobs[window._currentJobIdx] : null;
+    if (!job) return;
+    const checks = document.querySelectorAll('.share-check:checked');
+    const uids = Array.from(checks).map(cb => cb.dataset.uid);
+    try {
+      await updateDoc(doc(db, 'orgs', window._orgId, 'jobs', job.id), { sharedWith: uids });
+      const status = document.getElementById('share-status');
+      status.style.display = 'inline';
+      status.textContent = '✓ Guardado';
+      setTimeout(() => status.style.display = 'none', 2000);
+    } catch(e) {
+      alert('Error al guardar: ' + e.message);
     }
   };
 

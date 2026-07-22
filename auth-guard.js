@@ -2,9 +2,11 @@
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { makePermChecker } from './permissions.js';
 
 let currentUser = null;
 let currentUserData = null;
+let _can = () => false;
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -15,12 +17,18 @@ onAuthStateChanged(auth, async (user) => {
   const userDoc = await getDoc(doc(db, 'users', user.uid));
   currentUserData = userDoc.data();
 
+  // make permission checker available globally
+  _can = makePermChecker(currentUserData);
+  window._can = _can;
+  window._currentUser = currentUser;
+  window._currentUserData = currentUserData;
+
   // inject user info into header
   const logo = document.getElementById('app-logo');
   if (logo) logo.textContent = 'Nivelato';
 
-  // owner/cotizador → show dashboard link
-  if (currentUserData?.role === 'owner' || currentUserData?.role === 'cotizador') {
+  // show dashboard link if user has viewDashboard permission
+  if (_can('viewDashboard')) {
     const header = document.getElementById('app-header');
     if (header) {
       const dashBtn = document.createElement('a');
@@ -45,6 +53,7 @@ window._doLogout = async () => {
 // saveJob — called from adhd.js on share
 window.saveJobToFirestore = async (jobData) => {
   if (!currentUser || !currentUserData) return;
+  if (!_can('createMeasurements')) { console.warn('[Nivelato] No tienes permiso para crear medidas.'); return; }
   try {
     const orgId = currentUserData.orgId;
     await addDoc(collection(db, 'orgs', orgId, 'jobs'), {

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Nivelato — Ajustes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="autism.css" />
+<style>
+  .settings-shell { max-width: 640px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 14px; color: #868e96; margin-bottom: 24px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f1f3f5; border-radius: 10px; padding: 4px; }
+  .tab-btn { flex: 1; padding: 10px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; background: transparent; color: #495057; transition: all 0.15s; }
+  .tab-btn.active { background: #fff; color: #1971c2; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  .card { background: #fff; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 15px; font-weight: 700; color: #212529; margin-bottom: 4px; }
+  .card-desc { font-size: 13px; color: #868e96; margin-bottom: 16px; }
+  .perm-member { border-bottom: 1px solid #f1f3f5; padding: 14px 0; }
+  .perm-member:last-child { border-bottom: none; }
+  .perm-member-header { font-size: 14px; font-weight: 600; color: #212529; margin-bottom: 8px; }
+  .perm-member-role { font-size: 12px; color: #868e96; font-weight: 500; }
+  .perm-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .perm-grid label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #495057; cursor: pointer; padding: 4px 10px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6; }
+  .perm-grid label:has(input:checked) { background: #e7f5ff; border-color: #1971c2; color: #1971c2; }
+  .perm-grid input { width: 14px; height: 14px; accent-color: #1971c2; }
+  .request-card { background: #fff; border: 1px solid #e9ecef; border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .request-name { font-size: 14px; font-weight: 600; }
+  .request-email { font-size: 12px; color: #868e96; }
+  .request-actions { display: flex; gap: 8px; }
+  .btn-sm { padding: 7px 16px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-sm.approve { background: #2f9e44; color: #fff; }
+  .btn-sm.reject { background: #e03131; color: #fff; }
+  .btn-back { display: inline-block; margin-bottom: 16px; font-size: 13px; color: #1971c2; text-decoration: none; font-weight: 600; cursor: pointer; }
+  .btn-back:hover { text-decoration: underline; }
+  .info-row { display: flex; padding: 10px 0; border-bottom: 1px solid #f1f3f5; font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { font-weight: 600; color: #495057; min-width: 120px; }
+  .info-value { color: #212529; }
+  .saved-msg { font-size: 13px; color: #2f9e44; font-weight: 600; text-align: center; padding: 8px; display: none; }
+</style>
+</head>
+<body>
+<div class="settings-shell">
+  <a class="btn-back" onclick="history.back()">← Volver</a>
+  <h1>Ajustes</h1>
+  <div class="sub">Configuración de tu cuenta y del taller</div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('cuenta')">Mi cuenta</button>
+    <button class="tab-btn" id="tab-taller-btn" onclick="switchTab('taller')" style="display:none">Taller</button>
+  </div>
+
+  <!-- MI CUENTA -->
+  <div class="tab-panel active" id="tab-cuenta">
+    <div class="card">
+      <div class="card-title">Información de la cuenta</div>
+      <div class="card-desc">Datos de tu perfil en Nivelato.</div>
+      <div class="info-row"><span class="info-label">Nombre</span><span class="info-value" id="info-name">—</span></div>
+      <div class="info-row"><span class="info-label">Correo</span><span class="info-value" id="info-email">—</span></div>
+      <div class="info-row"><span class="info-label">Rol</span><span class="info-value" id="info-role">—</span></div>
+      <div class="info-row"><span class="info-label">Taller</span><span class="info-value" id="info-org">—</span></div>
+      <div class="info-row"><span class="info-label">Código</span><span class="info-value" id="info-joincode">—</span></div>
+    </div>
+  </div>
+
+  <!-- TALLER -->
+  <div class="tab-panel" id="tab-taller">
+    <div class="card">
+      <div class="card-title">Permisos de miembros</div>
+      <div class="card-desc">Gestiona las capacidades de cada miembro del taller.</div>
+      <div id="permissions-list"><p style="color:#868e96;font-size:13px;">Cargando miembros…</p></div>
+      <div class="saved-msg" id="perm-saved">✓ Cambios guardados</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Solicitudes de acceso</div>
+      <div class="card-desc">Cuentas pendientes de aprobación para unirse al taller.</div>
+      <div id="requests-list"><p style="color:#868e96;font-size:13px;">Cargando solicitudes…</p></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { makePermChecker } from './permissions.js';
+import { PERM_DEFS } from './permissions.js';
+
+let currentUser = null;
+let currentUserData = null;
+let orgMembers = [];
+let _can = () => false;
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  const userSnap = await getDoc(doc(db, 'users', user.uid));
+  currentUserData = userSnap.data();
+  _can = makePermChecker(currentUserData);
+  const orgId = currentUserData.orgId;
+
+  // fill info tab
+  document.getElementById('info-name').textContent = currentUserData.name || '—';
+  document.getElementById('info-email').textContent = user.email || '—';
+  document.getElementById('info-role').textContent = {
+    owner: 'Dueño / Admin', cotizador: 'Cotizador', supervisor: 'Supervisor', measurer: 'Técnico medidor'
+  }[currentUserData.role] || currentUserData.role || '—';
+  document.getElementById('info-org').textContent = orgId;
+  document.getElementById('info-joincode').textContent = orgId;
+
+  // show taller tab only for userManagement
+  if (_can('userManagement')) {
+    document.getElementById('tab-taller-btn').style.display = 'block';
+    await loadOrgMembers(orgId);
+    renderPermissions();
+    await loadRequests(orgId);
+  }
+});
+
+async function loadOrgMembers(orgId) {
+  const q = query(collection(db, 'users'), where('orgId', '==', orgId));
+  const snap = await getDocs(q);
+  orgMembers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+}
+
+function renderPermissions() {
+  const container = document.getElementById('permissions-list');
+  container.innerHTML = orgMembers.map(m => {
+    const perms = m.permissions || {};
+    const roleLabel = { owner: 'Dueño', cotizador: 'Cotizador', supervisor: 'Supervisor', measurer: 'Técnico' }[m.role] || m.role || '—';
+    return `
+      <div class="perm-member" data-uid="${m.uid}">
+        <div class="perm-member-header">${m.name || 'Sin nombre'} <span class="perm-member-role">${roleLabel}</span></div>
+        <div class="perm-grid">
+          ${PERM_DEFS.map(p => `
+            <label>
+              <input type="checkbox" class="perm-check" data-perm="${p.key}" ${!!perms[p.key] ? 'checked' : ''} ${m.role === 'owner' ? 'disabled' : ''} />
+              ${p.label}
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // attach change listeners
+  container.querySelectorAll('.perm-check:not([disabled])').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const memberEl = e.target.closest('.perm-member');
+      const uid = memberEl.dataset.uid;
+      const permKey = e.target.dataset.perm;
+      const checked = e.target.checked;
+      try {
+        const userRef = doc(db, 'users', uid);
+        await updateDoc(userRef, { [`permissions.${permKey}`]: checked });
+        document.getElementById('perm-saved').style.display = 'block';
+        setTimeout(() => document.getElementById('perm-saved').style.display = 'none', 2500);
+      } catch(err) {
+        alert('Error al guardar permiso: ' + err.message);
+        e.target.checked = !checked; // revert
+      }
+    });
+  });
+}
+
+async function loadRequests(orgId) {
+  const container = document.getElementById('requests-list');
+  const pending = orgMembers.filter(m => m.disabled === true);
+  if (pending.length === 0) {
+    container.innerHTML = '<p style="color:#868e96;font-size:13px;">No hay solicitudes pendientes.</p>';
+    return;
+  }
+  container.innerHTML = pending.map(m => `
+    <div class="request-card" data-uid="${m.uid}">
+      <div>
+        <div class="request-name">${m.name || 'Sin nombre'}</div>
+        <div class="request-email">${m.email || ''}</div>
+      </div>
+      <div class="request-actions">
+        <button class="btn-sm approve" onclick="approveRequest('${m.uid}')">Aprobar</button>
+        <button class="btn-sm reject" onclick="rejectRequest('${m.uid}')">Rechazar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.approveRequest = async (uid) => {
+  try {
+    await updateDoc(doc(db, 'users', uid), { disabled: false });
+    // remove the card from DOM
+    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+    // also update in-memory
+    const m = orgMembers.find(x => x.uid === uid);
+    if (m) m.disabled = false;
+  } catch(e) {
+    alert('Error al aprobar: ' + e.message);
+  }
+};
+
+window.rejectRequest = async (uid) => {
+  if (!confirm('¿Rechazar a este usuario? Su cuenta será eliminada.')) return;
+  try {
+    // For real rejection we'd delete the user doc; for now just disable permanently
+    await updateDoc(doc(db, 'users', uid), { disabled: 'rejected' });
+    const card = document.querySelector(`.request-card[data-uid="${uid}"]`);
+    if (card) card.remove();
+  } catch(e) {
+    alert('Error al rechazar: ' + e.message);
+  }
+};
+
+window.switchTab = (name) => {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${name}"]`)?.classList.add('active');
+  document.getElementById(`tab-${name}`)?.classList.add('active');
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Nivelato — Sin acceso</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f8f9fa;
+    color: #212529;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    gap: 16px;
+  }
+  .icon { font-size: 56px; }
+  h2 { font-size: 20px; font-weight: 700; color: #212529; }
+  p { font-size: 14px; color: #868e96; max-width: 340px; line-height: 1.6; }
+  .btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background: #1971c2;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+    margin-top: 8px;
+  }
+  .btn:active { background: #1864ab; }
+</style>
+</head>
+<body>
+  <div class="icon">🚫</div>
+  <h2>Sin acceso al panel</h2>
+  <p>No tienes permisos para ver el panel de administración. Si crees que esto es un error, contacta al administrador del taller.</p>
+  <a href="index.html" class="btn">Volver a la app</a>
+</body>
+</html>
