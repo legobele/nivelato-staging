@@ -50,19 +50,28 @@
   .measure-label {
     position: absolute; z-index: 10; cursor: pointer;
     touch-action: none; user-select: none;
+    overflow: visible;
+    /* Width set by JS per label */
+  }
+  .measure-label .ml-wrap {
+    position: relative; width: 100%; height: 24px;
   }
   .measure-label .ml-line {
-    position: absolute; background: #e64980; border-radius: 1px;
+    position: absolute; top: 50%; left: 0; right: 0; height: 3px;
+    margin-top: -1.5px; background: #e64980; border-radius: 1px;
   }
   .measure-label .ml-tick {
-    position: absolute; background: #e64980; border-radius: 1px;
+    position: absolute; top: 50%; width: 2px; height: 8px;
+    margin-top: -4px; background: #e64980; border-radius: 1px;
   }
+  .measure-label .ml-tick-l { left: 0; }
+  .measure-label .ml-tick-r { right: 0; }
   .measure-label .ml-text {
     position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    background: rgba(0,0,0,0.82); color: #fff; padding: 3px 8px;
-    border-radius: 5px; font-size: 12px; font-weight: 700;
+    background: rgba(0,0,0,0.82); color: #fff; padding: 2px 7px;
+    border-radius: 5px; font-size: 11px; font-weight: 700;
     white-space: nowrap; border: 1.5px solid #e64980;
-    text-align: center; pointer-events: auto;
+    text-align: center; pointer-events: auto; z-index: 2;
   }
   .measure-label.selected .ml-text {
     border-color: #ff6b9d; box-shadow: 0 0 10px rgba(230,73,128,0.4);
