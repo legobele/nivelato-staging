@@ -11,13 +11,20 @@
   .page { display: flex; flex-direction: column; height: 100dvh; }
   .page.hide { display: none; }
 
-  .login { padding: 20px 16px; justify-content: center; gap: 10px; }
-  .login h1 { font-size: 22px; font-weight: 900; color: #e64980; }
-  .login p { font-size: 11px; color: #666; }
-  .login input { padding: 14px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 14px; font-family: inherit; width: 100%; }
-  .login input:focus { outline: none; border-color: #e64980; }
-  .login button { padding: 14px; border-radius: 10px; border: none; background: #e64980; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
-  .login .err { font-size: 10px; color: #ff6b6b; text-align: center; min-height: 14px; }
+  .login { padding: 20px 16px; justify-content: center; align-items: center; gap: 12px; text-align: center; }
+  .login h1 { font-size: 24px; font-weight: 900; color: #e64980; }
+  .login p { font-size: 11px; color: #666; max-width: 200px; }
+
+  .digits { display: flex; gap: 6px; justify-content: center; margin: 8px 0; }
+  .digits .d { width: 44px; height: 54px; background: #1a1a1a; border: 2px solid #333; border-radius: 10px; font-size: 22px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; }
+  .digits .d.filled { border-color: #e64980; }
+
+  .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 220px; margin: 0 auto; }
+  .numpad button { height: 56px; border-radius: 12px; border: none; background: #1a1a1a; color: #fff; font-size: 22px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .numpad button:active { background: #333; }
+  .numpad button.del { background: #2a1a1a; color: #ff6b6b; font-size: 16px; }
+  .numpad button.go { background: #e64980; color: #fff; }
+  .login .err { font-size: 10px; color: #ff6b6b; min-height: 14px; }
 
   header { padding: 10px 14px; background: #1a1a1a; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
   header h1 { font-size: 14px; font-weight: 700; color: #e64980; }
@@ -47,9 +54,14 @@
 <body>
 <div id="pg-login" class="page login">
   <h1>⌚️ Nivelato</h1>
-  <input type="email" id="wl-email" placeholder="Correo" />
-  <input type="password" id="wl-pass" placeholder="Contraseña" />
-  <button onclick="watchLogin()">Iniciar sesión</button>
+  <p>Ingresa el código de acceso desde tu teléfono.</p>
+  <div class="digits"><div class="d" id="d0"></div><div class="d" id="d1"></div><div class="d" id="d2"></div><div class="d" id="d3"></div><div class="d" id="d4"></div><div class="d" id="d5"></div></div>
+  <div class="numpad">
+    <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button>
+    <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button>
+    <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button>
+    <button class="del" onclick="delDigit()">⌫</button><button onclick="press('0')">0</button><button class="go" onclick="submitCode()">→</button>
+  </div>
   <div class="err" id="wl-err"></div>
 </div>
 
@@ -68,34 +80,68 @@
 
 <script type="module">
 import { auth, db } from './firebase-config.js';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
-import { getDoc, doc, getDocs, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+import { signOut, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+import { getDoc, doc, getDocs, collection, query, orderBy, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
 
 let allJobs = [];
+let code = '';
+let sessionUid = null;
+
 function show(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.add('hide'));
   document.getElementById(id).classList.remove('hide');
 }
 
-onAuthStateChanged(auth, user => { if (user) loadDash(user); else show('pg-login'); });
+function updateDigits() {
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById('d' + i);
+    el.textContent = code[i] || '';
+    el.className = 'd' + (code[i] ? ' filled' : '');
+  }
+}
 
-window.watchLogin = async () => {
-  const email = document.getElementById('wl-email').value.trim();
-  const pass = document.getElementById('wl-pass').value;
-  const err = document.getElementById('wl-err');
-  if (!email || !pass) { err.textContent = 'Completa los campos.'; return; }
+window.press = (d) => { if (code.length < 6) { code += d; updateDigits(); } };
+window.delDigit = () => { code = code.slice(0, -1); updateDigits(); };
+
+// ── AUTH ──
+// Check if we already have a session token stored
+const SESS_KEY = 'nivelato_watch_session';
+const stored = localStorage.getItem(SESS_KEY);
+if (stored) {
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
+    const s = JSON.parse(stored);
+    if (s.expires > Date.now()) {
+      sessionUid = s.uid;
+      loadDash(s.orgId);
+    } else {
+      localStorage.removeItem(SESS_KEY);
+    }
+  } catch(e) {}
+}
+
+window.submitCode = async () => {
+  if (code.length !== 6) return;
+  const err = document.getElementById('wl-err');
+  try {
+    const snap = await getDoc(doc(db, 'watch_codes', code));
+    if (!snap.exists()) { err.textContent = 'Código inválido.'; return; }
+    const data = snap.data();
+    if (data.expires?.toDate && data.expires.toDate() < new Date()) { err.textContent = 'Código expirado.'; return; }
+    // code valid — load data
+    sessionUid = data.uid;
+    const orgId = data.orgId;
+    // store session locally
+    localStorage.setItem(SESS_KEY, JSON.stringify({ uid: sessionUid, orgId, expires: Date.now() + 86400000 }));
+    await deleteDoc(doc(db, 'watch_codes', code));
+    loadDash(orgId);
   } catch(e) { err.textContent = e.message; }
 };
 
-window.watchLogout = () => signOut(auth);
+window.watchLogout = () => { localStorage.removeItem(SESS_KEY); sessionUid = null; show('pg-login'); };
 
-async function loadDash(user) {
+async function loadDash(orgId) {
   show('pg-dash');
   try {
-    const ud = (await getDoc(doc(db, 'users', user.uid))).data();
-    const orgId = ud.orgId;
     const snap = await getDocs(query(collection(db, 'orgs', orgId, 'jobs'), orderBy('createdAt', 'desc')));
     allJobs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nivelato — Dashboard</title>
-<script>console.log('nivelato v1.0.0 — commit 79b0c5a')</script>
+<script>console.log('nivelato v1.0.0 — commit bbc934d')</script>
 <script type="module" src="firebase-config.js"></script>
 <script src="./adhd.js"></script>
 <script type="module" src="account-selector.js"></script>
@@ -228,6 +228,7 @@
     <div class="org-badge" id="org-name-badge">…</div>
     <button id="btn-new-measure" onclick="window.location.href='index.html'" style="display:none;background:#1971c2;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">+ Nueva medida</button>
     <button id="btn-photos" onclick="window.location.href='photos.html'" style="display:none;background:#e64980;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;">📸 Fotos</button>
+    <button id="btn-watch" onclick="genWatchCode()" style="display:none;background:#000;color:#fff;border:1px solid #333;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">⌚️</button>
     <div class="nueva-btn-wrap" id="nueva-btn-wrap">
       <button class="nueva-btn" onclick="toggleNueva()" style="display:none">+ Nueva</button>
       <div class="nueva-dropdown" id="nueva-dropdown">
@@ -318,7 +319,7 @@
 <script type="module">
 import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+import { getDoc, doc, setDoc, updateDoc, collection, query, where, orderBy, getDocs, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 import { makePermChecker, canEditJob } from './permissions.js';
 
 // ── embedGraph — standalone copy to avoid loading adhd.js ──
@@ -471,6 +472,9 @@ let currentUser;
     // Photos button — only if user has addPhotosToOrders
     const btnPhotos = document.getElementById('btn-photos');
     if (btnPhotos && _can('addPhotosToOrders')) btnPhotos.style.display = 'inline-block';
+    // Watch button — available for all dashboard users
+    const btnWatch = document.getElementById('btn-watch');
+    if (btnWatch) btnWatch.style.display = 'inline-block';
     const orgDoc = await getDoc(doc(db, 'orgs', orgId));
     const orgName = orgDoc.data()?.name || orgId;
     document.getElementById('org-name-badge').textContent = orgName;
@@ -828,6 +832,21 @@ let currentUser;
       closeMobileSheet();
       allJobs = allJobs.filter(j => j.id !== job.id);
       applyFilters();
+    } catch(e) { alert('Error: ' + e.message); }
+  };
+
+  // ── WATCH CODE ──
+  window.genWatchCode = async () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    try {
+      await setDoc(doc(db, 'watch_codes', code), {
+        uid: currentUser.uid,
+        orgId: window._orgId,
+        expires: new Date(Date.now() + 600000), // 10 min
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('btn-watch').textContent = '⌚️ ' + code;
+      setTimeout(() => { document.getElementById('btn-watch').textContent = '⌚️'; }, 60000);
     } catch(e) { alert('Error: ' + e.message); }
   };
 
