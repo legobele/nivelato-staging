@@ -115,7 +115,7 @@ function buildMenu({ user, userData }) {
         ${email ? `<div class="em">${email}</div>` : ""}
         <div class="rl">${roleLabel(userData?.role)}</div>
       </div>
-      <button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='dashboard.html'" style="display:none">📊 Dashboard</button>
+      <button class="acct-item" id="acct-dashboard" role="menuitem" onclick="window.location.href='dashboard.html'">📊 Dashboard</button>
       <button class="acct-item" id="acct-settings" role="menuitem" onclick="window.location.href='settings.html'">⚙️ Ajustes</button>
       <button class="acct-item danger" id="acct-signout" role="menuitem">Cerrar sesión</button>
     </div>
