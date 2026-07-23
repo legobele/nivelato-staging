@@ -386,6 +386,7 @@ function renderLabels() {
     el.style.left = (l.x * 100) + '%'; el.style.top = (l.y * 100) + '%';
     el.dataset.idx = i;
 
+    const isDim = l.type === 'dim' || l.type === 'arrow';
     let txt;
     if (isDim) {
 const wPct = (l.w || 0.2) * 100;
