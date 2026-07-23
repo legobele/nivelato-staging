@@ -548,8 +548,8 @@ function startLabelDrag(e, idx) {
     const rect = img.getBoundingClientRect();
     const dx = (cx - dragState.sx) / rect.width;
     const dy = (cy - dragState.sy) / rect.height;
-    label.x = Math.max(0, Math.min(1, dragState.ox + dx));
-    label.y = Math.max(0, Math.min(1, dragState.oy + dy));
+    label.x = dragState.ox + dx;
+    label.y = dragState.oy + dy;
     moveLabelEl(idx); // move element directly — no full re-render
   };
   const up = () => {
@@ -579,7 +579,7 @@ function startResize(e, idx) {
   if (cur) cur.classList.add('selected');
   const t = e.touches?.[0] || e;
   const label = labels[idx];
-  dragState = { idx, sx: t?.clientX || e.clientX, sy: t?.clientY || e.clientY, ow: label.w || 0.2, isResize: true };
+  dragState = { idx, sx: t?.clientX || e.clientX, sy: t?.clientY || e.clientY, ow: label.w || 0.2, ox: label.x, oy: label.y, isResize: true };
 
   const move = (ev) => {
     const tt = ev.touches?.[0] || ev;
@@ -593,8 +593,15 @@ function startResize(e, idx) {
     const dy = (cy - dragState.sy) / rect.width;
     const delta = dx * Math.cos(rotRad) + dy * Math.sin(rotRad);
     label.w = Math.max(0.02, dragState.ow + delta);
+    // Keep left (non-resize) endpoint anchored
+    label.x = dragState.ox + (dragState.ow - label.w) * (1 - Math.cos(rotRad)) / 2;
+    label.y = dragState.oy + (dragState.ow - label.w) * Math.sin(rotRad) / -2;
     const el = container.querySelector(`[data-idx="${idx}"]`);
-    if (el) el.style.width = (label.w * 100) + '%';
+    if (el) {
+      el.style.width = (label.w * 100) + '%';
+      el.style.left = (label.x * 100) + '%';
+      el.style.top = (label.y * 100) + '%';
+    }
   };
   const up = () => {
     document.removeEventListener('pointermove', move);
