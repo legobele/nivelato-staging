@@ -590,7 +590,7 @@ function startResize(e, idx) {
     const rotRad = (label.rot || 0) * Math.PI / 180;
     // Project mouse movement onto the line's direction
     const dx = (cx - dragState.sx) / rect.width;
-    const dy = (cy - dragState.sy) / rect.height;
+    const dy = (cy - dragState.sy) / rect.width;
     const delta = dx * Math.cos(rotRad) + dy * Math.sin(rotRad);
     label.w = Math.max(0.02, dragState.ow + delta);
     const el = container.querySelector(`[data-idx="${idx}"]`);
