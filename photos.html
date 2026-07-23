@@ -627,18 +627,21 @@ function startRotate(e, idx) {
   const w = label.w || 0.2;
 
   function getCenter() {
-    // Center of the line = center of the top edge of the element (transform-origin)
     return {
       cx: rect.left + (label.x + w / 2) * rect.width,
       cy: rect.top + label.y * rect.height
     };
   }
 
+  const startAngle = label.rot || 0;
+  const center = getCenter();
+  const initMouseAngle = Math.atan2(t.clientY - center.cy, t.clientX - center.cx) * 180 / Math.PI;
+
   const move = (ev) => {
     const tt = ev.touches?.[0] || ev;
     const center = getCenter();
-    const angle = Math.atan2(tt.clientY - center.cy, tt.clientX - center.cx) * 180 / Math.PI;
-    label.rot = angle;
+    const currentAngle = Math.atan2(tt.clientY - center.cy, tt.clientX - center.cx) * 180 / Math.PI;
+    label.rot = startAngle + (currentAngle - initMouseAngle);
     while (label.rot > 180) label.rot -= 360;
     while (label.rot < -180) label.rot += 360;
     renderLabels();
